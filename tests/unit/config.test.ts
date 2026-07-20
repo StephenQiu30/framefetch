@@ -14,3 +14,13 @@ describe('Umi OpenAPI configuration', () => {
     expect(source).toContain('...openApiConfig');
   });
 });
+
+describe('development API proxy configuration', () => {
+  it('keeps the server API prefix when forwarding requests', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'config/proxy.ts'),
+      'utf8',
+    );
+    expect(source).not.toContain('pathRewrite');
+  });
+});
