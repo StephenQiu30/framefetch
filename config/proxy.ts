@@ -5,7 +5,6 @@ const apiProxy = target
       '/api/': {
         target,
         changeOrigin: true,
-        pathRewrite: { '^/api': '' },
       },
     }
   : {};
