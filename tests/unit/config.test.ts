@@ -10,6 +10,7 @@ describe('Umi OpenAPI configuration', () => {
     );
     expect(source).toContain('const hasOpenApiSchema = Boolean(');
     expect(source).toContain('plugins: hasOpenApiSchema ?');
-    expect(source).toContain('openAPI: hasOpenApiSchema');
+    expect(source).toContain('const openApiConfig = hasOpenApiSchema');
+    expect(source).toContain('...openApiConfig');
   });
 });
