@@ -109,7 +109,7 @@ export default function DownloadJobPage() {
             <Alert
               type="warning"
               showIcon
-              message="当前处于离线状态"
+              title="当前处于离线状态"
               description="网络恢复后会继续查询任务状态。"
             />
           ) : null}
@@ -223,7 +223,7 @@ export default function DownloadJobPage() {
             <Alert
               type="error"
               showIcon
-              message={downloadUrl.problem.title}
+              title={downloadUrl.problem.title}
               description={downloadUrl.problem.detail}
             />
           ) : null}
@@ -231,7 +231,7 @@ export default function DownloadJobPage() {
             <Alert
               type="warning"
               showIcon
-              message="状态刷新暂时失败"
+              title="状态刷新暂时失败"
               description="已保留最近一次真实状态，网络恢复后会继续尝试。"
             />
           ) : null}

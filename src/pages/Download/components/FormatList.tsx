@@ -15,7 +15,7 @@ export default function FormatList({ formats, value, onChange }: Props) {
       onChange={(event) => onChange(event.target.value)}
       style={{ width: '100%' }}
     >
-      <Space direction="vertical" size="small" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="small" style={{ width: '100%' }}>
         {formats.map((format) => (
           <Radio key={format.id} value={format.id} style={{ width: '100%' }}>
             <Space wrap>

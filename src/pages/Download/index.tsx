@@ -93,7 +93,7 @@ export default function DownloadPage() {
             <Alert
               type="warning"
               showIcon
-              message="解析结果已过期"
+              title="解析结果已过期"
               description="请重新解析链接后再选择清晰度。"
               action={<Button onClick={submitInspect}>重新解析</Button>}
             />
@@ -122,7 +122,7 @@ export default function DownloadPage() {
                     style={{ marginTop: 12 }}
                     type="error"
                     showIcon
-                    message={createProblem.title}
+                    title={createProblem.title}
                     description={createProblem.detail}
                   />
                 ) : null}
