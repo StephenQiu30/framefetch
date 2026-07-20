@@ -4,14 +4,14 @@
 
 PRD 的核心目的不是堆叠描述，而是让需求更清楚，让代码更可验证，让错误更早暴露，让重构更安全。
 
-## 当前文档
+## 已归档文档
 
-- [001 Web 应用基座与全局体验需求](001-Web应用基座与全局体验需求.md)：Accepted for Planning；对应 Design/Plan 001。
-- [002 视频解析与清晰度选择需求](002-视频解析与清晰度选择需求.md)：Accepted for Planning；对应 Design/Plan 002。
-- [003 下载任务状态与文件获取需求](003-下载任务状态与文件获取需求.md)：Accepted for Planning；对应 Design/Plan 003。
-- [004 API 请求与异常恢复需求](004-API请求与异常恢复需求.md)：Accepted for Planning；对应 Design/Plan 004。
+- [001 Web 应用基座与全局体验需求](archive/001-Web应用基座与全局体验需求.md)：Archived；对应 Design/Plan 001。
+- [002 视频解析与清晰度选择需求](archive/002-视频解析与清晰度选择需求.md)：Archived；对应 Design/Plan 002。
+- [003 下载任务状态与文件获取需求](archive/003-下载任务状态与文件获取需求.md)：Archived；对应 Design/Plan 003。
+- [004 API 请求与异常恢复需求](archive/004-API请求与异常恢复需求.md)：Archived；对应 Design/Plan 004。
 
-4 份 PRD 按 Design 职责一一对应，不重复保存总需求。PRD 与 Plan 完成不代表功能已实现。
+4 份 PRD 按 Design 职责一一对应，均已完成文档生命周期并归档；归档不代表对应 Acceptance 已通过。
 
 PRD 的 `Wxxx-AC-*` 只能补充产品验收，不得删除、合并或降低同编号 Design 的 `Wxxx-DAC-*`；发现冲突必须先回到 Design 修订并重新确认。
 

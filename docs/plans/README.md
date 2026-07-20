@@ -4,12 +4,12 @@
 
 ## 当前文档
 
-- [001 Web 应用基座与全局体验计划](001-Web应用基座与全局体验计划.md)：Ready；无前置 Plan。
-- [004 API 请求与异常恢复计划](004-API请求与异常恢复计划.md)：Ready；依赖 Web Plan 001 与服务端稳定 OpenAPI。
-- [002 视频解析与清晰度选择计划](002-视频解析与清晰度选择计划.md)：Ready；依赖 Web Plan 001、004。
-- [003 下载任务状态与文件获取计划](003-下载任务状态与文件获取计划.md)：Ready；依赖 Web Plan 001、004、002，并负责 Web 全量回归。
+- [001 Web 应用基座与全局体验计划](001-Web应用基座与全局体验计划.md)：Implemented；Acceptance 001 Blocked。
+- [004 API 请求与异常恢复计划](004-API请求与异常恢复计划.md)：Implemented；Acceptance 004 Blocked。
+- [002 视频解析与清晰度选择计划](002-视频解析与清晰度选择计划.md)：Implemented；Acceptance 002 Blocked。
+- [003 下载任务状态与文件获取计划](003-下载任务状态与文件获取计划.md)：Implemented；Acceptance 003 Blocked。
 
-确定执行顺序为 `001 → 004 → 002 → 003`；其中服务端 Acceptance 004 必须先于 Web Plan 004 开始且结论为 Accepted。Ready 只表示任务、文件、Test-first、验证和全部 `Wxxx-DAC/AC` 映射完整；Acceptance 已预定义但尚无执行证据或结论，用户尚未授权实现，不创建应用代码。
+实现已按 `001 → 004 → 002 → 003` 进入 `main`。Plan 在对应 Acceptance 变为 Accepted 前继续留在活动目录；此处的 Implemented 只表示代码任务完成，不代表服务端前置验收或 Web 强验收通过。
 
 任一上游变化、编号缺少任务/验证/证据、真实依赖不可用或全量命令失败时，对应 Plan 立即失去 Ready 或在执行时标记 `blocked/failed`。
 

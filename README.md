@@ -5,11 +5,10 @@
 ## 当前状态
 
 - MVP 只覆盖：粘贴单个公开视频链接、选择分辨率、查看任务状态和获取文件。
-- 4 份 Web Design、4 份对应 PRD 已 Accepted，4 份对应 Plan 已 Ready。
+- 4 份 Web Design 与 4 份 PRD 已完成文档生命周期并归档，4 份 Plan 已实施。
 - Web 固定消费 PostgreSQL/RabbitMQ/MinIO 后端架构提供的 FastAPI/OpenAPI 契约，不提供基础设施选择。
-- 当前未开始应用实现，也没有 Acceptance 结果；Plan Ready 不代表已授权实施。
-- 当前没有应用源码、依赖、测试、schema、fixture 或业务运行配置。
-- 仓库只保留项目治理文件与文档分类骨架。
+- 标准 Ant Design Pro/Umi 工程、OpenAPI 生成 Service、下载交互与测试代码已进入 `main`。
+- 4 份 Acceptance 已执行但仍为 Blocked；未完成项以 [`docs/acceptance/README.md`](docs/acceptance/README.md) 为准。
 
 ## 重新设计门禁
 
@@ -17,7 +16,7 @@
 
 `Design → PRD → Plan → Acceptance`
 
-当前 Design、PRD、Plan 与各阶段 Acceptance 定义已完成。只有用户再次明确要求实现后才能创建应用代码；实现前不得改动验收标准，实现后只在对应 Acceptance 中填写证据与结论。
+当前 MVP 已实现。Design/PRD 基线位于归档目录；新增能力必须重新走完整交付链，现有未通过项只在对应 Acceptance 中补充证据与结论。
 
 ## 项目规范
 
@@ -30,4 +29,4 @@
 - `docs/`：正式文档分类骨架。
 - `.github/`：PR 模板与基础 CI。
 
-文档入口见 [`docs/README.md`](docs/README.md)。当前不提供安装、运行或部署命令。
+文档入口见 [`docs/README.md`](docs/README.md)。本地开发使用 `npm ci` 后执行 `npm run dev`；质量门禁见 [`package.json`](package.json) scripts。

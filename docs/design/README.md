@@ -2,14 +2,14 @@
 
 本目录存放设计方案类文档。
 
-## 当前文档
+## 已归档文档
 
-- [001 Web 边界与总体架构设计](001-Web边界与总体架构设计.md)：Accepted；技术选型、路由和未来源码目录。
-- [002 视频解析与清晰度选择交互设计](002-视频解析与清晰度选择交互设计.md)：Accepted；输入、结果和格式选择状态。
-- [003 下载任务与文件获取交互设计](003-下载任务与文件获取交互设计.md)：Accepted；轮询、刷新恢复和 MinIO 文件获取。
-- [004 API 请求与异常处理设计](004-API请求与异常处理设计.md)：Accepted；OpenAPI 生成、匿名 Cookie 与 Problem Details。
+- [001 Web 边界与总体架构设计](archive/001-Web边界与总体架构设计.md)：Archived；技术选型、路由和工程边界。
+- [002 视频解析与清晰度选择交互设计](archive/002-视频解析与清晰度选择交互设计.md)：Archived；输入、结果和格式选择状态。
+- [003 下载任务与文件获取交互设计](archive/003-下载任务与文件获取交互设计.md)：Archived；轮询、刷新恢复和 MinIO 文件获取。
+- [004 API 请求与异常处理设计](archive/004-API请求与异常处理设计.md)：Archived；OpenAPI 生成、匿名 Cookie 与 Problem Details。
 
-本组 Design 于 2026-07-20 按最新 MVP 范围确认。Web 技术栈和服务端 PostgreSQL/RabbitMQ/MinIO 契约均已冻结；本目录不保存执行计划。
+本组 Design 于 2026-07-20 确认，对应实现已进入 `main`，现归档保存。归档不等于 Acceptance 通过；新设计放在本目录根级，完成文档生命周期后再移入 `archive/`。
 
 ## 执行验收基线（强制）
 
