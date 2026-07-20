@@ -27,3 +27,35 @@ jobs:
 
       - name: Validate merge helper syntax
         run: python -m py_compile .codex/skills/land/land_watch.py
+
+  web-quality:
+    name: Web quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run lint and type checks
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Run coverage gate
+        run: npm run test:coverage
+
+      - name: Build production assets
+        run: npm run build
