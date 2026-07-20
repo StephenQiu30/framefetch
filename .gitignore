@@ -20,4 +20,5 @@ temp/
 .env
 .env.*
 !.env.example
+!.env.prod.example
 .openapi-schema.json
