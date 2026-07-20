@@ -89,7 +89,7 @@ export function useInspectFlow() {
       if (createMutation.isPending) return null;
       setCreateProblem(null);
       const clientRequestId =
-        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
           ? crypto.randomUUID()
           : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       try {
