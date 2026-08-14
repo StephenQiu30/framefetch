@@ -3,9 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.application.analysis_execution import VideoAnalysisRequest
+from app.application.analysis_execution import (
+    ScreenplayAnalysisRequest,
+    VideoAnalysisRequest,
+)
 from app.runner.process import ProcessSupervisor, ProcessTimeoutError
 
+from .claude_screenplay import ClaudeCliScreenplayAnalyzer
 from .config import CliAdapterConfig
 from .environment import child_environment
 from .errors import AnalysisCliError, classify_cli_failure
@@ -26,6 +30,9 @@ class ClaudeCliVideoAnalyzer:
             stdout_limit_bytes=config.max_stdout_bytes,
             stderr_limit_bytes=config.max_stderr_bytes,
             terminate_grace_seconds=config.terminate_grace_seconds,
+        )
+        self._screenplay = ClaudeCliScreenplayAnalyzer(
+            config, supervisor=self._supervisor
         )
 
     async def analyze(self, request: VideoAnalysisRequest) -> object:
@@ -64,6 +71,9 @@ class ClaudeCliVideoAnalyzer:
         except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
             raise AnalysisCliError("invalid_model_output") from exc
         return structured
+
+    async def analyze_screenplay(self, request: ScreenplayAnalysisRequest) -> object:
+        return await self._screenplay.analyze(request)
 
     def _argv(
         self,
