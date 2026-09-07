@@ -12,7 +12,7 @@
 
 交互组件优先直接使用统一 `radix-ui` 包提供的 Primitive，并通过 [shadcn/ui `radix-nova` 源码](https://ui.shadcn.com/docs/components)形成项目内薄封装，完整保留 [Radix 无障碍行为](https://www.radix-ui.com/primitives/docs/overview/accessibility)。`radix-nova` 只是一份可审计源码，不是平行运行时 UI 框架；Radix 未提供的 Table、Button、Input 等语义由同一源码层补齐，页面不得另建第二套基础组件或手写可点击容器。
 
-不在本次范围内新增视频平台、支付、社交登录或后端业务接口。明暗主题只提供浅色与深色两种显式偏好，默认浅色并持久化到 `framegrab-theme`；页面提供单击切换按钮，不提供主题菜单或“跟随系统”选项。两种主题只消费现有语义 token，不改变业务语义。生产环境仍不运行 Next.js Node 服务，FastAPI 继续同源提供静态页面与 `/api/*`。
+不在本次范围内新增视频平台、支付、社交登录或后端业务接口。明暗主题只提供浅色与深色两种显式偏好，默认浅色并持久化到 `framegrab-theme`；页面提供单击切换按钮，不提供主题菜单或“跟随系统”选项。两种主题只消费现有语义 token，不改变业务语义。生产环境由独立 Next.js Node 服务提供页面，FastAPI 提供业务 API；浏览器通过同源入口访问。
 
 ## 设计依据与冲突优先级
 
@@ -27,7 +27,7 @@
 
 | 层级 | 唯一选型 | 约束 |
 | --- | --- | --- |
-| 路由与构建 | Next.js App Router | 使用 `src/app/`、静态导出和路由组；不使用 Pages Router、Umi 路由或 Next 运行时服务 |
+| 路由与构建 | Next.js App Router | 使用 `src/app/`、路由组和 standalone Node 服务；不使用 Pages Router 或 Umi 路由 |
 | UI 原语 | 统一 `radix-ui` + 项目内 `radix-nova` 源码 | Dialog、Dropdown Menu、Select、Tabs、Progress、Sheet、Tooltip、AlertDialog 等交互直接以 Radix Primitive 为底层；源码层只补充样式、语义 token 和 Radix 未提供的基础元素 |
 | 样式 | Tailwind CSS | 全局 token 由 CSS 变量定义，组件只消费语义类；不新增 Less、CSS-in-JS 或另一套主题系统 |
 | 图标与品牌 | `@phosphor-icons/react` + `public/logo.svg` | 功能图标继续使用 Phosphor 的同一线性/填充家族；Header 品牌标识与页面 metadata 通过 Next.js `Image`/icons 使用已经设计好的 Logo；禁止用 emoji、文本符号、手绘 SVG、CSS 图形代替功能图标 |
@@ -77,26 +77,23 @@ App Router 页面默认保持可静态渲染；只有表单、菜单、选择器
 | `/admin/users` | `app/admin/users/page.tsx` | 管理员 | 搜索、筛选、分页并更新他人角色/启用状态 |
 | `/admin/analytics` | `app/admin/analytics/page.tsx` | 管理员 | 查看 7/30/90 天下载摘要、日趋势与视频来源分布 |
 | `/admin/providers` | `app/admin/providers/page.tsx` | 管理员 | 维护平台状态页名称、排序与可见性，不修改系统下载能力 |
-| `/downloads/detail?jobId=<id>` | `app/downloads/detail/page.tsx` | 已登录且拥有任务 | 下载状态、取消/取件、AI 视觉分镜、高光与资产；静态导出的 canonical 地址 |
+| `/downloads/detail?jobId=<id>` | `app/downloads/detail/page.tsx` | 已登录且拥有任务 | 下载状态、取消/取件、AI 视觉分镜、高光与资产；统一的详情地址 |
 | `/user/login` | `app/user/login/page.tsx` | 公开 | 登录并返回经过校验的站内 `redirect` |
 | `/user/register` | `app/user/register/page.tsx` | 公开 | 注册并返回经过校验的站内 `redirect` |
-| `/downloads/{jobId}` | FastAPI 308 | 与目标页一致 | 旧详情地址永久重定向到 `/downloads/detail?jobId=<id>` |
-| 其他地址 | `not-found.tsx` | 公开 | 返回静态 404 页面，不伪装为成功首页 |
+| 其他地址 | `not-found.tsx` | 公开 | 由 Next.js 返回未找到页面，不伪装为成功首页 |
 
-Next.js `output: "export"` 无法为未知任务 ID 枚举 `/downloads/[jobId]` 静态页面，因此动态段不进入目标路由树。FastAPI 必须在静态挂载前匹配旧地址并进行安全 URL 编码的 308 重定向；`/downloads/detail` 必须先于该兼容规则匹配。前端创建任务、历史入口和内部链接全部直接生成 canonical 地址。
+前端创建任务、历史入口和内部链接统一生成 `/downloads/detail?jobId=<id>`。页面由 Next.js 提供，FastAPI 不提供页面重定向或静态挂载。
 
 客户端 Auth Boundary 调用 `/api/auth/me`。根路由恢复会话期间显示中性的品牌会话启动态，Header 只保留品牌和固定宽度操作槽；公开首页和登录工作区都不进入可见 DOM。认证完成后，Header 与唯一目标页面通过同一套受控入场节奏呈现。其他受保护路由继续使用稳定骨架；401 只允许跳转到 `/user/login?redirect=<站内地址>`，管理员页面还需校验最新角色。重定向参数必须拒绝绝对 URL、协议相对 URL、反斜杠和认证页自循环。
 
-## 静态导出与 FastAPI 同源
+## Next.js 与 FastAPI 分离部署
 
-- `next.config` 使用 `output: "export"`、`trailingSlash: true`；远程视频封面使用普通响应式图片或 `images.unoptimized`，不依赖 Next Image Optimization 服务。
-- 构建产物固定为 `frontend/out/`。根 Dockerfile 只复制该目录到运行镜像，运行时不包含 `next start` 或独立 Node 前端进程。
-- FastAPI 从 `FRONTEND_DIST_DIR` 同源提供导出文件。`/api`、`/health`、`/docs`、`/redoc`、`/openapi.json` 永远由后端处理，缺失接口不得回退 HTML。
-- 已导出的页面支持直接打开和浏览器刷新；未知 UI 地址返回 `404.html` 与 HTTP 404。静态资源使用内容哈希和长缓存，HTML 使用可重新验证的缓存策略。
-- 浏览器生产请求全部使用相对地址；访问令牌或 Refresh 凭据不得进入 URL、localStorage、构建变量或静态文件。
-- 本地 Next 开发如需代理，只能在开发模式条件下把 `/api/*`、`/health/*` 和 OpenAPI 文档地址转发到 FastAPI；生产构建配置不得包含静态导出不支持的 rewrite。
-
-不得引入 Server Actions、Route Handlers、请求时 Server Components、Middleware、ISR 或其他需要 Next 服务端运行时的能力。
+- `next.config.ts` 使用 `output: 'standalone'` 和 `trailingSlash: true`；图片保持 `images.unoptimized`。
+- 根 Dockerfile 复制 `.next/standalone`、`.next/static` 和 `public/`，由独立 Node.js 前端进程监听 `8101`；FastAPI API 进程监听 `8111`。
+- 浏览器使用同源相对 API 地址。Next.js 在开发和生产环境转发 `/api/*` 与 `/health/*`；WebSocket Upgrade 由部署入口直达 FastAPI。
+- Next.js 负责页面、元数据、安全头和上传代理；业务状态、认证授权、配额与任务编排由 FastAPI 负责。缺失 API 不得回退为页面 HTML。
+- `/downloads/detail?jobId=<id>` 等页面支持直接访问与刷新。访问令牌或 Refresh 凭据不得进入 URL、localStorage、构建变量或静态文件。
+- 当前构建、启动和代理配置以 [前端使用说明](../../frontend/README.md) 为准。
 
 ## OpenAPI 唯一契约
 
@@ -265,4 +262,4 @@ PageHeader 直接显示“下载记录”及一句用途说明、可选的“新
 
 全部路由还需在 1280px/方案 3 原始桌面视口和 390×844 下检查真实数据、加载、空、错误、打开菜单/Sheet/AlertDialog 等关键状态。P0/P1/P2 差异修复后重新截图比较，根目录 `design-qa.md` 只有在写明 `final result: passed` 后才可交付；剩余 P3 只能作为后续微调记录。
 
-设计 QA 不能替代功能、静态导出、OpenAPI 漂移、axe 与键盘验收。
+设计 QA 不能替代功能、生产构建、OpenAPI 漂移、axe 与键盘验收。
