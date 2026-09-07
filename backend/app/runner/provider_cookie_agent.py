@@ -116,6 +116,8 @@ def _launch_agent_plist(
             for provider in sorted(browser_session_providers(), key=str)
         ],
         "ProcessType": "Background",
+        # launchd defaults to 10 seconds, exceeding the runner's 2-second probe.
+        "ThrottleInterval": 1,
         "Umask": 0o077,
         "EnvironmentVariables": {
             "PATH": "/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/usr/local/bin"

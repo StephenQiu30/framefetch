@@ -34,6 +34,7 @@ def test_launchd_definition_is_on_demand_and_platform_neutral(
 
     assert "RunAtLoad" not in document
     assert "KeepAlive" not in document
+    assert document["ThrottleInterval"] == 1
     assert document["QueueDirectories"] == [
         str(tmp_path / "runtime" / provider.value / "requests")
         for provider in sorted(agent.browser_session_providers(), key=str)
