@@ -35,7 +35,9 @@ def test_pyproject_and_compose_match_provider_sbom() -> None:
     production_compose = (ROOT.parent / "docker-compose-prod.yml").read_text()
     dockerfile = (ROOT.parent / "Dockerfile").read_text()
     notices = (SUPPLY_CHAIN / "PROVIDER-NOTICES.md").read_text()
-    supervisor = (ROOT / "ops" / "youtube-pot-supervisor.mjs").read_text()
+    supervisor = (
+        ROOT / "app" / "runner" / "youtube-pot-supervisor.mjs"
+    ).read_text()
 
     image = (
         "bgutil-ytdlp-pot-provider:1.3.2@"
@@ -162,7 +164,7 @@ def _supervisor_config_check(
     return subprocess.run(
         [
             "node",
-            str(ROOT / "ops" / "youtube-pot-supervisor.mjs"),
+            str(ROOT / "app" / "runner" / "youtube-pot-supervisor.mjs"),
             "--check-config",
         ],
         check=False,

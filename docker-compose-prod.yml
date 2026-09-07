@@ -752,7 +752,7 @@ services:
       - youtube_pot_net
     volumes:
       - type: bind
-        source: ./backend/ops/youtube-pot-supervisor.mjs
+        source: ./backend/app/runner/youtube-pot-supervisor.mjs
         target: /opt/video/youtube-pot-supervisor.mjs
         read_only: true
         bind:

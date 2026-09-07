@@ -22,7 +22,7 @@ app/
 ├── repositories/     持久化、查询与事务
 ├── integrations/     AI、存储、消息与媒体/文档适配器
 ├── workers/          消费、调度与进程入口
-├── runner/           隔离媒体执行进程
+├── runner/           隔离媒体执行进程与 Provider sidecar 入口
 └── analysis_skills/   分析技能资源
 ```
 
