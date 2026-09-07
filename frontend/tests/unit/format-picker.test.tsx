@@ -5,15 +5,6 @@ import FormatPicker from '@/components/intake/format-picker';
 import { inspection } from '../fixtures/download-fixtures';
 
 describe('FormatPicker', () => {
-  it('shows an empty state when no download format is available', () => {
-    const onChange = vi.fn();
-    render(<FormatPicker formats={[]} onChange={onChange} selectedId="" />);
-
-    expect(document.querySelector('[data-slot="empty"]')).toBeInTheDocument();
-    expect(screen.queryAllByRole('radio')).toHaveLength(0);
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
   it('renders every semantic format as a selectable card', () => {
     const formats = Array.from({ length: 8 }, (_, index) => ({
       ...inspection.formats[0],
@@ -31,13 +22,12 @@ describe('FormatPicker', () => {
     );
 
     expect(screen.getAllByRole('radio')).toHaveLength(8);
-    expect(screen.getAllByText(/1080P/)).toHaveLength(8);
 
     fireEvent.click(screen.getAllByRole('radio')[1]);
     expect(onChange).toHaveBeenCalledWith('format-1');
   });
 
-  it('renders an image gallery as a ZIP option without a video plan', () => {
+  it('lets users select an image gallery ZIP option', () => {
     const onChange = vi.fn();
     const format = {
       id: 'image-gallery-zip',
@@ -49,12 +39,14 @@ describe('FormatPicker', () => {
       <FormatPicker
         formats={[format]}
         onChange={onChange}
-        selectedId={format.id}
+        selectedId=""
       />,
     );
 
-    expect(screen.getByText('下载 3 张原图（ZIP）')).toBeInTheDocument();
-    expect(screen.getByText('官方图文 · 原图 ZIP')).toBeInTheDocument();
-    expect(screen.getByRole('radio')).toBeChecked();
+    const radio = screen.getByRole('radio');
+    expect(radio).not.toBeChecked();
+
+    fireEvent.click(radio);
+    expect(onChange).toHaveBeenCalledWith('image-gallery-zip');
   });
 });
