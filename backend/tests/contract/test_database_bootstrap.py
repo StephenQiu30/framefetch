@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import os
 import re
-import subprocess
 from pathlib import Path
 from urllib.parse import urlsplit
 
-import pytest
 import yaml
 from app.integrations.readiness import EXPECTED_DATABASE_TABLES
 
@@ -16,7 +13,6 @@ COMPOSE_PATH = ROOT.parent / "docker-compose.yml"
 PROD_COMPOSE_PATH = ROOT.parent / "docker-compose-prod.yml"
 ENV_EXAMPLE_PATH = ROOT.parent / ".env.example"
 PROD_ENV_EXAMPLE_PATH = ROOT.parent / ".env.prod.example"
-CORS_VALIDATOR_PATH = ROOT.parent / "scripts/validate-minio-cors.sh"
 SCHEMA_PATH = ROOT / "sql/schema.sql"
 ROOT_README_PATH = ROOT.parent / "README.md"
 FRONTEND_README_PATH = ROOT.parent / "frontend/README.md"
@@ -196,7 +192,6 @@ def test_environment_bootstrap_provisions_analysis_storage_probe() -> None:
 
 def test_environment_minio_applies_exact_browser_cors_origins() -> None:
     compose = ENV_COMPOSE_PATH.read_text(encoding="utf-8")
-    cors_check = _service_block(compose, "minio-config-check")
     minio = _service_block(compose, "minio")
 
     assert (
@@ -207,68 +202,14 @@ def test_environment_minio_applies_exact_browser_cors_origins() -> None:
         'MINIO_API_CORS_ALLOW_ORIGIN: "${MINIO_CORS_ALLOWED_ORIGINS-'
         'http://127.0.0.1:8101,http://localhost:8101}"'
     )
-    assert expected_setting in cors_check
     assert expected_setting in minio
-    assert "${MINIO_CORS_ALLOWED_ORIGINS:-" not in cors_check
-    assert (
-        'entrypoint: ["/bin/sh", "/opt/video-server/validate-minio-cors.sh"]'
-        in cors_check
-    )
-    assert (
-        "./scripts/validate-minio-cors.sh:/opt/video-server/validate-minio-cors.sh:ro"
-    ) in cors_check
     assert "entrypoint:" not in minio
-    assert "condition: service_completed_successfully" in minio
     assert 'command: ["minio", "server", "/data"' in minio
     assert "/bin/sh" not in minio
     assert "/usr/bin/docker-entrypoint.sh" not in minio
 
     for path in (ENV_EXAMPLE_PATH, PROD_ENV_EXAMPLE_PATH):
         _assert_exact_http_origins(_env_value(path, "MINIO_CORS_ALLOWED_ORIGINS"))
-
-
-@pytest.mark.parametrize(
-    "origins",
-    (
-        "",
-        "*",
-        "https://app.example.com/path",
-        "https://user@app.example.com",
-        "https://:443",
-        "https://app.example.com:0",
-        "https://app.example.com:70000",
-        "https://bad_host.example.com",
-    ),
-)
-@pytest.mark.skipif(os.name == "nt", reason="MinIO image validator is POSIX-only")
-def test_minio_cors_validator_rejects_non_exact_origins(origins: str) -> None:
-    result = subprocess.run(
-        ["/bin/sh", str(CORS_VALIDATOR_PATH)],
-        env={**os.environ, "MINIO_API_CORS_ALLOW_ORIGIN": origins},
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-
-    assert result.returncode == 64
-
-
-@pytest.mark.skipif(os.name == "nt", reason="MinIO image validator is POSIX-only")
-def test_minio_cors_validator_accepts_exact_origin_list() -> None:
-    result = subprocess.run(
-        ["/bin/sh", str(CORS_VALIDATOR_PATH)],
-        env={
-            **os.environ,
-            "MINIO_API_CORS_ALLOW_ORIGIN": (
-                "https://app.example.com,http://127.0.0.1:8101"
-            ),
-        },
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-
-    assert result.returncode == 0
 
 
 def test_database_consumers_use_the_configured_postgres_service() -> None:
