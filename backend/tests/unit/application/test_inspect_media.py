@@ -73,7 +73,6 @@ def runner_result(*, duration: int = 30) -> RunnerInspection:
 def use_case(
     repository: FakeRepository,
     result: RunnerInspection,
-    operator_providers: frozenset[str] = frozenset(),
 ) -> tuple[InspectMedia, FakeRunner, FakeCipher]:
     runner, cipher = FakeRunner(result), FakeCipher()
     return (
@@ -87,7 +86,6 @@ def use_case(
             new_id=uuid4,
             inspection_ttl=timedelta(minutes=15),
             max_duration_seconds=7_200,
-            operator_providers=operator_providers,
         ),
         runner,
         cipher,
@@ -153,9 +151,9 @@ async def test_invalid_url_never_reaches_runner() -> None:
     ("url", "decision", "reason"),
     (
         (
-            "https://v.qq.com/x/page/q326831cny0.html",
-            "playback_only",
-            "tencent_consumer_download_disabled",
+            "https://v.qq.com/channel/cartoon",
+            "unsupported",
+            "unsupported_qqvideo_url",
         ),
         (
             "https://mp.weixin.qq.com/s/AbCdEf123",
@@ -342,7 +340,7 @@ async def test_personal_routes_reach_runner_without_claiming_public_or_official_
     inspection = replace(
         runner_result(), access_context=context, extractor_key=provider
     )
-    execute, _, _ = use_case(FakeRepository(), inspection, frozenset({provider}))
+    execute, _, _ = use_case(FakeRepository(), inspection)
     response = await execute(url, OWNER, "personal-inspection")
     assert response.formats
     assert response.access_decision.value == "downloadable"

@@ -1262,3 +1262,44 @@ def test_inspection_bounds_playlist_with_overflow_sentinel(tmp_path: Path) -> No
     assert command[command.index("--playlist-end") + 1] == str(
         configured.runner_max_gallery_assets + 1
     )
+
+
+async def test_segment_prefix_probe_bounds_bytes_uses_proxy_and_cleans_up(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    observed = {}
+
+    class Stream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield b"x" * (40 * 1024)
+            pytest.fail("The probe must stop reading at its prefix limit")
+
+        async def aclose(self):
+            observed["closed"] = True
+
+    def respond(request):
+        assert request.headers["range"] == "bytes=0-8191"
+        assert request.headers["referer"] == "https://v.qq.com/x/page/fixture.html"
+        return httpx.Response(200, stream=Stream())
+
+    original_client = httpx.AsyncClient
+
+    def client(**kwargs):
+        observed["proxy"] = kwargs["proxy"]
+        return original_client(transport=httpx.MockTransport(respond))
+
+    class Supervisor(RecordingSupervisor):
+        async def run(self, argv, **kwargs):
+            assert Path(argv[-1]).read_bytes() == b"x" * (8 * 1024)
+            return await super().run(argv, **kwargs)
+
+    monkeypatch.setattr(commands_module.httpx, "AsyncClient", client)
+    configured = settings(tmp_path)
+    commands = MediaCommands(configured, Supervisor())
+    await commands.probe_remote_prefix(
+        "https://media.example/first.ts",
+        tmp_path,
+        referer="https://v.qq.com/x/page/fixture.html",
+    )
+    assert observed == {"proxy": configured.runner_egress_proxy, "closed": True}
+    assert list(tmp_path.iterdir()) == []

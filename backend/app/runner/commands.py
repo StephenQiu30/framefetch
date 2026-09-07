@@ -4,6 +4,7 @@ import asyncio
 import logging
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Protocol
 
 import httpx
@@ -123,6 +124,39 @@ class MediaCommands:
             egress_proxy=egress_proxy,
         )
         return json_object(result.stdout, "invalid_inspection_response")
+
+    async def probe_remote_prefix(
+        self, url: str, cwd: Path, *, referer: str
+    ) -> dict[str, Any]:
+        # A throttled CDN must not force inspection to fetch an entire segment.
+        # Only a small clear prefix is needed to identify codecs.
+        limit = 8 * 1024
+        data = bytearray()
+        try:
+            async with httpx.AsyncClient(
+                proxy=self._egress_proxy(referer),
+                timeout=10,
+                follow_redirects=True,
+                trust_env=False,
+            ) as client:
+                async with client.stream(
+                    "GET",
+                    url,
+                    headers={"Range": f"bytes=0-{limit - 1}", "Referer": referer},
+                ) as response:
+                    response.raise_for_status()
+                    async for chunk in response.aiter_bytes():
+                        data.extend(chunk[: limit - len(data)])
+                        if len(data) == limit:
+                            break
+        except httpx.HTTPError as exc:
+            raise RunnerFailure("inspection_failed", status=502) from exc
+        if not data:
+            raise RunnerFailure("inspection_failed", status=502)
+        with TemporaryDirectory(prefix="segment-probe-", dir=cwd) as directory:
+            sample = Path(directory) / "prefix.input"
+            sample.write_bytes(data)
+            return await self.probe(sample, Path(directory))
 
     async def download_stream(
         self,

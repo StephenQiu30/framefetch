@@ -59,8 +59,14 @@ PUBLIC_PROVIDER_PROFILES: tuple[ProviderProfile, ...] = (
         capabilities=SINGLE_VIDEO,
         status=ProviderSupportStatus.UNKNOWN,
         normalize_url=qqvideo_url,
-        anonymous_access=False,
         operator_cookie_domains=frozenset({ProviderCookieDomain.QQVIDEO}),
+        probe_authenticated_media=True,
+        command_args=(
+            "--socket-timeout",
+            "10",
+            "--concurrent-fragments",
+            "4",
+        ),
         canary_suite="qqvideo-personal-single-video",
     ),
     standard_provider(

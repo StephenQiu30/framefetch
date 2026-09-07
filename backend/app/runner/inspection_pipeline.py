@@ -199,6 +199,8 @@ class RunnerInspectionPipeline:
             if not isinstance(value, dict):
                 continue
             url = value.get("url")
+            if payload.get("_framefetch_full_stream") is True:
+                url = value.get("_framefetch_probe_url", url)
             if isinstance(url, str):
                 candidates.append((index, value, url))
             if len(candidates) == 12:
@@ -213,7 +215,13 @@ class RunnerInspectionPipeline:
             try:
                 media_url = safe_media_url(url)
                 async with semaphore:
-                    probe = await self._commands.probe_remote(
+                    probe_command = (
+                        self._commands.probe_remote_prefix
+                        if payload.get("_framefetch_full_stream") is True
+                        and raw.get("_framefetch_probe_url") == url
+                        else self._commands.probe_remote
+                    )
+                    probe = await probe_command(
                         media_url,
                         workspace.path,
                         referer=referer,

@@ -34,8 +34,6 @@ def enforce_media_rights(
         provider_key in {ProviderKey.YOUKU, ProviderKey.QQVIDEO}
         and access_mode is ProviderAccessMode.OPERATOR_MANAGED
     )
-    if personal and payload.get("_framefetch_full_stream") is not True:
-        raise RunnerFailure("content_access_metadata_invalid", status=422)
     availability = payload.get("availability")
     if isinstance(availability, str):
         normalized = availability.casefold()
@@ -57,6 +55,10 @@ def enforce_media_rights(
         restricted_flags += ("is_premium", "is_member_only")
     if any(payload.get(field) is True for field in restricted_flags):
         raise RunnerFailure("content_not_entitled", status=403)
+    if (personal or provider_key == ProviderKey.QQVIDEO) and payload.get(
+        "_framefetch_full_stream"
+    ) is not True:
+        raise RunnerFailure("content_access_metadata_invalid", status=422)
     entries = payload.get("entries")
     if isinstance(entries, list):
         for entry in entries:

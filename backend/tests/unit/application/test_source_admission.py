@@ -6,16 +6,13 @@ def test_wechat_channels_public_share_continues_to_provider_runner() -> None:
     assert classify_restricted_source("https://weixin.qq.com/sph/AbCdEf12") is None
 
 
-def test_qqvideo_single_video_is_playback_only() -> None:
-    result = classify_restricted_source(
-        "https://v.qq.com/x/cover/example123/q326831cny0.html"
+def test_qqvideo_single_video_reaches_runner_without_forcing_login() -> None:
+    assert (
+        classify_restricted_source(
+            "https://v.qq.com/x/cover/example123/q326831cny0.html"
+        )
+        is None
     )
-
-    assert result is not None
-    assert result.provider_media_id == "q326831cny0"
-    assert result.access_decision is AccessDecision.PLAYBACK_ONLY
-    assert result.restriction_reason == "tencent_consumer_download_disabled"
-    assert "持久会话" in result.user_action
 
 
 def test_known_platform_host_never_falls_back_to_generic() -> None:
@@ -46,7 +43,6 @@ def test_configured_tencent_single_video_can_reach_operator_runner() -> None:
     assert (
         classify_restricted_source(
             "https://v.qq.com/x/cover/mzc00200fr1ry1o/m00441h6knj.html",
-            operator_providers=frozenset({"qqvideo"}),
         )
         is None
     )
@@ -58,8 +54,6 @@ def test_operator_enablement_does_not_allow_playlists_or_arbitrary_ports() -> No
         "https://v.qq.com/x/cover/example123.html",
         "https://v.qq.com:8443/x/page/q326831cny0.html",
     ):
-        result = classify_restricted_source(
-            url, operator_providers=frozenset({"qqvideo"})
-        )
+        result = classify_restricted_source(url)
         assert result is not None
         assert result.access_decision is AccessDecision.UNSUPPORTED

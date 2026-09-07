@@ -8,8 +8,8 @@ def test_statuses_expose_only_runtime_enabled_access_modes() -> None:
     assert statuses["youtube"].access_modes == (ProviderAccessMode.ANONYMOUS,)
     assert statuses["tiktok"].access_modes == (ProviderAccessMode.ANONYMOUS,)
     assert statuses["douyin"].status is ProviderSupportStatus.ACCESS_REQUIRED
-    assert statuses["qqvideo"].access_modes == ()
-    assert statuses["qqvideo"].status is ProviderSupportStatus.ACCESS_REQUIRED
+    assert statuses["qqvideo"].access_modes == (ProviderAccessMode.ANONYMOUS,)
+    assert statuses["qqvideo"].status is ProviderSupportStatus.UNKNOWN
     assert statuses["qqvideo"].download_supported is True
     assert "持久会话" in statuses["qqvideo"].user_action
     assert "待样本验证" in statuses["youku"].user_action

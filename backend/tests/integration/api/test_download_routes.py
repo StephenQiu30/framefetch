@@ -329,8 +329,8 @@ def test_provider_status_distinguishes_registered_verified_and_unsupported(
         items[key]["status"]
         for key in ("facebook", "twitch", "pinterest", "weibo")
     } == {"verified"}
-    assert items["qqvideo"]["status"] == "access_required"
-    assert items["qqvideo"]["access_modes"] == []
+    assert items["qqvideo"]["status"] == "unknown"
+    assert items["qqvideo"]["access_modes"] == ["anonymous"]
     assert items["qqvideo"]["download_supported"] is True
     assert "持久会话" in items["qqvideo"]["user_action"]
     assert "待样本验证" in items["youku"]["user_action"]

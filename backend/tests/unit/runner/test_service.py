@@ -21,6 +21,9 @@ class ThumbnailStream:
     headers = {"content-type": "image/avif", "content-length": "5"}
     is_redirect = False
 
+    def raise_for_status(self) -> None:
+        return None
+
     async def __aenter__(self) -> ThumbnailStream:
         return self
 
@@ -1105,3 +1108,30 @@ async def test_personal_full_duration_is_not_replaced_by_probe_preview(
     response = await service.inspect("https://v.youku.com/v_show/id_fixture.html")
     assert response.media.duration_seconds == 1800
     assert response.streams[0].height == 1080
+
+
+async def test_full_playlist_probes_clear_segment_and_preserves_duration(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    info = split_media_info()
+    info["duration"] = 1800
+    info["_framefetch_full_stream"] = True
+    info["formats"] = [
+        {
+            "format_id": "sparse",
+            "ext": "mp4",
+            "url": "https://cdn.example.com/full.m3u8",
+            "_framefetch_probe_url": "https://cdn.example.com/first.ts",
+        }
+    ]
+    client = ThumbnailClient()
+    monkeypatch.setattr("app.runner.commands.httpx.AsyncClient", lambda **_: client)
+    supervisor = FixtureSupervisor(info)
+    service = MediaRunnerService(settings(tmp_path), supervisor=supervisor)
+    response = await service.inspect("https://v.qq.com/x/page/q326831cny0.html")
+    assert response.media.duration_seconds == 1800
+    probes = [command for command, _ in supervisor.calls if command[0] == "ffprobe"]
+    assert len(probes) == 1
+    assert probes[0][-1].endswith("prefix.input")
+    assert client.requests == [("GET", "https://cdn.example.com/first.ts")]

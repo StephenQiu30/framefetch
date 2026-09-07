@@ -148,20 +148,46 @@ def test_tencent_rejects_preview_and_wrong_asset_before_manifest(
         )
 
 
-def test_tencent_page_duration_is_bound_to_requested_asset() -> None:
+def test_tencent_page_duration_is_bound_to_requested_asset(monkeypatch) -> None:
     extractor = _VQQPersonalIE(YoutubeDL({"quiet": True}))
+    extractor._source_url = "https://v.qq.com/x/cover/series/fixture.html"
+    config = {
+        "vinfoConfig": {
+            "playerVersion": "1.74.0",
+            "adVersion": "4.4.4",
+            "vinfoProtoVer": "7",
+            "adProtoVer": "2026080601",
+            "vinfoProxyDomain": "vd6.l.qq.com",
+        }
+    }
+    page = "<script>window.__STARTUP_CONFIG__=" + json.dumps(config) + "</script>"
+    data = {
+        "videoInfo": {"vid": "fixture", "duration": 1800},
+        "playInfo": {"vid": "fixture", "cid": "series"},
+        "proxyhttp": {"enc": 1, "vinfo": "uninterpreted envelope"},
+    }
+    calls = []
 
-    def page(vid):
-        return (
-            "<script>window.__pinia="
-            + json.dumps({"global": {"videoInfo": {"vid": vid, "duration": 1800}}})
-            + "</script>"
-        )
+    def fetch(url, vid, *args, **kwargs):
+        calls.append((url, kwargs))
+        return {"ret": 0, "data": data}
 
-    extractor._get_webpage_metadata(page("fixture"), "fixture")
+    monkeypatch.setattr(extractor, "_download_json", fetch)
+    result = extractor._get_webpage_metadata(page, "fixture")
     assert extractor._full_duration == 1800
+    assert "proxyhttp" not in result["global"]
+    assert calls[0][0] == "https://vd6.l.qq.com/vinfo_proxy"
+    sent = json.loads(calls[0][1]["data"])
+    assert sent["vid"] == "fixture"
+    assert sent["cid"] == "series"
+    data["videoInfo"]["vid"] = "another"
     with pytest.raises(ExtractorError, match="content_access_metadata_invalid"):
-        extractor._get_webpage_metadata(page("another"), "fixture")
+        extractor._get_webpage_metadata(page, "fixture")
+    with pytest.raises(ExtractorError, match="content_access_metadata_invalid"):
+        extractor._get_webpage_metadata(
+            page.replace("vd6.l.qq.com", "internal.invalid"), "fixture"
+        )
+    assert len(calls) == 2
 
 
 def test_tencent_login_token_is_scoped_to_exact_api_and_never_mutates_query(
@@ -341,3 +367,140 @@ def test_tencent_clear_api_flag_cannot_erase_manifest_drm(monkeypatch) -> None:
     formats, _ = extractor._extract_video_formats_and_subtitles(response, "fixture")
     assert formats == []
     assert extractor._saw_drm
+
+
+def test_youku_request_reuses_persisted_client_identity(monkeypatch) -> None:
+    extractor = _YoukuPersonalIE(YoutubeDL({"quiet": True}))
+    monkeypatch.setattr(
+        extractor,
+        "_get_cookies",
+        lambda url: {
+            "cna": SimpleNamespace(value="synthetic-stable-client"),
+        },
+    )
+    calls = []
+
+    def fetch(*args, **kwargs):
+        calls.append(kwargs)
+        return {"data": youku_data()}
+
+    monkeypatch.setattr(InfoExtractor, "_download_json", fetch)
+    original = {"utid": "anonymous-generated-client", "vid": "fixture"}
+    extractor._download_json(
+        "https://ups.youku.com/ups/get.json", "fixture", query=original
+    )
+    assert calls[0]["query"]["utid"] == "synthetic-stable-client"
+    assert original["utid"] == "anonymous-generated-client"
+
+
+def test_tencent_stops_after_first_usable_cdn_and_retries_failed_mirror(
+    monkeypatch,
+) -> None:
+    extractor = _VQQPersonalIE(YoutubeDL({"quiet": True}))
+    extractor._full_duration = 1800
+    calls = []
+
+    def manifest(_self, url, *a, **kw):
+        calls.append(url)
+        return ([], {}) if "failed" in url else ([{"url": url}], {})
+
+    monkeypatch.setattr(InfoExtractor, "_extract_m3u8_formats_and_subtitles", manifest)
+    response = {
+        "vl": {
+            "vi": [
+                {
+                    "vid": "fixture",
+                    "td": 1800,
+                    "br": 1,
+                    "ul": {
+                        "ui": [
+                            {"url": f"https://media.example/{name}.m3u8"}
+                            for name in ("failed", "working", "unused")
+                        ]
+                    },
+                }
+            ]
+        },
+        "fl": {"fi": [{"br": 1, "drm": 0}]},
+    }
+    formats, _ = extractor._extract_video_formats_and_subtitles(response, "fixture")
+    assert len(formats) == 1
+    assert len(calls) == 2
+    assert calls[-1].endswith("working.m3u8")
+    assert len(response["vl"]["vi"][0]["ul"]["ui"]) == 3
+
+
+def tencent_inline_response(manifest: str) -> dict:
+    return {
+        "vl": {
+            "vi": [
+                {
+                    "vid": "fixture",
+                    "td": 30,
+                    "br": 1,
+                    "ul": {
+                        "m3u8": manifest,
+                        "ui": [{"url": "https://media.example/full.m3u8"}],
+                    },
+                }
+            ]
+        },
+        "fl": {"fi": [{"br": 1, "drm": 0}]},
+    }
+
+
+INLINE_MANIFEST = (
+    "#EXTM3U\n#EXT-X-TARGETDURATION:30\n#EXTINF:30,\npart.ts\n#EXT-X-ENDLIST\n"
+)
+
+
+def test_tencent_reuses_complete_inline_playlist_without_cdn_request(
+    monkeypatch,
+) -> None:
+    extractor = _VQQPersonalIE(YoutubeDL({"quiet": True}))
+    extractor._full_duration = 30
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("Inline playlist must not trigger a CDN manifest request")
+
+    monkeypatch.setattr(InfoExtractor, "_request_webpage", unexpected)
+    formats, _ = extractor._extract_video_formats_and_subtitles(
+        tencent_inline_response(INLINE_MANIFEST), "fixture"
+    )
+    assert formats[0]["hls_media_playlist_data"] == INLINE_MANIFEST
+    assert formats[0]["_framefetch_probe_url"] == "https://media.example/part.ts"
+    assert formats[0]["http_headers"]["Referer"] == "https://v.qq.com/"
+
+
+@pytest.mark.parametrize(
+    "manifest, code",
+    [
+        (
+            INLINE_MANIFEST.replace("#EXT-X-ENDLIST", ""),
+            "content_access_metadata_invalid",
+        ),
+        (INLINE_MANIFEST.replace("#EXTINF:30", "#EXTINF:5"), "content_preview_only"),
+        ("invalid", "content_access_metadata_invalid"),
+    ],
+)
+def test_tencent_rejects_incomplete_inline_playlist(manifest, code) -> None:
+    extractor = _VQQPersonalIE(YoutubeDL({"quiet": True}))
+    extractor._full_duration = 30
+    with pytest.raises(ExtractorError, match=code):
+        extractor._extract_video_formats_and_subtitles(
+            tencent_inline_response(manifest), "fixture"
+        )
+
+
+def test_tencent_inline_drm_cannot_be_overwritten_by_clear_api_flag() -> None:
+    extractor = _VQQPersonalIE(YoutubeDL({"quiet": True}))
+    extractor._full_duration = 30
+    manifest = INLINE_MANIFEST.replace(
+        "#EXTINF",
+        '#EXT-X-KEY:METHOD=SAMPLE-AES,KEYFORMAT="com.apple.streamingkeydelivery",URI="https://media.example/key"\n#EXTINF',
+    )
+    formats, _ = extractor._extract_video_formats_and_subtitles(
+        tencent_inline_response(manifest), "fixture"
+    )
+    assert formats == []
+    assert extractor._saw_drm is True

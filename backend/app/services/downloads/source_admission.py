@@ -59,9 +59,7 @@ class RestrictedSourceAdmission:
         }
 
 
-def classify_restricted_source(
-    url: str, *, operator_providers: frozenset[str] = frozenset()
-) -> RestrictedSourceAdmission | None:
+def classify_restricted_source(url: str) -> RestrictedSourceAdmission | None:
     parsed = urlsplit(url)
     host = (parsed.hostname or "").casefold()
     if host == "mp.weixin.qq.com":
@@ -117,7 +115,7 @@ def classify_restricted_source(
         media_id = (
             _qqvideo_media_id(parsed.path) if parsed.port in (None, 443) else None
         )
-        if media_id is not None and ProviderKey.QQVIDEO in operator_providers:
+        if media_id is not None:
             return None
         return RestrictedSourceAdmission(
             provider_key=ProviderKey.QQVIDEO,
@@ -125,24 +123,12 @@ def classify_restricted_source(
             title="腾讯视频内容",
             source_origin=SourceOrigin.PUBLIC_URL,
             execution_mode=ExecutionMode.PROVIDER_RUNNER,
-            access_decision=(
-                AccessDecision.PLAYBACK_ONLY
-                if media_id is not None
-                else AccessDecision.UNSUPPORTED
-            ),
+            access_decision=AccessDecision.UNSUPPORTED,
             entitlement_state=EntitlementState.UNKNOWN,
-            identity_state=(
-                IdentityState.VERIFIED
-                if media_id is not None
-                else IdentityState.UNKNOWN
-            ),
+            identity_state=IdentityState.UNKNOWN,
             protection_state=ProtectionState.UNKNOWN,
             rights_basis=None,
-            restriction_reason=(
-                "tencent_consumer_download_disabled"
-                if media_id is not None
-                else "unsupported_qqvideo_url"
-            ),
+            restriction_reason="unsupported_qqvideo_url",
             user_action=QQVIDEO_DOWNLOAD_ACTION,
         )
     return None

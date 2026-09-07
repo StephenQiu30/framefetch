@@ -118,12 +118,22 @@ def test_hongguo_official_share_is_a_single_video_profile() -> None:
     assert profile.capabilities == frozenset({ProviderCapability.SINGLE_VIDEO})
 
 
-def test_qqvideo_is_opt_in_operator_only_and_unverified() -> None:
+def test_qqvideo_supports_anonymous_and_optional_operator() -> None:
     url = "https://v.qq.com/x/page/q326831cny0.html"
     profile = provider_profile(url)
     assert profile.support_status is ProviderSupportStatus.UNKNOWN
-    assert profile.access_modes == (ProviderAccessMode.OPERATOR_MANAGED,)
+    assert profile.access_modes == (
+        ProviderAccessMode.ANONYMOUS,
+        ProviderAccessMode.OPERATOR_MANAGED,
+    )
     assert provider_request_url(url) == url
+    assert profile.probe_authenticated_media is True
+    assert profile.command_args == (
+        "--socket-timeout",
+        "10",
+        "--concurrent-fragments",
+        "4",
+    )
 
 
 def test_preserves_unlisted_and_non_vimeo_urls() -> None:
