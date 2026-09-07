@@ -75,6 +75,17 @@ def test_challenge_page_is_rejected_without_browser_fallback() -> None:
         parse_article_html("<html><title>安全验证</title>请输入验证码</html>")
 
 
+def test_challenge_marker_after_bootstrap_script_is_rejected() -> None:
+    payload = (
+        '<html><head><title>文章标题</title></head><body id="js_content">'
+        + ("x" * 20_000)
+        + "环境异常，请完成验证后继续访问</body></html>"
+    )
+
+    with pytest.raises(ArticleAccessRestricted):
+        parse_article_html(payload)
+
+
 def test_missing_article_body_fails_closed() -> None:
     with pytest.raises(ArticleDiscoveryFailure):
         parse_article_html('<html><iframe src="https://v.qq.com/x/page/a123.html">')
