@@ -16,6 +16,7 @@ from app.runner.provider_normalizers import (
     snapchat_url,
     telegram_url,
     tumblr_url,
+    weibo_url,
 )
 from app.runner.provider_registry import ProviderProfile
 
@@ -35,8 +36,16 @@ PUBLIC_PROVIDER_PROFILES: tuple[ProviderProfile, ...] = (
     standard_provider(
         ProviderKey.WEIBO,
         "微博",
-        ("weibo.com", "www.weibo.com", "weibo.cn", "m.weibo.cn"),
+        (
+            "weibo.com",
+            "www.weibo.com",
+            "weibo.cn",
+            "m.weibo.cn",
+            "video.weibo.com",
+            "t.cn",
+        ),
         version=ProviderProfileVersion.WEIBO,
+        normalize_url=weibo_url,
         capabilities=SINGLE_VIDEO,
         status=ProviderSupportStatus.VERIFIED,
         canary_suite="weibo-public-single-video",

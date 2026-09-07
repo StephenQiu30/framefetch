@@ -43,6 +43,19 @@ class FailureRule:
 
 
 PROVIDER_FAILURE_RULES: tuple[FailureRule, ...] = (
+    *(
+        FailureRule(
+            code,
+            status,
+            any_stderr=(f"framefetch {code}".encode(),),
+            providers=frozenset({ProviderKey.WEIBO}),
+        )
+        for code, status in (
+            ("provider_link_unavailable", 422),
+            ("provider_rate_limited", 429),
+            ("provider_temporarily_unavailable", 503),
+        )
+    ),
     FailureRule(
         "credential_required",
         422,

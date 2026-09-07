@@ -194,3 +194,36 @@ def qqvideo_url(url: str, parsed: SplitResult) -> str:
     ):
         raise RunnerFailure("provider_unsupported", status=422)
     return f"https://v.qq.com{parsed.path}"
+
+
+def weibo_url(_url: str, parsed: SplitResult) -> str:
+    """Keep share links within the single-post/video extractor boundary."""
+    host = (parsed.hostname or "").lower()
+    if (
+        parsed.scheme not in {"http", "https"}
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.port not in (None, 80 if parsed.scheme == "http" else 443)
+    ):
+        raise RunnerFailure("provider_unsupported", status=422)
+    if host == "t.cn" and re.fullmatch(r"/[A-Za-z0-9]+/?", parsed.path):
+        return f"https://t.cn{parsed.path.rstrip('/')}"
+    if host in {"weibo.com", "www.weibo.com", "weibo.cn"}:
+        if re.fullmatch(r"/[0-9]+/[A-Za-z0-9]+/?", parsed.path):
+            return f"https://weibo.com{parsed.path.rstrip('/')}"
+        match = re.fullmatch(
+            r"/tv/show/([0-9]+:(?:[0-9a-f]{32}|[0-9]{16,}))/?", parsed.path
+        )
+        if host != "weibo.cn" and match is not None:
+            return f"https://weibo.com/tv/show/{match.group(1)}"
+    if host == "m.weibo.cn" and re.fullmatch(
+        r"/(?:status|detail)/[A-Za-z0-9]+/?", parsed.path
+    ):
+        return f"https://m.weibo.cn{parsed.path.rstrip('/')}"
+    if host == "video.weibo.com" and parsed.path.rstrip("/") == "/show":
+        identifiers = parse_qs(parsed.query).get("fid", [])
+        if len(identifiers) == 1 and re.fullmatch(
+            r"[0-9]+:(?:[0-9a-f]{32}|[0-9]{16,})", identifiers[0]
+        ):
+            return f"https://weibo.com/tv/show/{identifiers[0]}"
+    raise RunnerFailure("provider_unsupported", status=422)

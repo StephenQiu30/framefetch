@@ -40,6 +40,8 @@ macOS 部署可显式安装统一按需助手，在解析进入受控线路时�
 
 完整的 Provider 一次性会话租约、撤销与故障流程见 `docs/operations/003-多平台受控会话运行手册.md`。
 
+微博公开单视频支持普通帖子、移动端 status/detail、`video.weibo.com` 视频页和 `t.cn` 分享短链。短链插件在取得有效微博视频地址后立即交给微博提取器，避免通用网页跳转进入访客页面；使用无账号凭据的受控 Runner，容器重启后重新解析即可。实际下载与重启证据见 [017 验收](../docs/acceptance/017-其他短视频平台分阶段接入验收.md)。
+
 视觉分析默认通过宿主机 Codex App Server stdio 协议运行，也支持 `claude -p` adapter 和 Web 管理的 DeepSeek/LangChain 视觉 API，三者统一实现 `VideoAnalyzer` 端口并返回唯一当前态结果契约。每个 Codex 调用创建独立 ephemeral thread，完成后关闭进程，不依赖长期连接。DeepSeek 由 Worker 使用 FFmpeg 均匀生成最多 64 张、总原始证据不超过 24 MiB 的顺序 JPEG，以 base64 内联图片调用视觉模型，不暴露对象地址或客户端文件路径。分析能力由 `app/analysis_skills/*/SKILL.md` 注册；不运行 ASR。第三方 Endpoint、模型与 Key 只通过管理员 Web Profile 配置，Key 使用 Fernet 加密后存入 PostgreSQL 并仅在 Worker 内存中解密，不使用第三方 AI `.env`。报告以 Markdown 为唯一内容源，可安全预览和导出 Markdown/DOCX。Worker 必须在可访问 FFmpeg、队列和对象存储的宿主机运行；默认 Codex 路径还要求同一系统用户已完成官方登录。
 
 内置 `local-codex` 不可删除或改造为第三方结构；模型和线路仅由数据库 Web Profile 决定，`.env` 只保留宿主机 CLI 二进制路径。
