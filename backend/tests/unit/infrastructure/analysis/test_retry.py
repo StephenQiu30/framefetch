@@ -4,16 +4,16 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from app.application.analysis import (
-    AnalysisRetry,
-    PersistenceActiveRun,
-    PersistenceRetryLimited,
-)
-from app.infrastructure.database.models import (
+from app.models import (
     AnalysisArtifactLockRow,
     AnalysisRetryOperationRow,
     AnalysisRunRow,
     OutboxEventRow,
+)
+from app.services.analysis import (
+    AnalysisRetry,
+    PersistenceActiveRun,
+    PersistenceRetryLimited,
 )
 from sqlalchemy import func, select
 from tests.unit.infrastructure.analysis.factories import analysis_command, seed_artifact

@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest
-from app.infrastructure.messaging import EventEnvelope, EventEnvelopeError
+from app.integrations.messaging import EventEnvelope, EventEnvelopeError
 from app.workers.dlq.repository import ReplayAudit
 from app.workers.dlq.service import DlqReplayService
 

@@ -8,11 +8,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
 from app.domain.downloads import CandidateStream, DynamicRange, MediaKind, StreamKind
-from app.runner.codecs import (
-    audio_codec_family,
-    container_family,
-    video_codec_family,
-)
+from app.runner.codecs import audio_codec_family, container_family, video_codec_family
 from app.runner.errors import RunnerFailure
 from app.runner.options import build_download_options
 from app.runner.url_policy import UrlPolicyError, validate_media_url

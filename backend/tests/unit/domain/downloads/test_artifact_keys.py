@@ -3,12 +3,12 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from app.application.download_execution.artifact import artifact_object_key
-from app.application.download_execution.errors import ArtifactValidationError
 from app.domain.downloads import build_artifact_object_key
-from app.infrastructure.database.completion_repository import (
+from app.repositories.completion_repository import (
     build_artifact_object_key as persistence_artifact_object_key,
 )
+from app.services.download_execution.artifact import artifact_object_key
+from app.services.download_execution.errors import ArtifactValidationError
 
 
 @pytest.mark.parametrize(

@@ -1,8 +1,8 @@
 from dataclasses import replace
 
 import pytest
-from app.application.analysis import render_analysis_report_markdown
 from app.domain.analysis import AnalysisValidationError, ScreenplayRewriteChunk
+from app.services.analysis import render_analysis_report_markdown
 from tests.unit.domain.analysis.screenplay_factories import (
     screenplay_analysis_result,
     screenplay_rewrite_result,

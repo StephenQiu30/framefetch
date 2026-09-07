@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
-from app.infrastructure.messaging import EventEnvelope
+from app.integrations.messaging import EventEnvelope
 from app.workers.report.message import ReportMessageError, parse_report_requested
 
 

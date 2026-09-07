@@ -7,19 +7,19 @@ from fastapi import APIRouter, Depends, Response, status
 
 from app.api.auth_dependencies import get_current_admin
 from app.api.dependencies import get_provider_catalog_service
-from app.api.schemas.provider_catalog import (
+from app.core.errors import AppError
+from app.schemas.provider_catalog import (
     CreateProviderCatalogEntryRequest,
     ProviderCatalogEntryResponse,
     ProviderCatalogListResponse,
     UpdateProviderCatalogEntryRequest,
 )
-from app.application.auth import CurrentUser
-from app.application.provider_catalog import (
+from app.services.auth import CurrentUser
+from app.services.provider_catalog import (
     ProviderCatalogError,
     ProviderCatalogErrorCode,
     ProviderCatalogService,
 )
-from app.core.errors import AppError
 
 router = APIRouter(prefix="/admin/providers", tags=["admin"])
 Admin = Annotated[CurrentUser, Depends(get_current_admin)]

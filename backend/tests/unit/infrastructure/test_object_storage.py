@@ -5,14 +5,14 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from app.application.downloads import download_filename
-from app.application.imports import (
+from app.core.config import Settings
+from app.integrations.object_storage import MinioObjectStorage, MultipartUploadPart
+from app.services.downloads import download_filename
+from app.services.imports import (
     ImportObjectStorageError,
     MultipartUploadNotFound,
     MultipartUploadRejected,
 )
-from app.core.config import Settings
-from app.infrastructure.object_storage import MinioObjectStorage, MultipartUploadPart
 from minio.commonconfig import CopySource
 from pydantic import SecretStr
 

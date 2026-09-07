@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from uuid import UUID
 
-from app.application.imports import CONTENT_IMPORT_VERIFY_REQUESTED
 from app.domain.imports import ContentKind
-from app.infrastructure.messaging import EventEnvelope, EventEnvelopeError
+from app.integrations.messaging import EventEnvelope, EventEnvelopeError
+from app.services.imports import CONTENT_IMPORT_VERIFY_REQUESTED
 
 _FIELDS = {"resource_id", "content_kind", "attempt", "version"}
 

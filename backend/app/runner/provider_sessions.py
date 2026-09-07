@@ -14,10 +14,7 @@ from app.domain.providers import (
     ProviderSessionVersion,
 )
 from app.runner.errors import RunnerFailure
-from app.runner.provider_cookie_sync import (
-    ProviderCookieSync,
-    ProviderCookieSyncClient,
-)
+from app.runner.provider_cookie_sync import ProviderCookieSync, ProviderCookieSyncClient
 from app.runner.provider_registry import ProviderProfile, provider_profile
 from app.runner.provider_session_files import (
     operation_cookie,

@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
 
-from app.infrastructure.ai_cli.screenplay_rewrite_prompt import (
+from app.integrations.ai_cli.screenplay_rewrite_prompt import (
     screenplay_glossary_prompt,
     screenplay_rewrite_chunk_prompt,
 )
-from app.infrastructure.ai_cli.screenplay_rewrite_schema import (
+from app.integrations.ai_cli.screenplay_rewrite_schema import (
     screenplay_glossary_output_schema,
     screenplay_rewrite_chunk_output_schema,
 )

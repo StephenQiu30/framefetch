@@ -6,19 +6,19 @@ import asyncio
 import json
 from datetime import UTC, datetime
 
-from app.application.provider_canaries import ProviderStatusService
 from app.core.config import get_settings_for_role
+from app.db.session import create_engine, create_session_factory
 from app.domain.providers import ProviderSupportStatus
-from app.infrastructure.database import create_engine, create_session_factory
-from app.infrastructure.media_runner_factory import (
+from app.integrations.media_runner_factory import (
     media_runner_router,
     operator_provider_keys,
 )
-from app.infrastructure.provider_canary_repository import (
+from app.integrations.provider_status import configured_provider_statuses
+from app.repositories.provider_canary_repository import (
     SqlAlchemyProviderCanaryRepository,
 )
-from app.infrastructure.provider_status import configured_provider_statuses
 from app.runner.provider_registry import configure_provider_instances
+from app.services.provider_canaries import ProviderStatusService
 
 
 async def pending_provider_statuses() -> tuple[dict[str, str], ...]:

@@ -8,19 +8,25 @@ FastAPI API、下载/分析领域逻辑、异步 Worker、当前态数据库 SQL
 
 ```text
 app/
-├── api/              FastAPI 装配、健康检查与 HTTP 契约
-│   ├── routes/       `/api/*` 路由
-│   └── schemas/      请求与响应模型
-├── application/      用例编排与外部能力端口
-├── domain/           不依赖框架的领域规则
-├── infrastructure/   数据库、消息、对象存储和模型适配器
-├── runner/           匿名或单 Provider 会话隔离的媒体执行进程
-├── workers/          Outbox、下载和分析进程入口
-├── composition.py    运行时依赖装配
-└── main.py           FastAPI 进程入口
+├── main.py           FastAPI 应用工厂与入口
+├── lifespan.py       外部资源创建与释放
+├── runtime.py        类型化服务集合与资源所有权
+├── composition.py    具体服务装配
+├── api/routes/       HTTP 路由与协议转换
+├── schemas/          请求与响应契约
+├── core/             配置、安全与通用能力
+├── services/         按业务组织用例、服务模型与能力端口
+├── domain/           纯业务规则与实体
+├── db/               Engine、Session 与 Base
+├── models/           SQLAlchemy ORM 模型
+├── repositories/     持久化、查询与事务
+├── integrations/     AI、存储、消息与媒体/文档适配器
+├── workers/          消费、调度与进程入口
+├── runner/           隔离媒体执行进程
+└── analysis_skills/   分析技能资源
 ```
 
-依赖方向保持为 `api/workers → application → domain`。FastAPI DTO 位于 `api/schemas/`；不要把数据库模型、Provider SDK 或 Worker 实现移入 `domain`。
+依赖方向保持为 `api/workers → services → domain`。FastAPI DTO 位于 `schemas/`；不要把数据库模型、Provider SDK 或 Worker 实现移入 `domain`。
 
 公共接口不维护无实际兼容需求的版本目录或 URL 前缀。服务启动后可通过 `/docs` 访问 Swagger UI，通过 `/openapi.json` 获取供前端生成客户端的 OpenAPI 契约。
 

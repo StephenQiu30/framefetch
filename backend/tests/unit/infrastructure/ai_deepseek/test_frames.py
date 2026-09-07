@@ -5,8 +5,8 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import pytest
-from app.infrastructure.ai_deepseek.config import DeepSeekAdapterConfig
-from app.infrastructure.ai_deepseek.frames import DeepSeekFrameExtractor
+from app.integrations.ai_deepseek.config import DeepSeekAdapterConfig
+from app.integrations.ai_deepseek.frames import DeepSeekFrameExtractor
 from app.runner.process import ProcessResult
 
 

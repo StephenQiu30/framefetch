@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import cast
 
-from app.application.analysis_execution import (
+from app.integrations.ai_cli import AnalysisCliError
+from app.services.analysis_execution import (
     AnalyzerResolver,
     ScreenplayAnalyzer,
     ScreenplayAnalyzerSelection,
     ScreenplayRewriteAnalyzer,
     ScreenplayRewriteAnalyzerSelection,
 )
-from app.infrastructure.ai_cli import AnalysisCliError
 
 
 class ConfiguredScreenplayAnalyzerResolver:

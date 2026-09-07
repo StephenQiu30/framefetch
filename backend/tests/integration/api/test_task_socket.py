@@ -6,7 +6,7 @@ from uuid import UUID
 import pytest
 from app.api.routes.task_socket import _same_origin
 from app.core.config import Settings
-from app.infrastructure.realtime import RealtimeHub
+from app.integrations.realtime import RealtimeHub
 from app.main import create_app
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect

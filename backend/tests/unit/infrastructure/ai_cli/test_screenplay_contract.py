@@ -2,12 +2,10 @@ import json
 from pathlib import Path
 
 import pytest
-from app.application.analysis_execution import SCREENPLAY_SINGLE_CALL_SCENE_LIMIT
-from app.infrastructure.ai_cli.screenplay_prompt import screenplay_analysis_prompt
-from app.infrastructure.ai_cli.screenplay_schema import (
-    screenplay_analysis_output_schema,
-)
-from app.infrastructure.ai_cli.screenplay_workspace import prepare_screenplay_job_files
+from app.integrations.ai_cli.screenplay_prompt import screenplay_analysis_prompt
+from app.integrations.ai_cli.screenplay_schema import screenplay_analysis_output_schema
+from app.integrations.ai_cli.screenplay_workspace import prepare_screenplay_job_files
+from app.services.analysis_execution import SCREENPLAY_SINGLE_CALL_SCENE_LIMIT
 from tests.unit.infrastructure.ai_cli.helpers import screenplay_request
 
 

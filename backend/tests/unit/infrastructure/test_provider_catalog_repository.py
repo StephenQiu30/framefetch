@@ -3,11 +3,11 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from app.application.provider_catalog import DuplicateProviderCatalogKeyError
-from app.infrastructure.database import create_session_factory
-from app.infrastructure.provider_catalog_repository import (
+from app.db.session import create_session_factory
+from app.repositories.provider_catalog_repository import (
     SqlAlchemyProviderCatalogRepository,
 )
+from app.services.provider_catalog import DuplicateProviderCatalogKeyError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 NOW = datetime(2026, 8, 12, tzinfo=UTC)

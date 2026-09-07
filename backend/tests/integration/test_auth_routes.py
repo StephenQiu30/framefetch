@@ -6,14 +6,14 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
-from app.application.auth import AuthService, UserService
 from app.core.config import Settings
-from app.infrastructure.auth_repository import SqlAlchemyAuthRepository
-from app.infrastructure.database import create_session_factory
-from app.infrastructure.jwt_tokens import JwtTokenService
-from app.infrastructure.passwords import Argon2PasswordHasher
-from app.infrastructure.user_repository import SqlAlchemyUserRepository
+from app.db.session import create_session_factory
+from app.integrations.jwt_tokens import JwtTokenService
+from app.integrations.passwords import Argon2PasswordHasher
 from app.main import create_app
+from app.repositories.auth_repository import SqlAlchemyAuthRepository
+from app.repositories.user_repository import SqlAlchemyUserRepository
+from app.services.auth import AuthService, UserService
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncEngine
 

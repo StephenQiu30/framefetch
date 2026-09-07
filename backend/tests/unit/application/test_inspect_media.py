@@ -5,21 +5,6 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from app.application.downloads import (
-    ApplicationError,
-    ApplicationErrorCode,
-    GetInspection,
-    HmacRequestFingerprinter,
-    InspectMedia,
-    RunnerFormat,
-    RunnerInspection,
-)
-from app.application.downloads.errors import (
-    MediaInspectionAuthRequired,
-    MediaInspectionDurationLimitExceeded,
-    MediaInspectionLinkUnavailable,
-    MediaInspectionUnsupported,
-)
 from app.domain.downloads import (
     AudioCodecFamily,
     CompatibilityProfile,
@@ -31,6 +16,21 @@ from app.domain.downloads import (
     VideoCodecFamily,
 )
 from app.domain.providers import ProviderAccessContextRef, ProviderAccessMode
+from app.services.downloads import (
+    ApplicationError,
+    ApplicationErrorCode,
+    GetInspection,
+    HmacRequestFingerprinter,
+    InspectMedia,
+    RunnerFormat,
+    RunnerInspection,
+)
+from app.services.downloads.errors import (
+    MediaInspectionAuthRequired,
+    MediaInspectionDurationLimitExceeded,
+    MediaInspectionLinkUnavailable,
+    MediaInspectionUnsupported,
+)
 from tests.unit.application.fakes import (
     FakeCipher,
     FakeRepository,

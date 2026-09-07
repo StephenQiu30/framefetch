@@ -161,10 +161,10 @@ class VideoAnalyzer(Protocol):
 
 职责放置遵守现有依赖方向：
 
-- `application/analysis_execution/`：任务编排、公共端口、lease/heartbeat/cancel，不导入 CLI SDK。
+- `services/analysis_execution/`：任务编排、公共端口、lease/heartbeat/cancel，不导入 CLI SDK。
 - `domain/analysis/`：唯一当前态结果的纯领域模型、解析和交叉引用校验。
-- `infrastructure/ai_cli/`：Codex/Claude argv、输出解析、认证预检、错误映射、Prompt 与 Schema 资源。
-- `infrastructure/analysis_media/`：任务工作区、固定输入路径、大小配额和媒体安全辅助，不实现分镜判断。
+- `integrations/ai_cli/`：Codex/Claude argv、输出解析、认证预检、错误映射、Prompt 与 Schema 资源。
+- `integrations/analysis_media/`：任务工作区、固定输入路径、大小配额和媒体安全辅助，不实现分镜判断。
 - `workers/analysis/`：按可信配置装配一个 `VideoAnalyzer`，启动前 fail-fast。
 - `runner/process.py`：复用并扩展现有 `ProcessSupervisor`，支持受限 stdin、独立 stdout/stderr 上限、进程组取消和超时。
 

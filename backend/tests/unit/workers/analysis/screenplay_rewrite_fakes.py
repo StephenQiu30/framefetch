@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 
-from app.application.analysis_execution import (
+from app.services.analysis_execution import (
     AnalysisExecution,
     ScreenplayAnalysisExecutor,
     ScreenplayExecutionRouter,
@@ -12,7 +12,7 @@ from app.application.analysis_execution import (
     ScreenplayRewriteChunkRequest,
     ScreenplayRewriteExecutor,
 )
-from app.application.analysis_execution.errors import AnalysisExecutionError
+from app.services.analysis_execution.errors import AnalysisExecutionError
 
 from .fakes import NOW, FakeLoader, settings
 from .screenplay_fakes import (

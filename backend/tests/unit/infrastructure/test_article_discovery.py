@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import httpx
 import pytest
-from app.application.source_discoveries import (
-    ArticleAccessRestricted,
-    ArticleDiscoveryFailure,
-)
 from app.domain.source_discovery import (
     DiscoveryDecisionHint,
     DiscoveryItemKind,
     DiscoveryItemStatus,
 )
-from app.infrastructure.article_discovery import (
+from app.integrations.article_discovery import (
     WeChatArticleDiscoveryAdapter,
     parse_article_html,
+)
+from app.services.source_discoveries import (
+    ArticleAccessRestricted,
+    ArticleDiscoveryFailure,
 )
 
 ARTICLE_URL = "https://mp.weixin.qq.com/s/article_123"

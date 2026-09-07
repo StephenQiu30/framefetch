@@ -4,8 +4,8 @@ from datetime import UTC, date, datetime
 from uuid import UUID
 
 import pytest
-from app.application.auth import AuthError, AuthErrorCode, CurrentUser, UserRole
-from app.application.downloads import (
+from app.services.auth import AuthError, AuthErrorCode, CurrentUser, UserRole
+from app.services.downloads import (
     ApplicationError,
     ApplicationErrorCode,
     DownloadAnalyticsDailySnapshot,
@@ -14,7 +14,7 @@ from app.application.downloads import (
     DownloadAnalyticsSummarySnapshot,
     GetDownloadAnalytics,
 )
-from app.application.downloads.analytics import _success_rate
+from app.services.downloads.analytics import _success_rate
 
 NOW = datetime(2026, 8, 10, 12, 30, tzinfo=UTC)
 ADMIN = CurrentUser(

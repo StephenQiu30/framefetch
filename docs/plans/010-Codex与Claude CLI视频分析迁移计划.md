@@ -49,7 +49,7 @@
    - 实现严格解析、连续时间分区、引用、媒体元数据和总大小校验。
    - 由服务端派生 media、shot count、高光时间、资产首次出现时间和 Shot→Asset 反向索引，不要求模型重复返回。
    - 删除未校准的模型 confidence；camera motion 使用排他单枚举。
-2. 在 `backend/app/application/analysis_execution/ports.py`：
+2. 在 `backend/app/services/analysis_execution/ports.py`：
    - 删除 `AudioPreprocessor`、`Transcriber`、文本 `Analyzer`。
    - 增加 `VideoAnalysisRequest` 与 `VideoAnalyzer`。
 3. 重写 `AnalysisExecution`：
@@ -69,7 +69,7 @@
 
 ### 工作项
 
-1. 重构 `backend/app/infrastructure/analysis_media/`：
+1. 重构 `backend/app/integrations/analysis_media/`：
    - 删除音频提取与 25 MB ASR 分块逻辑。
    - 建立固定的任务目录、输入 materialization、Prompt/Schema/policy 复制和清理。
    - 视频使用固定 `input/video.bin`，不保留外部文件名或远程 URL。
@@ -98,7 +98,7 @@
 ### 目标文件
 
 ```text
-backend/app/infrastructure/ai_cli/
+backend/app/integrations/ai_cli/
 ├── __init__.py
 ├── codex.py
 ├── config.py
@@ -220,7 +220,7 @@ Prompt 与 Codex 一样由父进程写入 stdin，不作为 argv 暴露在进程
    - 增加内部 provider/model/cli/prompt/schema provenance 所需字段。
    - `analysis_results` 只保存唯一当前态的 Provider 无关 JSON。
 2. 同步 ORM、repository、snapshot 和序列化，不建立迁移目录或旧 JSON 解析器。
-3. 更新 `api/schemas/analyses.py` 与 OpenAPI：
+3. 更新 `schemas/analyses.py` 与 OpenAPI：
    - Skill 为 `director-breakdown`，任务中保存 Skill 指令快照。
    - 结果为服务端派生的 media/shot count、高光/资产时间，以及模型提供的 shots/highlights/assets 语义。
    - 不公开 provider、model、CLI/session/account/Prompt 元数据。
@@ -262,7 +262,7 @@ Prompt 与 Codex 一样由父进程写入 stdin，不作为 argv 暴露在进程
 
 只有 Phase 0—7 通过后执行：
 
-1. 删除 `backend/app/infrastructure/ai/` 中 OpenAI transcriber 与 LangChain analyzer，删除不再使用的 audio preprocessor。
+1. 删除 `backend/app/integrations/ai/` 中 OpenAI transcriber 与 LangChain analyzer，删除不再使用的 audio preprocessor。
 2. 从 `backend/pyproject.toml` 与 lock file 删除 `openai`、`langchain-core`、`langchain-deepseek`、`langchain-ollama` 及仅旧链路使用的依赖。
 3. 从代码、Compose、`.env.example`、`.env.prod.example`、测试和 README 删除所有 `OPENAI_*`、`DEEPSEEK_*`、`OLLAMA_*` 和旧 `ANALYSIS_PROVIDER`。
 4. 删除 transcript/mind-map 旧测试和 fixture，以 shot evidence 测试替代；不留下“legacy”目录或 adapter。

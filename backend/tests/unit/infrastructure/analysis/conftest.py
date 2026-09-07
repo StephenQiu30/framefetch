@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 import pytest
-from app.infrastructure.analysis_repository import SqlAlchemyAnalysisRepository
+from app.repositories.analysis_repository import SqlAlchemyAnalysisRepository
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,

@@ -4,19 +4,21 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
-from app.application.imports import (
-    ImportPersistenceIdempotencyConflict,
-    ImportResourceCreate,
-)
-from app.application.imports.events import CONTENT_IMPORT_VERIFY_REQUESTED
 from app.domain.imports import ContentKind, ImportSourceFormat, ImportStatus
-from app.infrastructure.database import SqlAlchemyDocumentImportRepository
-from app.infrastructure.database.models import (
+from app.models import (
     DocumentImportAttemptRow,
     DocumentRow,
     DownloadJobRow,
     OutboxEventRow,
 )
+from app.repositories.document_import_repository import (
+    SqlAlchemyDocumentImportRepository,
+)
+from app.services.imports import (
+    ImportPersistenceIdempotencyConflict,
+    ImportResourceCreate,
+)
+from app.services.imports.events import CONTENT_IMPORT_VERIFY_REQUESTED
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 

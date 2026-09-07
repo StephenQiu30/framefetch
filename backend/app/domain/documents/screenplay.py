@@ -4,7 +4,7 @@ import hashlib
 import unicodedata
 from dataclasses import dataclass
 
-from .structure import (
+from app.domain.documents.structure import (
     ScreenplayElement,
     is_scene_heading,
     parse_scene_elements,

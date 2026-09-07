@@ -2,14 +2,6 @@ import hashlib
 from dataclasses import replace
 
 import pytest
-from app.application.analysis import (
-    AnalysisApplicationError,
-    AnalysisApplicationErrorCode,
-    AnalysisStoredReportFile,
-    render_analysis_report_markdown,
-)
-from app.application.analysis.export_report import _read_verified
-from app.application.analysis.screenplay_report import render_screenplay_report_markdown
 from app.domain.analysis import (
     AnalysisMedia,
     Highlight,
@@ -17,6 +9,14 @@ from app.domain.analysis import (
     parse_analysis_result,
     parse_video_article_result,
 )
+from app.services.analysis import (
+    AnalysisApplicationError,
+    AnalysisApplicationErrorCode,
+    AnalysisStoredReportFile,
+    render_analysis_report_markdown,
+)
+from app.services.analysis.export_report import _read_verified
+from app.services.analysis.screenplay_report import render_screenplay_report_markdown
 from tests.unit.domain.analysis.screenplay_factories import screenplay_analysis_result
 from tests.unit.workers.analysis.fixtures import valid_mapping
 

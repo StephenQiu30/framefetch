@@ -10,13 +10,13 @@ from app.api.middleware import request_guard
 from app.api.openapi import API_DESCRIPTION, OPENAPI_TAGS, SWAGGER_UI_PARAMETERS
 from app.api.quota_errors import quota_error_handler
 from app.api.router import router
-from app.application.quotas import QuotaExceeded
 from app.core.config import Settings, get_settings
 from app.core.errors import AppError
-from app.infrastructure.media_runner_factory import operator_provider_keys
-from app.infrastructure.provider_status import current_provider_statuses
+from app.integrations.media_runner_factory import operator_provider_keys
+from app.integrations.provider_status import current_provider_statuses
 from app.lifespan import api_lifespan
 from app.runtime import ApiRuntime, ApiServices
+from app.services.quotas import QuotaExceeded
 
 
 def create_app(

@@ -5,9 +5,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
-from app.application.provider_canaries import (
-    ProviderEvidenceScope as _ProviderEvidenceScope,
-)
+from app.db.session import create_session_factory
 from app.domain.providers import (
     ProviderAccessContextRef,
     ProviderAccessMode,
@@ -15,12 +13,14 @@ from app.domain.providers import (
     ProviderCanaryResult,
     ProviderCanaryStage,
 )
-from app.infrastructure.database import create_session_factory
-from app.infrastructure.database.models import ProviderCanaryResultRow
-from app.infrastructure.provider_canary_repository import (
+from app.models import ProviderCanaryResultRow
+from app.repositories.provider_canary_repository import (
     SqlAlchemyProviderCanaryRepository,
 )
 from app.runner.version import YTDLP_ENGINE_COMMIT
+from app.services.provider_canaries import (
+    ProviderEvidenceScope as _ProviderEvidenceScope,
+)
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 NOW = datetime(2026, 8, 11, 6, tzinfo=UTC)

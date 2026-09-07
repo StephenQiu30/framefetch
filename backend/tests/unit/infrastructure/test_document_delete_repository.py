@@ -4,19 +4,19 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
-from app.application.documents import DeleteDocument
-from app.application.imports import ImportApplicationError, ImportResourceCreate
 from app.domain.imports import ContentKind, ImportSourceFormat, ImportStatus
-from app.infrastructure.database import (
+from app.models import DocumentArtifactRow, DocumentImportAttemptRow, DocumentRow
+from app.repositories.document_catalog_repository import (
     SqlAlchemyDocumentCatalogRepository,
+)
+from app.repositories.document_delete_repository import (
     SqlAlchemyDocumentDeleteRepository,
+)
+from app.repositories.document_import_repository import (
     SqlAlchemyDocumentImportRepository,
 )
-from app.infrastructure.database.models import (
-    DocumentArtifactRow,
-    DocumentImportAttemptRow,
-    DocumentRow,
-)
+from app.services.documents import DeleteDocument
+from app.services.imports import ImportApplicationError, ImportResourceCreate
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 NOW = datetime(2026, 8, 14, 16, 0, tzinfo=UTC)

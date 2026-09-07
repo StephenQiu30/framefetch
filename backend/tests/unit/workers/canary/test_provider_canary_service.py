@@ -4,13 +4,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from app.application.downloads import (
-    MediaInspectionAuthRequired,
-    MediaInspectionSessionExpired,
-    RunnerFormat,
-    RunnerInspection,
-)
-from app.application.downloads.errors import MediaInspectionFormatUnavailable
 from app.domain.downloads import DownloadPlan
 from app.domain.providers import (
     ProviderAccessContextRef,
@@ -19,10 +12,14 @@ from app.domain.providers import (
     ProviderCanaryResult,
     ProviderCanaryStage,
 )
-from app.infrastructure.media_runner_models import (
-    MediaRunnerClientError,
-    RunnerArtifact,
+from app.integrations.media_runner_models import MediaRunnerClientError, RunnerArtifact
+from app.services.downloads import (
+    MediaInspectionAuthRequired,
+    MediaInspectionSessionExpired,
+    RunnerFormat,
+    RunnerInspection,
 )
+from app.services.downloads.errors import MediaInspectionFormatUnavailable
 from app.workers.canary.service import ProviderCanaryService
 from app.workers.canary.targets import ProviderCanaryTarget
 from tests.unit.runner.helpers import download_request

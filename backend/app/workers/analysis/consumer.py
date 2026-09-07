@@ -11,10 +11,9 @@ from aio_pika.abc import (
     AbstractQueue,
     AbstractRobustConnection,
 )
-from app.application.analysis_execution import AnalysisDisposition
-from app.infrastructure.messaging import RabbitMqTopology, configured_rabbitmq_url
-
-from .message import AnalysisMessageError, parse_analysis_requested
+from app.integrations.messaging import RabbitMqTopology, configured_rabbitmq_url
+from app.services.analysis_execution import AnalysisDisposition
+from app.workers.analysis.message import AnalysisMessageError, parse_analysis_requested
 
 
 class AnalysisHandler(Protocol):

@@ -1,5 +1,5 @@
 from app.domain.providers import ProviderAccessMode, ProviderSupportStatus
-from app.infrastructure.provider_status import configured_provider_statuses
+from app.integrations.provider_status import configured_provider_statuses
 
 
 def test_statuses_expose_only_runtime_enabled_access_modes() -> None:

@@ -4,16 +4,16 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest
-from app.application.auth import CurrentUser, UserRole
-from app.application.provider_catalog import (
+from app.domain.providers import ProviderSupportStatus
+from app.services.auth import CurrentUser, UserRole
+from app.services.provider_catalog import (
     DuplicateProviderCatalogKeyError,
     ProviderCatalogEntry,
     ProviderCatalogError,
     ProviderCatalogErrorCode,
     ProviderCatalogService,
 )
-from app.application.providers import ProviderStatusView
-from app.domain.providers import ProviderSupportStatus
+from app.services.providers import ProviderStatusView
 
 NOW = datetime(2026, 8, 12, tzinfo=UTC)
 ADMIN = CurrentUser(

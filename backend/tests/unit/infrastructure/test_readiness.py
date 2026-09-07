@@ -8,7 +8,7 @@ import aio_pika
 import httpx
 import pytest
 from app.core.config import Settings
-from app.infrastructure.readiness import build_runtime_readiness
+from app.integrations.readiness import build_runtime_readiness
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 

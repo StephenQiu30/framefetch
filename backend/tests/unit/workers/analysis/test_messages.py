@@ -3,13 +3,10 @@ from __future__ import annotations
 from uuid import UUID, uuid4
 
 import pytest
-from app.application.analysis_execution import AnalysisDisposition
-from app.infrastructure.messaging import EventEnvelope
+from app.integrations.messaging import EventEnvelope
+from app.services.analysis_execution import AnalysisDisposition
 from app.workers.analysis.consumer import process_delivery
-from app.workers.analysis.message import (
-    AnalysisMessageError,
-    parse_analysis_requested,
-)
+from app.workers.analysis.message import AnalysisMessageError, parse_analysis_requested
 
 from .fakes import NOW
 

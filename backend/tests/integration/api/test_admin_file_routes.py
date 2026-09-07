@@ -3,14 +3,14 @@ from pathlib import Path
 from uuid import UUID
 
 from app.api.auth_dependencies import get_current_admin, get_current_user
-from app.application.auth import CurrentUser, UserRole
-from app.application.storage_files import (
+from app.core.config import Settings
+from app.main import create_app
+from app.services.auth import CurrentUser, UserRole
+from app.services.storage_files import (
     StorageCleanupResult,
     StoredFilePage,
     StoredFileView,
 )
-from app.core.config import Settings
-from app.main import create_app
 from fastapi.testclient import TestClient
 
 NOW = datetime(2026, 8, 18, 12, tzinfo=UTC)

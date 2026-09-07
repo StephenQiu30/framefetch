@@ -6,13 +6,13 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from app.application.analysis import AnalysisJobSnapshot
-from app.application.analysis_execution import (
+from app.domain.analysis import AnalysisResult
+from app.services.analysis import AnalysisJobSnapshot
+from app.services.analysis_execution import (
     AnalysisArtifactSource,
     AnalysisExecutionSettings,
     LocalAnalysisArtifact,
 )
-from app.domain.analysis import AnalysisResult
 
 NOW = datetime(2026, 8, 6, 12, tzinfo=UTC)
 

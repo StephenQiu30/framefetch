@@ -7,15 +7,14 @@ from datetime import UTC, datetime
 
 import aio_pika
 from app.core.config import Settings
-from app.infrastructure.database import create_engine, create_session_factory
-from app.infrastructure.messaging import (
+from app.db.session import create_engine, create_session_factory
+from app.integrations.messaging import (
     RabbitMqPublisher,
     RabbitMqTopology,
     configured_rabbitmq_url,
 )
-
-from .repository import DlqReplayRepository
-from .service import ALLOWED_EVENTS, DlqReplayService
+from app.workers.dlq.repository import DlqReplayRepository
+from app.workers.dlq.service import ALLOWED_EVENTS, DlqReplayService
 
 
 async def run(queue_name: str, actor: str, reason: str) -> None:

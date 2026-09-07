@@ -6,20 +6,15 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from app.application.quotas import QuotaExceeded, QuotaPolicy
-from app.infrastructure.analysis_repository import SqlAlchemyAnalysisRepository
-from app.infrastructure.database import (
-    DownloadCreate,
+from app.models import ArtifactRow, DocumentRow, DownloadJobRow, ResourceAdmissionRow
+from app.repositories.analysis_repository import SqlAlchemyAnalysisRepository
+from app.repositories.document_import_repository import (
     SqlAlchemyDocumentImportRepository,
-    SqlAlchemyDownloadRepository,
-    SqlAlchemyMediaImportRepository,
 )
-from app.infrastructure.database.models import (
-    ArtifactRow,
-    DocumentRow,
-    DownloadJobRow,
-    ResourceAdmissionRow,
-)
+from app.repositories.download_repository import SqlAlchemyDownloadRepository
+from app.repositories.media_import_repository import SqlAlchemyMediaImportRepository
+from app.services.downloads.download_models import DownloadCreate
+from app.services.quotas import QuotaExceeded, QuotaPolicy
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from tests.unit.infrastructure.analysis.factories import analysis_command, seed_artifact

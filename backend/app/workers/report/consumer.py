@@ -11,10 +11,9 @@ from aio_pika.abc import (
     AbstractQueue,
     AbstractRobustConnection,
 )
-from app.infrastructure.messaging import RabbitMqTopology, configured_rabbitmq_url
-
-from .message import ReportMessageError, parse_report_requested
-from .publisher import ReportPublisher
+from app.integrations.messaging import RabbitMqTopology, configured_rabbitmq_url
+from app.workers.report.message import ReportMessageError, parse_report_requested
+from app.workers.report.publisher import ReportPublisher
 
 
 async def process_delivery(

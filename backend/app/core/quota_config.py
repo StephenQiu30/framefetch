@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.application.quotas import QuotaPolicy
+from app.services.quotas import QuotaPolicy
 
 
 class QuotaLimits(BaseModel):

@@ -1,9 +1,10 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from app.api.schemas.downloads import DownloadResponse
-from app.application.downloads.views import download_view
-from app.infrastructure.database import DownloadJobRow, SqlAlchemyDownloadRepository
+from app.models import DownloadJobRow
+from app.repositories.download_repository import SqlAlchemyDownloadRepository
+from app.schemas.downloads import DownloadResponse
+from app.services.downloads.views import download_view
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 

@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from app.application.import_execution import RoutedImportExecution
-from app.application.imports import ImportDisposition
 from app.domain.imports import ContentKind
+from app.services.import_execution import RoutedImportExecution
+from app.services.imports import ImportDisposition
 
 RESOURCE_ID = UUID("cccccccc-cccc-4ccc-8ccc-cccccccccccc")
 

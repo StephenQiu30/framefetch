@@ -2,12 +2,8 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from app.infrastructure.database.models import (
-    AnalysisArtifactLockRow,
-    AnalysisJobRow,
-    ArtifactRow,
-)
-from app.infrastructure.storage_file_repository import SqlAlchemyStorageFileRepository
+from app.models import AnalysisArtifactLockRow, AnalysisJobRow, ArtifactRow
+from app.repositories.storage_file_repository import SqlAlchemyStorageFileRepository
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from tests.unit.infrastructure.analytics_helpers import add_job

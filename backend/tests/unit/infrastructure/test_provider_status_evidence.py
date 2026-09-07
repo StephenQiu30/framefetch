@@ -6,9 +6,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
-from app.application.provider_canaries import (
-    ProviderEvidenceScope as _ProviderEvidenceScope,
-)
+from app.db.session import create_session_factory
 from app.domain.providers import (
     ProviderAccessContextRef,
     ProviderAccessMode,
@@ -16,17 +14,14 @@ from app.domain.providers import (
     ProviderCanaryResult,
     ProviderCanaryStage,
 )
-from app.infrastructure.database import create_session_factory
-from app.infrastructure.database.models import (
-    ArtifactRow,
-    DownloadJobRow,
-    MediaFormatRow,
-    MediaInspectionRow,
-)
-from app.infrastructure.provider_status_evidence import (
+from app.models import ArtifactRow, DownloadJobRow, MediaFormatRow, MediaInspectionRow
+from app.repositories.provider_status_evidence import (
     MergedProviderStatusEvidenceReader,
     SqlAlchemyDownloadEvidenceReader,
     _download_result,
+)
+from app.services.provider_canaries import (
+    ProviderEvidenceScope as _ProviderEvidenceScope,
 )
 from sqlalchemy.ext.asyncio import AsyncEngine
 

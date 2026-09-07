@@ -14,9 +14,9 @@ from app.api.auth_dependencies import (
 )
 from app.api.dependencies import get_runtime_settings
 from app.api.errors import app_error_handler, auth_application_error
-from app.api.schemas.auth import EmailPasswordRequest, RegisterRequest, UserResponse
-from app.application.auth import AuthError, AuthErrorCode, AuthService, CurrentUser
 from app.core.config import Settings
+from app.schemas.auth import EmailPasswordRequest, RegisterRequest, UserResponse
+from app.services.auth import AuthError, AuthErrorCode, AuthService, CurrentUser
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 Auth = Annotated[AuthService, Depends(get_auth_service)]

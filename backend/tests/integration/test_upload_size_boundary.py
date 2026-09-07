@@ -8,7 +8,7 @@ from uuid import uuid4
 import httpx
 import pytest
 from app.core.config import Settings
-from app.infrastructure.object_storage import MinioObjectStorage, MultipartUploadPart
+from app.integrations.object_storage import MinioObjectStorage, MultipartUploadPart
 from minio import Minio
 
 

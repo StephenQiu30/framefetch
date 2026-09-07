@@ -7,7 +7,17 @@ from time import monotonic
 from typing import Protocol
 from uuid import uuid4
 
-from app.application.downloads import (
+from app.domain.downloads import DownloadPlan, MediaKind
+from app.domain.providers import (
+    ProviderAccessContextRef,
+    ProviderAccessMode,
+    ProviderCanaryOutcome,
+    ProviderCanaryResult,
+    ProviderCanaryStage,
+)
+from app.integrations.media_runner_models import MediaRunnerClientError, RunnerArtifact
+from app.runner.provider_registry import provider_profile
+from app.services.downloads import (
     MediaInspectionAuthRequired,
     MediaInspectionContentRestricted,
     MediaInspectionDrmProtected,
@@ -23,20 +33,7 @@ from app.application.downloads import (
     MediaInspectionVerificationFailed,
     RunnerInspection,
 )
-from app.application.downloads.errors import MediaInspectionFormatUnavailable
-from app.domain.downloads import DownloadPlan, MediaKind
-from app.domain.providers import (
-    ProviderAccessContextRef,
-    ProviderAccessMode,
-    ProviderCanaryOutcome,
-    ProviderCanaryResult,
-    ProviderCanaryStage,
-)
-from app.infrastructure.media_runner_models import (
-    MediaRunnerClientError,
-    RunnerArtifact,
-)
-from app.runner.provider_registry import provider_profile
+from app.services.downloads.errors import MediaInspectionFormatUnavailable
 from app.workers.canary.targets import ProviderCanaryTarget
 
 _INSPECTION_ERRORS: tuple[tuple[type[Exception], str], ...] = (

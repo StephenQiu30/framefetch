@@ -6,19 +6,18 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 
 from app.core.config import get_settings_for_role
-from app.infrastructure.analysis_report_docx import PythonDocxAnalysisReportRenderer
-from app.infrastructure.analysis_report_repository import (
+from app.db.session import create_engine, create_session_factory
+from app.integrations.analysis_report_docx import PythonDocxAnalysisReportRenderer
+from app.integrations.messaging import RabbitMqTopology
+from app.integrations.object_storage import MinioObjectStorage
+from app.repositories.analysis_report_repository import (
     SqlAlchemyAnalysisReportRepository,
 )
-from app.infrastructure.database import create_engine, create_session_factory
-from app.infrastructure.messaging import RabbitMqTopology
-from app.infrastructure.object_storage import MinioObjectStorage
 from app.workers.analysis.utilities import install_signal_handlers, worker_id
-
-from .consumer import RabbitMqReportConsumer
-from .lifecycle import ReportLifecycleWorker
-from .publisher import ReportPublisher
-from .sweeper import ReportRecoverySweeper
+from app.workers.report.consumer import RabbitMqReportConsumer
+from app.workers.report.lifecycle import ReportLifecycleWorker
+from app.workers.report.publisher import ReportPublisher
+from app.workers.report.sweeper import ReportRecoverySweeper
 
 
 async def run() -> None:

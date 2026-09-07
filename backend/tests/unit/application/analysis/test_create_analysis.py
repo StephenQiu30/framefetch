@@ -5,16 +5,16 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
-from app.application.analysis import (
-    AnalysisApplicationError,
-    AnalysisApplicationErrorCode,
-    AnalysisArtifactSnapshot,
-    CreateAnalysis,
-)
 from app.domain.analysis import (
     AnalysisInputKind,
     AnalysisResultContract,
     AnalysisStatus,
+)
+from app.services.analysis import (
+    AnalysisApplicationError,
+    AnalysisApplicationErrorCode,
+    AnalysisArtifactSnapshot,
+    CreateAnalysis,
 )
 from tests.unit.application.analysis.fakes import (
     FakeFingerprinter,

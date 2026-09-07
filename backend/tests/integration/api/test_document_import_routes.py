@@ -5,18 +5,14 @@ from pathlib import Path
 from uuid import UUID
 
 from app.api.auth_dependencies import get_current_user
-from app.application.auth import CurrentUser, UserRole
-from app.application.documents import DocumentPage, DocumentView
-from app.application.imports import (
-    ImportView,
-    UploadPartTarget,
-    UploadSessionView,
-)
 from app.core.config import Settings
 from app.domain.documents import DocumentParseSummary
 from app.domain.imports import ContentKind, ImportSourceFormat, ImportStatus
 from app.main import create_app
 from app.runtime import DocumentImportUseCases
+from app.services.auth import CurrentUser, UserRole
+from app.services.documents import DocumentPage, DocumentView
+from app.services.imports import ImportView, UploadPartTarget, UploadSessionView
 from fastapi.testclient import TestClient
 
 NOW = datetime(2026, 8, 14, 14, 0, tzinfo=UTC)

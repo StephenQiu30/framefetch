@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest
-from app.application.ai_providers import (
+from app.services.ai_providers import (
     AiProviderAuthMode,
     AiProviderEngine,
     AiProviderError,
@@ -14,7 +14,7 @@ from app.application.ai_providers import (
     AiProviderService,
     DuplicateAiProviderKeyError,
 )
-from app.application.auth import CurrentUser, UserRole
+from app.services.auth import CurrentUser, UserRole
 
 NOW = datetime(2026, 8, 13, tzinfo=UTC)
 ADMIN = CurrentUser(

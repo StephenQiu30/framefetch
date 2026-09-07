@@ -5,9 +5,8 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from app.infrastructure.messaging import EventEnvelope, EventEnvelopeError
-
-from .repository import ReplayAudit
+from app.integrations.messaging import EventEnvelope, EventEnvelopeError
+from app.workers.dlq.repository import ReplayAudit
 
 ALLOWED_EVENTS = {
     "video.download.dead": "download.requested",

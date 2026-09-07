@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import Protocol
 from uuid import UUID
 
-from app.application.import_execution import ImportWorkspaceManager
-from app.application.import_execution.ports import ImportExecutionStorage
-from app.infrastructure.database.contracts import DownloadThumbnailCandidateSnapshot
+from app.repositories.contracts import DownloadThumbnailCandidateSnapshot
+from app.services.import_execution import ImportWorkspaceManager
+from app.services.import_execution.ports import ImportExecutionStorage
 
 _log = logging.getLogger(__name__)
 

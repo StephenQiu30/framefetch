@@ -4,15 +4,6 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
-from app.application.import_execution import VerifiedImportArtifact
-from app.application.imports import (
-    ImportCleanupRef,
-    ImportPersistenceConflict,
-    ImportPersistenceIdempotencyConflict,
-    ImportResourceCreate,
-    ImportResourceSnapshot,
-)
-from app.application.imports.events import CONTENT_IMPORT_VERIFY_REQUESTED
 from app.domain.imports import (
     ContentKind,
     ImportErrorCode,
@@ -20,17 +11,24 @@ from app.domain.imports import (
     ImportStatus,
     quarantine_object_key,
 )
-from app.infrastructure.database import (
-    SqlAlchemyDownloadRepository,
-    SqlAlchemyMediaImportRepository,
-)
-from app.infrastructure.database.models import (
+from app.models import (
     ArtifactRow,
     DownloadJobRow,
     MediaImportAttemptRow,
     MediaImportRow,
     OutboxEventRow,
 )
+from app.repositories.download_repository import SqlAlchemyDownloadRepository
+from app.repositories.media_import_repository import SqlAlchemyMediaImportRepository
+from app.services.import_execution import VerifiedImportArtifact
+from app.services.imports import (
+    ImportCleanupRef,
+    ImportPersistenceConflict,
+    ImportPersistenceIdempotencyConflict,
+    ImportResourceCreate,
+    ImportResourceSnapshot,
+)
+from app.services.imports.events import CONTENT_IMPORT_VERIFY_REQUESTED
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 

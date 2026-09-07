@@ -5,13 +5,13 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
-from app.application.analysis import (
+from app.models import OutboxEventRow
+from app.models.analysis import AnalysisArtifactLockRow
+from app.services.analysis import (
     PersistenceConflict,
     PersistenceIdempotencyConflict,
     PersistenceNotFound,
 )
-from app.infrastructure.database.models import OutboxEventRow
-from app.infrastructure.database.models.analysis import AnalysisArtifactLockRow
 from sqlalchemy import func, select
 from tests.unit.infrastructure.analysis.conftest import AnalysisDatabase
 from tests.unit.infrastructure.analysis.factories import (

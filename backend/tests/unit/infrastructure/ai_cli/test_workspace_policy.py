@@ -5,9 +5,9 @@ import sys
 from pathlib import Path
 
 import pytest
-from app.infrastructure.ai_cli import AnalysisCliError, CliAdapterConfig
-from app.infrastructure.ai_cli.schema import analysis_output_schema
-from app.infrastructure.ai_cli.workspace import _validate_workspace, prepare_job_files
+from app.integrations.ai_cli import AnalysisCliError, CliAdapterConfig
+from app.integrations.ai_cli.schema import analysis_output_schema
+from app.integrations.ai_cli.workspace import _validate_workspace, prepare_job_files
 from tests.unit.infrastructure.ai_cli.helpers import request
 
 

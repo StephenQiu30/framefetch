@@ -11,11 +11,10 @@ from aio_pika.abc import (
     AbstractQueue,
     AbstractRobustConnection,
 )
-from app.application.download_execution import ExecutionDisposition
-from app.infrastructure.messaging import RabbitMqTopology, configured_rabbitmq_url
-
-from .message import DownloadMessageError, parse_download_requested
-from .pool import AsyncWorkerPool
+from app.integrations.messaging import RabbitMqTopology, configured_rabbitmq_url
+from app.services.download_execution import ExecutionDisposition
+from app.workers.download.message import DownloadMessageError, parse_download_requested
+from app.workers.download.pool import AsyncWorkerPool
 
 
 class DownloadHandler(Protocol):

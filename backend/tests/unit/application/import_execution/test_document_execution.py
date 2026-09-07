@@ -4,7 +4,9 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID
 
-from app.application.import_execution import (
+from app.domain.documents import DocumentParseSummary, ScreenplayScene
+from app.domain.imports import ContentKind, ImportErrorCode, ImportSourceFormat
+from app.services.import_execution import (
     DocumentImportExecution,
     ImportExecutionSettings,
     ImportVerificationClaim,
@@ -12,9 +14,7 @@ from app.application.import_execution import (
     ImportWorkspace,
     VerifiedDocumentImport,
 )
-from app.application.imports import ImportDisposition
-from app.domain.documents import DocumentParseSummary, ScreenplayScene
-from app.domain.imports import ContentKind, ImportErrorCode, ImportSourceFormat
+from app.services.imports import ImportDisposition
 
 NOW = datetime(2026, 8, 14, 19, 0, tzinfo=UTC)
 DOCUMENT_ID = UUID("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")

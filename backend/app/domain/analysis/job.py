@@ -3,11 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from app.domain.analysis.enums import (
-    AnalysisErrorCode,
-    AnalysisStage,
-    AnalysisStatus,
-)
+from app.domain.analysis.enums import AnalysisErrorCode, AnalysisStage, AnalysisStatus
 from app.domain.analysis.errors import InvalidAnalysisTransition
 from app.domain.analysis.job_rules import (
     AnalysisJobRules,

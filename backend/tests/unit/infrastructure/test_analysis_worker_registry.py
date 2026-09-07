@@ -3,9 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from app.infrastructure.analysis_worker_registry import (
-    SqlAlchemyAnalysisWorkerRegistry,
-)
+from app.repositories.analysis_worker_registry import SqlAlchemyAnalysisWorkerRegistry
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 

@@ -10,31 +10,22 @@ import socket
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from app.application.download_execution import (
-    DownloadExecution,
-    DownloadExecutionSettings,
-)
-from app.application.downloads import PersistThumbnail
 from app.core.config import Settings, get_settings_for_role
 from app.core.url_cipher import URLCipher
-from app.infrastructure.database import (
-    SqlAlchemyDownloadRepository,
-    create_engine,
-    create_session_factory,
-)
-from app.infrastructure.media_runner import MediaRunnerRouter
-from app.infrastructure.media_runner_factory import media_runner_router
-from app.infrastructure.messaging import RabbitMqTopology
-from app.infrastructure.object_storage import MinioObjectStorage
-from app.infrastructure.thumbnail_storage import MinioThumbnailStorage
-from app.infrastructure.url_security import FernetUrlEnvelope
+from app.db.session import create_engine, create_session_factory
+from app.integrations.media_runner import MediaRunnerRouter
+from app.integrations.media_runner_factory import media_runner_router
+from app.integrations.messaging import RabbitMqTopology
+from app.integrations.object_storage import MinioObjectStorage
+from app.integrations.thumbnail_storage import MinioThumbnailStorage
+from app.integrations.url_security import FernetUrlEnvelope
+from app.repositories.download_execution import DownloadExecutionRepository
+from app.repositories.download_repository import SqlAlchemyDownloadRepository
 from app.runner.provider_registry import configure_provider_instances
+from app.services.download_execution import DownloadExecution, DownloadExecutionSettings
+from app.services.downloads import PersistThumbnail
 from app.workers.download.consumer import RabbitMqDownloadConsumer
-from app.workers.download.persistence import DownloadExecutionRepository
-from app.workers.download.sweeper import (
-    DownloadRecoverySweeper,
-    RecoverySettings,
-)
+from app.workers.download.sweeper import DownloadRecoverySweeper, RecoverySettings
 from app.workers.download.thumbnail import ArtifactThumbnailRecovery
 from app.workers.download.workspace import SharedWorkspaceCleaner
 from sqlalchemy.ext.asyncio import AsyncEngine

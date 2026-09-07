@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from app.infrastructure.analysis_report_lifecycle import ReportPurgeResult
-from app.infrastructure.object_storage import StoredObject
+from app.integrations.object_storage import StoredObject
+from app.repositories.analysis_report_lifecycle import ReportPurgeResult
 from app.workers.report.lifecycle import ReportLifecycleWorker
 
 NOW = datetime(2026, 8, 10, 13, tzinfo=UTC)

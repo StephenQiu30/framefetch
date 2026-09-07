@@ -7,11 +7,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from app.domain.providers import (
-    ProviderAccessMode,
-    ProviderKey,
-    ProviderSessionVersion,
-)
+from app.domain.providers import ProviderAccessMode, ProviderKey, ProviderSessionVersion
 from app.runner import provider_session_files
 from app.runner.errors import RunnerFailure
 from app.runner.provider_sessions import ProviderSessionStore

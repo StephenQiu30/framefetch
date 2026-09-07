@@ -5,18 +5,14 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from app.application.analysis import (
+from app.models import AnalysisArtifactLockRow, AnalysisDocumentLockRow, OutboxEventRow
+from app.repositories.analysis_execution import AnalysisExecutionPersistence
+from app.services.analysis import (
     AnalysisRetry,
     PersistenceConflict,
     PersistenceNotFound,
 )
-from app.application.analysis_execution import AnalysisSourceUnavailable
-from app.infrastructure.database.models import (
-    AnalysisArtifactLockRow,
-    AnalysisDocumentLockRow,
-    OutboxEventRow,
-)
-from app.workers.analysis.persistence import AnalysisExecutionPersistence
+from app.services.analysis_execution import AnalysisSourceUnavailable
 from sqlalchemy import func, select
 from tests.unit.infrastructure.analysis.factories import OWNER
 from tests.unit.infrastructure.analysis.screenplay_factories import (

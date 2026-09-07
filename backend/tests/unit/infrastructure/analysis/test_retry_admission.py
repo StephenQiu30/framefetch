@@ -4,9 +4,9 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from app.application.analysis import AnalysisRetry, PersistenceRetryLimited
-from app.infrastructure.analysis_repository import SqlAlchemyAnalysisRepository
-from app.infrastructure.database.models import AnalysisRunRow
+from app.models import AnalysisRunRow
+from app.repositories.analysis_repository import SqlAlchemyAnalysisRepository
+from app.services.analysis import AnalysisRetry, PersistenceRetryLimited
 from sqlalchemy import func, select
 from tests.unit.infrastructure.analysis.factories import analysis_command, seed_artifact
 

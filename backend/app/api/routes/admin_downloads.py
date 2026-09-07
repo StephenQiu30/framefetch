@@ -5,10 +5,10 @@ from fastapi import APIRouter, Depends, Query
 from app.api.auth_dependencies import get_current_admin
 from app.api.dependencies import get_download_use_cases
 from app.api.errors import application_error, auth_application_error
-from app.api.schemas.admin_downloads import DownloadAnalyticsResponse
-from app.application.auth import AuthError, CurrentUser
-from app.application.downloads import ApplicationError
 from app.runtime import DownloadUseCases
+from app.schemas.admin_downloads import DownloadAnalyticsResponse
+from app.services.auth import AuthError, CurrentUser
+from app.services.downloads import ApplicationError
 
 router = APIRouter(prefix="/admin/downloads", tags=["admin"])
 Admin = Annotated[CurrentUser, Depends(get_current_admin)]

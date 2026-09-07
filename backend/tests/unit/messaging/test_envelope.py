@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
-from app.infrastructure.messaging import EventEnvelope, EventEnvelopeError
+from app.integrations.messaging import EventEnvelope, EventEnvelopeError
 
 
 def envelope(**overrides) -> EventEnvelope:

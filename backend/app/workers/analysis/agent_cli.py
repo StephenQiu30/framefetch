@@ -13,10 +13,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
 
-from app.application.analysis_execution import AnalysisArtifactError
 from app.core.config import REPOSITORY_ROOT, Settings
 from app.domain.identifiers import AnalysisStorageProbe
-from app.infrastructure.object_storage import StoredObjectStat
+from app.integrations.object_storage import StoredObjectStat
+from app.services.analysis_execution import AnalysisArtifactError
 from app.workers.analysis.agent_platforms import (
     agent_paths,
     agent_status,

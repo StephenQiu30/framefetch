@@ -5,15 +5,6 @@ from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from app.application.provider_canaries import (
-    ProviderEvidenceScope,
-    ProviderRuntimeContextReader,
-)
-from app.application.provider_canaries import (
-    ProviderStatusService as _ProviderStatusService,
-)
-from app.application.provider_catalog import ProviderCatalogEntry
-from app.application.providers import ProviderStatusView
 from app.domain.providers import (
     ProviderAccessContextRef,
     ProviderAccessMode,
@@ -24,6 +15,15 @@ from app.domain.providers import (
     ProviderSupportStatus,
 )
 from app.runner.version import YTDLP_ENGINE_COMMIT
+from app.services.provider_canaries import (
+    ProviderEvidenceScope,
+    ProviderRuntimeContextReader,
+)
+from app.services.provider_canaries import (
+    ProviderStatusService as _ProviderStatusService,
+)
+from app.services.provider_catalog import ProviderCatalogEntry
+from app.services.providers import ProviderStatusView
 
 NOW = datetime(2026, 8, 11, 6, tzinfo=UTC)
 

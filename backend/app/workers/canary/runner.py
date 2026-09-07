@@ -4,19 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from app.application.downloads import (
+from app.domain.downloads import DownloadPlan, MediaKind
+from app.domain.providers import ProviderAccessContextRef, ProviderAccessMode
+from app.integrations.media_runner import MediaRunnerClient
+from app.integrations.media_runner_models import MediaRunnerClientError, RunnerArtifact
+from app.runner.provider_registry import provider_profile
+from app.services.downloads import (
     MediaInspectionAuthRequired,
     MediaInspectionFailure,
     RunnerInspection,
 )
-from app.domain.downloads import DownloadPlan, MediaKind
-from app.domain.providers import ProviderAccessContextRef, ProviderAccessMode
-from app.infrastructure.media_runner import MediaRunnerClient
-from app.infrastructure.media_runner_models import (
-    MediaRunnerClientError,
-    RunnerArtifact,
-)
-from app.runner.provider_registry import provider_profile
 
 
 class ProviderCanaryRunner:

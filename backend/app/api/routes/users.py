@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends
 
 from app.api.auth_dependencies import get_current_user, get_user_service
 from app.api.errors import auth_application_error
-from app.api.schemas.auth import UserResponse
-from app.api.schemas.users import UpdateProfileRequest
-from app.application.auth import AuthError, CurrentUser, UserService
+from app.schemas.auth import UserResponse
+from app.schemas.users import UpdateProfileRequest
+from app.services.auth import AuthError, CurrentUser, UserService
 
 router = APIRouter(prefix="/users", tags=["users"])
 User = Annotated[CurrentUser, Depends(get_current_user)]

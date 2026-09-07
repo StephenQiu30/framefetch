@@ -6,12 +6,12 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from app.api.auth_dependencies import get_current_admin, get_user_service
 from app.api.errors import auth_application_error
-from app.api.schemas.users import (
+from app.schemas.users import (
     ManagedUserListResponse,
     ManagedUserResponse,
     UpdateUserAccessRequest,
 )
-from app.application.auth import AuthError, CurrentUser, UserRole, UserService
+from app.services.auth import AuthError, CurrentUser, UserRole, UserService
 
 router = APIRouter(prefix="/admin/users", tags=["admin"])
 Admin = Annotated[CurrentUser, Depends(get_current_admin)]

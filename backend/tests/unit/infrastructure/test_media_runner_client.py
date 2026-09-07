@@ -5,7 +5,11 @@ from pathlib import Path
 
 import httpx
 import pytest
-from app.application.downloads.errors import (
+from app.domain.providers import ProviderAccessContextRef, ProviderAccessMode
+from app.integrations.media_runner import MediaRunnerHttpClient
+from app.integrations.media_runner_models import MediaRunnerClientError
+from app.runner.contracts import DownloadPlanContract
+from app.services.downloads.errors import (
     MediaInspectionAuthRequired,
     MediaInspectionDurationLimitExceeded,
     MediaInspectionFailure,
@@ -14,10 +18,6 @@ from app.application.downloads.errors import (
     MediaInspectionTimeout,
     MediaInspectionUnsupported,
 )
-from app.domain.providers import ProviderAccessContextRef, ProviderAccessMode
-from app.infrastructure.media_runner import MediaRunnerHttpClient
-from app.infrastructure.media_runner_models import MediaRunnerClientError
-from app.runner.contracts import DownloadPlanContract
 
 
 @pytest.mark.asyncio

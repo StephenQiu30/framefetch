@@ -7,7 +7,10 @@ from typing import Annotated
 from fastapi import Depends, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.application.auth import (
+from app.api.dependencies import get_runtime_settings, get_services, require_service
+from app.core.config import Settings
+from app.core.errors import AppError
+from app.services.auth import (
     AuthError,
     AuthService,
     CurrentUser,
@@ -15,10 +18,6 @@ from app.application.auth import (
     UserRole,
     UserService,
 )
-from app.core.config import Settings
-from app.core.errors import AppError
-
-from .dependencies import get_runtime_settings, get_services, require_service
 
 native_bearer = HTTPBearer(auto_error=False, scheme_name="NativeBearerAuth")
 

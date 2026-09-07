@@ -6,7 +6,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from app.infrastructure.ai_cli import (
+from app.integrations.ai_cli import (
     AnalysisCliError,
     ClaudeCliVideoAnalyzer,
     CliAdapterConfig,

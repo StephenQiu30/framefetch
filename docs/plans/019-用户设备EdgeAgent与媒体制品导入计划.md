@@ -57,13 +57,13 @@
 
 ```text
 backend/app/domain/imports/                 状态、来源、manifest 值对象与规则
-backend/app/application/imports/            配对、导入、上传、完成、取消用例与 ports
+backend/app/services/imports/            配对、导入、上传、完成、取消用例与 ports
 backend/app/api/routes/edge_devices.py       用户设备管理 API
 backend/app/api/routes/media_imports.py      用户导入 API
 backend/app/api/routes/edge_agent.py         设备认证 API
-backend/app/api/schemas/                     严格公开/设备协议模型
-backend/app/infrastructure/database/         import/device repository 与 ORM
-backend/app/infrastructure/object_storage.py 单对象 multipart/quarantine 能力
+backend/app/schemas/                     严格公开/设备协议模型
+backend/app/db/         import/device repository 与 ORM
+backend/app/integrations/object_storage.py 单对象 multipart/quarantine 能力
 backend/app/workers/imports/                 验证、晋升、恢复与清理
 frontend/src/components/                     导入、配对和状态组件
 frontend/src/hooks/                          上传、设备与导入状态流程

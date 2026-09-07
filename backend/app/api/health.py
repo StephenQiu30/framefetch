@@ -5,7 +5,7 @@ from typing import Protocol, cast
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from app.api.schemas.system import LivenessResponse, ReadinessResponse
+from app.schemas.system import LivenessResponse, ReadinessResponse
 
 router = APIRouter(prefix="/health", tags=["system"])
 

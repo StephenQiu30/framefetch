@@ -3,12 +3,6 @@ from __future__ import annotations
 from dataclasses import replace
 
 import pytest
-from app.application.analysis import (
-    AnalysisApplicationError,
-    AnalysisApplicationErrorCode,
-    CancelAnalysis,
-    GetAnalysis,
-)
 from app.domain.analysis import (
     AnalysisMedia,
     AnalysisStatus,
@@ -17,6 +11,12 @@ from app.domain.analysis import (
     Shot,
     VideoAnalysisResult,
     VideoScene,
+)
+from app.services.analysis import (
+    AnalysisApplicationError,
+    AnalysisApplicationErrorCode,
+    CancelAnalysis,
+    GetAnalysis,
 )
 from tests.unit.application.analysis.fakes import FakeRepository
 from tests.unit.application.analysis.test_create_analysis import (

@@ -6,9 +6,9 @@ import sys
 from pathlib import Path
 
 import pytest
-from app.infrastructure.ai_cli.codex_app_server_client import CodexAppServerClient
-from app.infrastructure.ai_cli.config import CliAdapterConfig
-from app.infrastructure.ai_cli.errors import AnalysisCliError
+from app.integrations.ai_cli.codex_app_server_client import CodexAppServerClient
+from app.integrations.ai_cli.config import CliAdapterConfig
+from app.integrations.ai_cli.errors import AnalysisCliError
 
 
 def config(

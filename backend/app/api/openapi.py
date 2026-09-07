@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from app.api.schemas.errors import ProblemDetails
+from app.schemas.errors import ProblemDetails
 
 API_DESCRIPTION = """
 统一的视频下载与 AI 分析服务接口。

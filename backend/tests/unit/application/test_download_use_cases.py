@@ -5,7 +5,13 @@ from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
-from app.application.downloads import (
+from app.domain.downloads import (
+    DownloadSourceKind,
+    DownloadStage,
+    DownloadStatus,
+    MediaKind,
+)
+from app.services.downloads import (
     ApplicationError,
     ApplicationErrorCode,
     ArtifactSnapshot,
@@ -21,12 +27,6 @@ from app.application.downloads import (
     JobSnapshot,
     RetryDownload,
     plan_to_documents,
-)
-from app.domain.downloads import (
-    DownloadSourceKind,
-    DownloadStage,
-    DownloadStatus,
-    MediaKind,
 )
 from tests.unit.application.fakes import FakeRepository, FakeStorage
 from tests.unit.application.test_inspect_media import (

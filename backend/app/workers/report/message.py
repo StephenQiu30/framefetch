@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from app.domain.identifiers import AnalysisReportRenderer
-from app.infrastructure.messaging import EventEnvelope, EventEnvelopeError
+from app.integrations.messaging import EventEnvelope, EventEnvelopeError
 
 _FIELDS = {"job_id", "run_id", "report_id", "renderer_version", "version"}
 

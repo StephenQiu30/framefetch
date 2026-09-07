@@ -13,10 +13,7 @@ from app.domain.providers import ProviderKey
 from app.runner.command_support import child_environment, json_object
 from app.runner.errors import RunnerFailure
 from app.runner.process import ProcessResult, ProcessTimeoutError
-from app.runner.provider_errors import (
-    ProviderFailureContext,
-    classify_provider_failure,
-)
+from app.runner.provider_errors import ProviderFailureContext, classify_provider_failure
 from app.runner.provider_registry import ProviderRequest, provider_request
 from app.runner.settings import RunnerSettings
 from app.runner.utilities import safe_media_url

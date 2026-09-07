@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from app.infrastructure.database.models import (
+from app.models import (
     ArtifactRow,
     DownloadJobRow,
     MediaFormatRow,

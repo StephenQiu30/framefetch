@@ -6,7 +6,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
-from app.application.analysis_execution import (
+from app.services.analysis_execution import (
     AnalysisArtifactError,
     AnalysisScreenplaySource,
     ScreenplaySceneSource,

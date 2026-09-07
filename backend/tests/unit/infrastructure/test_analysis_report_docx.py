@@ -1,8 +1,8 @@
 from io import BytesIO
 from zipfile import ZipFile, is_zipfile
 
-from app.application.analysis import render_analysis_report_markdown
-from app.infrastructure.analysis_report_docx import PythonDocxAnalysisReportRenderer
+from app.integrations.analysis_report_docx import PythonDocxAnalysisReportRenderer
+from app.services.analysis import render_analysis_report_markdown
 from docx import Document
 from tests.unit.application.analysis.test_report import report_result
 

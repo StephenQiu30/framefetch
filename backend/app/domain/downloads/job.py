@@ -3,11 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from app.domain.downloads.enums import (
-    DownloadErrorCode,
-    DownloadStage,
-    DownloadStatus,
-)
+from app.domain.downloads.enums import DownloadErrorCode, DownloadStage, DownloadStatus
 from app.domain.downloads.errors import InvalidJobTransition
 from app.domain.downloads.formats import DownloadPlan
 from app.domain.downloads.job_rules import (

@@ -10,12 +10,9 @@ import socket
 from datetime import UTC, datetime, timedelta
 
 from app.core.config import get_settings_for_role
-from app.infrastructure.database import (
-    SqlAlchemyOutboxRepository,
-    create_engine,
-    create_session_factory,
-)
-from app.infrastructure.messaging import RabbitMqPublisher, RabbitMqTopology
+from app.db.session import create_engine, create_session_factory
+from app.integrations.messaging import RabbitMqPublisher, RabbitMqTopology
+from app.repositories.outbox_repository import SqlAlchemyOutboxRepository
 from app.workers.outbox.loop import OutboxLoopSettings, OutboxPublisherLoop
 
 

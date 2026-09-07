@@ -13,11 +13,7 @@ from app.domain.downloads.enums import (
     VideoCodecFamily,
 )
 from app.domain.downloads.errors import FormatSelectionError
-from app.domain.downloads.formats import (
-    CandidateStream,
-    DownloadPlan,
-    StreamSelection,
-)
+from app.domain.downloads.formats import CandidateStream, DownloadPlan, StreamSelection
 
 _COMPATIBLE_CODECS = {
     Container.MP4: (

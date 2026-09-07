@@ -9,14 +9,14 @@ from app.api.admission import RateLimitAdmission
 from app.api.auth_dependencies import get_current_user
 from app.api.dependencies import IdempotencyKey, get_download_use_cases
 from app.api.errors import application_error
-from app.api.schemas.inspections import (
+from app.runtime import DownloadUseCases
+from app.schemas.inspections import (
     InspectionRequest,
     InspectionResponse,
     PublicUrlInspectionSource,
 )
-from app.application.auth import CurrentUser
-from app.application.downloads import ApplicationError
-from app.runtime import DownloadUseCases
+from app.services.auth import CurrentUser
+from app.services.downloads import ApplicationError
 
 router = APIRouter(prefix="/inspections", tags=["inspections"])
 User = Annotated[CurrentUser, Depends(get_current_user)]

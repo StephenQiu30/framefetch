@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 from app.core.config import Settings
-from app.infrastructure.realtime import RabbitMqRealtimeConsumer
+from app.integrations.realtime import RabbitMqRealtimeConsumer
 from app.main import create_app
 from fastapi.testclient import TestClient
 

@@ -4,20 +4,20 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from app.application.downloads import EncryptedUrl
-from app.application.source_discoveries import (
-    SourceDiscoveryCreate,
-    SourceDiscoveryIdempotencyConflict,
-    SourceDiscoveryItemCreate,
-)
 from app.domain.source_discovery import (
     DiscoveryDecisionHint,
     DiscoveryItemKind,
     DiscoveryItemStatus,
     DiscoveryStatus,
 )
-from app.infrastructure.database.source_discovery_repository import (
+from app.repositories.source_discovery_repository import (
     SqlAlchemySourceDiscoveryRepository,
+)
+from app.services.downloads import EncryptedUrl
+from app.services.source_discoveries import (
+    SourceDiscoveryCreate,
+    SourceDiscoveryIdempotencyConflict,
+    SourceDiscoveryItemCreate,
 )
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 

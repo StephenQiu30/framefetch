@@ -10,10 +10,7 @@ import pytest
 from app.runner.plugins.yt_dlp_plugins.extractor.wechat_channels_public import (
     WechatChannelsPublicIE,
 )
-from app.runner.wechat_channels_policy import (
-    allowed_media_url,
-    has_protection_material,
-)
+from app.runner.wechat_channels_policy import allowed_media_url, has_protection_material
 from yt_dlp.utils import ExtractorError
 
 VIDEO_ID = "AFWYoXF5Bw"

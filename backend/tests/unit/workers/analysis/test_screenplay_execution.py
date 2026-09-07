@@ -3,13 +3,13 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from app.application.analysis_execution import (
+from app.domain.analysis import ScreenplayAnalysisResult
+from app.services.analysis_execution import (
     AnalysisDisposition,
     ScreenplayAnalysisRequest,
     ScreenplayAnalysisSynthesisRequest,
     ScreenplaySceneSource,
 )
-from app.domain.analysis import ScreenplayAnalysisResult
 
 from .fakes import FakeLoader
 from .fixtures import valid_screenplay_mapping

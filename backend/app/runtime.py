@@ -7,8 +7,15 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from app.application.ai_providers import AiProviderService
-from app.application.analysis import (
+from app.integrations.media_runner import MediaRunnerRouter
+from app.integrations.rate_limiter import ValkeyRateLimiter
+from app.integrations.readiness import RuntimeReadiness
+from app.integrations.realtime import RabbitMqRealtimeConsumer, RealtimeHub
+from app.repositories.operational_metrics import OperationalMetrics
+from app.repositories.redis_auth_repository import ValkeyAuthSessionStore
+from app.repositories.task_event_store import TaskEventStore
+from app.services.ai_providers import AiProviderService
+from app.services.analysis import (
     CancelAnalysis,
     CreateAnalysis,
     CreateDocumentAnalysis,
@@ -21,9 +28,9 @@ from app.application.analysis import (
     ListAnalysisSkills,
     RetryAnalysis,
 )
-from app.application.auth import AuthService, UserService
-from app.application.documents import DeleteDocument, GetDocument, ListDocuments
-from app.application.downloads import (
+from app.services.auth import AuthService, UserService
+from app.services.documents import DeleteDocument, GetDocument, ListDocuments
+from app.services.downloads import (
     CancelDownload,
     CreateDownload,
     DeleteDownload,
@@ -39,30 +46,21 @@ from app.application.downloads import (
     IssueDownloadUrl,
     RetryDownload,
 )
-from app.application.imports import (
+from app.services.imports import (
     CancelImport,
     CompleteImportUpload,
     CreateImportResource,
     CreateUploadSession,
     GetImport,
 )
-from app.application.provider_canaries import ProviderStatusService
-from app.application.provider_catalog import ProviderCatalogService
-from app.application.source_discoveries import (
+from app.services.provider_canaries import ProviderStatusService
+from app.services.provider_catalog import ProviderCatalogService
+from app.services.source_discoveries import (
     CreateSourceDiscovery,
     GetSourceDiscovery,
     InspectDiscoveredItem,
 )
-from app.application.storage_files import StorageFileService
-from app.infrastructure.media_runner import MediaRunnerRouter
-from app.infrastructure.operational_metrics import OperationalMetrics
-from app.infrastructure.rate_limiter import ValkeyRateLimiter
-from app.infrastructure.readiness import RuntimeReadiness
-from app.infrastructure.realtime import RabbitMqRealtimeConsumer, RealtimeHub
-from app.infrastructure.redis_auth_repository import (
-    ValkeyAuthSessionStore,
-)
-from app.infrastructure.task_event_store import TaskEventStore
+from app.services.storage_files import StorageFileService
 
 
 @dataclass(frozen=True, slots=True)

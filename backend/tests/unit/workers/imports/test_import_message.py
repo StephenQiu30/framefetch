@@ -2,12 +2,12 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
-from app.application.imports import (
+from app.domain.imports import ContentKind
+from app.integrations.messaging import EventEnvelope
+from app.services.imports import (
     CONTENT_IMPORT_VERIFY_REQUESTED,
     import_verify_requested_payload,
 )
-from app.domain.imports import ContentKind
-from app.infrastructure.messaging import EventEnvelope
 from app.workers.imports import ImportMessageError, parse_import_verify_requested
 
 NOW = datetime(2026, 8, 14, tzinfo=UTC)

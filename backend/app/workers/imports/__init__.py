@@ -1,19 +1,16 @@
 """Local video and screenplay import worker contracts."""
 
-from .consumer import ImportHandler, RabbitMqImportConsumer, process_delivery
-from .docx import DocxScreenplayVerifier, DocxVerificationSettings
-from .message import (
-    ImportMessageError,
-    ImportVerifyRequested,
-    parse_import_verify_requested,
+from app.integrations.imports.docx import (
+    DocxScreenplayVerifier,
+    DocxVerificationSettings,
 )
-from .pdf import PdfScreenplayVerifier, PdfVerificationSettings
-from .screenplay import ScreenplayImportVerifier
-from .text import (
+from app.integrations.imports.pdf import PdfScreenplayVerifier, PdfVerificationSettings
+from app.integrations.imports.screenplay import ScreenplayImportVerifier
+from app.integrations.imports.text import (
     TextScreenplayVerifier,
     TextVerificationSettings,
 )
-from .video import (
+from app.integrations.imports.video import (
     FfprobeVideoProbe,
     Mp4ImportVerifier,
     VerifiedVideo,
@@ -22,6 +19,16 @@ from .video import (
     VideoVerificationError,
     VideoVerificationSettings,
     verify_video,
+)
+from app.workers.imports.consumer import (
+    ImportHandler,
+    RabbitMqImportConsumer,
+    process_delivery,
+)
+from app.workers.imports.message import (
+    ImportMessageError,
+    ImportVerifyRequested,
+    parse_import_verify_requested,
 )
 
 __all__ = [

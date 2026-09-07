@@ -15,10 +15,7 @@ from typing import Any
 
 from app.domain.providers import ProviderKey, ProviderSessionVersion
 from app.runner.provider_cookie_boundary import export_provider_cookie_lease_bounded
-from app.runner.provider_cookie_lease import (
-    ProviderCookieLease,
-    seal_cookie_lease,
-)
+from app.runner.provider_cookie_lease import ProviderCookieLease, seal_cookie_lease
 from app.runner.provider_cookie_process import termination_guard
 from app.runner.provider_cookie_queue import (
     AGENT_READY_MARKER,

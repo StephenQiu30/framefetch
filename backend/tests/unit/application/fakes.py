@@ -4,7 +4,7 @@ from dataclasses import replace
 from datetime import datetime
 from uuid import UUID
 
-from app.application.downloads import (
+from app.services.downloads import (
     ArtifactSnapshot,
     DownloadCleanupRef,
     DownloadCreate,
@@ -247,11 +247,11 @@ class FakeRepository:
         del now
         job = self.jobs.get(job_id)
         if job is None or job.owner_hash != owner_hash:
-            from app.application.downloads import PersistenceNotFound
+            from app.services.downloads import PersistenceNotFound
 
             raise PersistenceNotFound
         if self.deletion_conflict:
-            from app.application.downloads import PersistenceConflict
+            from app.services.downloads import PersistenceConflict
 
             raise PersistenceConflict
         return DownloadDeletionPlan(

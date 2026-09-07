@@ -4,7 +4,8 @@ from dataclasses import replace
 from datetime import datetime
 from uuid import UUID
 
-from app.application.analysis import (
+from app.domain.analysis import AnalysisInputKind, AnalysisResultContract
+from app.services.analysis import (
     AnalysisArtifactSnapshot,
     AnalysisCreate,
     AnalysisDocumentSnapshot,
@@ -20,7 +21,6 @@ from app.application.analysis import (
     PersistenceIdempotencyConflict,
     PersistenceNotFound,
 )
-from app.domain.analysis import AnalysisInputKind, AnalysisResultContract
 
 
 class FakeFingerprinter:

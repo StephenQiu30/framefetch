@@ -5,13 +5,13 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
+from app.db.session import create_session_factory
 from app.domain.analysis import AnalysisMedia, parse_analysis_result
 from app.domain.providers import ProviderAccessContextRef, ProviderAccessMode
-from app.infrastructure.analysis_repository_serialization import (
-    analysis_result_document,
+from app.integrations.provider_analysis_evidence import (
+    SqlAlchemyAnalysisCanaryEvidenceReader,
 )
-from app.infrastructure.database import create_session_factory
-from app.infrastructure.database.models import (
+from app.models import (
     AnalysisJobRow,
     AnalysisReportArtifactRow,
     AnalysisReportVersionRow,
@@ -22,9 +22,7 @@ from app.infrastructure.database.models import (
     MediaInspectionRow,
     TaskEventRow,
 )
-from app.infrastructure.provider_analysis_evidence import (
-    SqlAlchemyAnalysisCanaryEvidenceReader,
-)
+from app.repositories.analysis_repository_serialization import analysis_result_document
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine
 from tests.unit.workers.analysis.fixtures import valid_mapping

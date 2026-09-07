@@ -7,13 +7,6 @@ from typing import Annotated, cast
 from fastapi import Header, Request
 from starlette.requests import HTTPConnection
 
-from app.application.ai_providers import AiProviderService
-from app.application.downloads import (
-    DownloadArtifactStorage,
-)
-from app.application.provider_catalog import ProviderCatalogService
-from app.application.providers import ProviderStatusView
-from app.application.storage_files import StorageFileService
 from app.core.config import Settings
 from app.core.errors import AppError
 from app.runtime import (
@@ -24,6 +17,11 @@ from app.runtime import (
     MediaImportUseCases,
     SourceDiscoveryUseCases,
 )
+from app.services.ai_providers import AiProviderService
+from app.services.downloads import DownloadArtifactStorage
+from app.services.provider_catalog import ProviderCatalogService
+from app.services.providers import ProviderStatusView
+from app.services.storage_files import StorageFileService
 
 IdempotencyKey = Annotated[
     str,

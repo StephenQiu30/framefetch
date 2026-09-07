@@ -1,6 +1,6 @@
 """Transactional outbox worker exports."""
 
-from .loop import (
+from app.workers.outbox.loop import (
     EventPublisher,
     OutboxLoopSettings,
     OutboxPublisherLoop,

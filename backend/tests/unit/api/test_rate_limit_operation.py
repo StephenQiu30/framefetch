@@ -6,7 +6,7 @@ import pytest
 from app.api.admission import RateLimitAdmission, _client_host
 from app.api.auth_dependencies import get_current_user
 from app.core.config import Settings
-from app.infrastructure.rate_limiter import RateLimitExceeded
+from app.integrations.rate_limiter import RateLimitExceeded
 from app.main import create_app
 from fastapi.testclient import TestClient
 from starlette.requests import Request

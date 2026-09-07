@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from app.infrastructure.jwt_tokens import JwtTokenService
+from app.integrations.jwt_tokens import JwtTokenService
 
 NOW = datetime.now(UTC).replace(microsecond=0)
 USER_ID = UUID("11111111-1111-4111-8111-111111111111")

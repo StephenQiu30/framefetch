@@ -5,18 +5,20 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
-from app.application.documents import GetDocument, ListDocuments
-from app.application.imports import (
+from app.domain.imports import ContentKind, ImportSourceFormat
+from app.models import DocumentArtifactRow, DocumentRow
+from app.repositories.document_catalog_repository import (
+    SqlAlchemyDocumentCatalogRepository,
+)
+from app.repositories.document_import_repository import (
+    SqlAlchemyDocumentImportRepository,
+)
+from app.services.documents import GetDocument, ListDocuments
+from app.services.imports import (
     ImportApplicationError,
     ImportApplicationErrorCode,
     ImportResourceCreate,
 )
-from app.domain.imports import ContentKind, ImportSourceFormat
-from app.infrastructure.database import (
-    SqlAlchemyDocumentCatalogRepository,
-    SqlAlchemyDocumentImportRepository,
-)
-from app.infrastructure.database.models import DocumentArtifactRow, DocumentRow
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 NOW = datetime(2026, 8, 14, 15, 0, tzinfo=UTC)

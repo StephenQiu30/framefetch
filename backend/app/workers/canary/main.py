@@ -8,12 +8,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 from app.core.config import Settings, get_settings_for_role
-from app.infrastructure.database import create_engine, create_session_factory
-from app.infrastructure.media_runner_factory import (
+from app.db.session import create_engine, create_session_factory
+from app.integrations.media_runner_factory import (
     anonymous_media_runner,
     operator_media_runners,
 )
-from app.infrastructure.provider_canary_repository import (
+from app.repositories.provider_canary_repository import (
     SqlAlchemyProviderCanaryRepository,
 )
 from app.runner.provider_registry import configure_provider_instances

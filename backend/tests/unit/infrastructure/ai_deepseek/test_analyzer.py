@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from app.infrastructure.ai_deepseek.analyzer import LangChainDeepSeekAnalyzer
-from app.infrastructure.ai_deepseek.config import DeepSeekAdapterConfig
-from app.infrastructure.ai_deepseek.frames import FrameEvidence
+from app.integrations.ai_deepseek.analyzer import LangChainDeepSeekAnalyzer
+from app.integrations.ai_deepseek.config import DeepSeekAdapterConfig
+from app.integrations.ai_deepseek.frames import FrameEvidence
 from tests.unit.infrastructure.ai_cli.helpers import (
     request,
     screenplay_glossary_request,

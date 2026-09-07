@@ -8,16 +8,23 @@
 server/
 ├── backend/                       Python 3.12 / FastAPI 后端
 │   ├── app/
-│   │   ├── api/                   HTTP 装配、公共依赖、错误与健康检查
-│   │   │   ├── routes/            `/api/*` 接口路由
-│   │   │   └── schemas/           请求与响应模型
-│   │   ├── application/           用例编排、应用模型与外部能力端口
-│   │   ├── domain/                不依赖框架的领域实体、规则与错误
-│   │   ├── infrastructure/        数据库、消息、存储、AI 与媒体适配器
+│   │   ├── api/                   HTTP 路由、依赖、错误与健康检查
+│   │   │   └── routes/            `/api/*` 接口路由
+│   │   ├── schemas/               请求与响应模型
+│   │   ├── core/                  配置、安全与通用基础能力
+│   │   ├── services/              按业务组织用例、服务模型与能力端口
+│   │   ├── domain/                不依赖框架的领域规则与实体
+│   │   ├── db/                    Engine、Session 与 Base
+│   │   ├── models/                SQLAlchemy ORM 模型
+│   │   ├── repositories/          持久化、查询与事务
+│   │   ├── integrations/          消息、存储、AI 与媒体适配器
 │   │   ├── runner/                隔离执行媒体命令的进程
-│   │   ├── workers/               Outbox、下载与分析 Worker
-│   │   ├── composition.py         运行时依赖装配
-│   │   └── main.py                FastAPI 入口
+│   │   ├── workers/               消息消费、调度与进程入口
+│   │   ├── analysis_skills/       分析技能资源
+│   │   ├── composition.py         具体服务装配
+│   │   ├── runtime.py             类型化服务集合与资源所有者
+│   │   ├── lifespan.py            FastAPI 生命周期
+│   │   └── main.py                FastAPI 应用工厂与入口
 │   ├── egress/                    Squid 出口代理策略
 │   ├── supply-chain/              后端 SBOM 与第三方声明
 │   ├── sql/schema.sql             PostgreSQL 当前态结构
@@ -44,8 +51,8 @@ server/
 ## 文件放置规则
 
 - FastAPI 路由只负责协议转换、依赖注入和调用应用用例；业务规则不得写在 `api/`。
-- 请求与响应模型放在 `api/schemas/`，不得直接暴露 ORM 模型或基础设施对象。
-- 用例编排和外部能力接口放在 `application/`；纯业务规则放在 `domain/`；具体 SDK、数据库、消息和存储实现放在 `infrastructure/`。
+- 请求与响应模型放在 `schemas/`，不得直接暴露 ORM 模型或基础设施对象。
+- 用例编排和外部能力接口放在 `services/`；纯业务规则放在 `domain/`；SQL 查询与事务放在 `repositories/`，数据库连接配置放在 `db/`，ORM 模型放在 `models/`，具体 SDK、消息、存储和媒体实现放在 `integrations/`。
 - 进程入口放在 `workers/` 或 `runner/`，不要把下载、转码或 AI 长任务放进 HTTP 请求进程。
 - 前端不使用独立的 `src/features/` 目录。App Router 页面放在 `src/app/`，业务组件按 feature 放在 `src/components/{account,admin,analysis,auth,downloads,intake,layout,providers,screenplay}/`，shadcn/ui 源码放在 `src/components/ui/`。
 - 前端请求统一从 `services/` 暴露，状态流程优先放在 `hooks/`；不要在页面中散落原始请求、轮询或错误映射逻辑。
@@ -91,11 +98,11 @@ server/
 
 ## 架构与数据边界
 
-- 后端依赖方向为 `api/workers → application → domain`。`domain` 不得导入 FastAPI、SQLAlchemy、RabbitMQ、MinIO、yt-dlp、FFmpeg 或模型 SDK。
+- 后端依赖方向为 `api/workers → services → domain`。`domain` 不得导入 FastAPI、SQLAlchemy、RabbitMQ、MinIO、yt-dlp、FFmpeg 或模型 SDK。
 - API、下载 Worker、媒体 Runner、AI Worker 是独立进程。PostgreSQL 是状态事实来源；跨 PostgreSQL/RabbitMQ 使用 transactional outbox，消费者必须支持幂等和 lease/heartbeat。
 - PostgreSQL 只通过 `backend/sql/schema.sql` 维护当前态结构。本机直接复用已运行的 PostgreSQL，按结构变更需要在已有项目数据库中幂等执行该 SQL；不得为启动或验证项目另起基础服务或覆盖现有数据。空库验证只能使用已有服务中的隔离测试数据库或远端 CI。项目不维护迁移目录、历史 schema 或旧版本兼容逻辑。结构变化时同步更新可重复执行的当前态 SQL、ORM 和测试，并同时使用空数据库与已有当前态数据库验证。
 - OpenAPI 是前后端接口契约的唯一来源，通过 `/openapi.json` 提供，并由 `/docs` 展示 Swagger UI；不维护平行 DTO、手写生成类型或旧 API 适配层。
-- 只实现当前需求，不添加旧目录、旧 API、旧 Provider 或旧数据库的兼容分支。单个源码文件原则上不超过 200 行，超过时按职责拆分。
+- 只实现当前需求，不添加旧目录、旧 API、旧 Provider 或旧数据库的兼容分支。文件按业务内聚性和事务边界拆分，不以固定行数机械拆分，不为缩短文件引入转发层或多重继承。
 
 ## 安全与运行约束
 

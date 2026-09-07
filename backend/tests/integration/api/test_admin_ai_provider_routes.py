@@ -6,14 +6,14 @@ from pathlib import Path
 from uuid import UUID
 
 from app.api.auth_dependencies import get_current_admin, get_current_user
-from app.application.ai_providers import (
+from app.core.config import Settings
+from app.main import create_app
+from app.services.ai_providers import (
     AiProviderError,
     AiProviderErrorCode,
     AiProviderProfile,
 )
-from app.application.auth import CurrentUser, UserRole
-from app.core.config import Settings
-from app.main import create_app
+from app.services.auth import CurrentUser, UserRole
 from fastapi.testclient import TestClient
 
 NOW = datetime(2026, 8, 13, tzinfo=UTC)

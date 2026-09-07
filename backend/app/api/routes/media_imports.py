@@ -13,17 +13,17 @@ from app.api.dependencies import (
     get_runtime_settings,
 )
 from app.api.errors import import_application_error
-from app.api.schemas.media_imports import (
+from app.api.upload_signing import use_local_browser_upload_endpoint
+from app.domain.imports import ContentKind, ImportSourceFormat
+from app.runtime import MediaImportUseCases
+from app.schemas.media_imports import (
     CompleteMediaImportRequest,
     MediaImportRequest,
     MediaImportResponse,
     MediaUploadSessionResponse,
 )
-from app.api.upload_signing import use_local_browser_upload_endpoint
-from app.application.auth import CurrentUser
-from app.application.imports import CompletedUploadPart, ImportApplicationError
-from app.domain.imports import ContentKind, ImportSourceFormat
-from app.runtime import MediaImportUseCases
+from app.services.auth import CurrentUser
+from app.services.imports import CompletedUploadPart, ImportApplicationError
 
 router = APIRouter(prefix="/media-imports", tags=["media-imports"])
 User = Annotated[CurrentUser, Depends(get_current_user)]

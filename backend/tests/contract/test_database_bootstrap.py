@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 
 import pytest
 import yaml
-from app.infrastructure.readiness import EXPECTED_DATABASE_TABLES
+from app.integrations.readiness import EXPECTED_DATABASE_TABLES
 
 ROOT = Path(__file__).resolve().parents[2]
 ENV_COMPOSE_PATH = ROOT.parent / "docker-compose-env.yml"

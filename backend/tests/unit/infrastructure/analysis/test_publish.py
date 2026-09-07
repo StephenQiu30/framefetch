@@ -5,22 +5,22 @@ from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from app.application.analysis import AnalysisPublish, PersistenceConflict
 from app.domain.analysis import (
     AnalysisMedia,
     AnalysisResultContract,
     parse_video_article_result,
 )
-from app.infrastructure.analysis_report_repository import (
-    ReportObject,
-    SqlAlchemyAnalysisReportRepository,
-)
-from app.infrastructure.database.models import (
+from app.models import (
     AnalysisArtifactLockRow,
     AnalysisReportArtifactRow,
     AnalysisResultRow,
     OutboxEventRow,
 )
+from app.repositories.analysis_report_repository import (
+    ReportObject,
+    SqlAlchemyAnalysisReportRepository,
+)
+from app.services.analysis import AnalysisPublish, PersistenceConflict
 from sqlalchemy import func, select, update
 from tests.unit.domain.analysis.test_video_article import article_payload
 from tests.unit.infrastructure.analysis.factories import (

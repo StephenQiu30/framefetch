@@ -1,11 +1,11 @@
 import pytest
-from app.application.analysis_execution import (
+from app.integrations.ai_cli import AnalysisCliError
+from app.services.analysis_execution import (
     AnalyzerSelection,
     ScreenplayAnalysisRequest,
     VideoAnalysisRequest,
     VideoAnalyzer,
 )
-from app.infrastructure.ai_cli import AnalysisCliError
 from app.workers.analysis.screenplay_providers import (
     ConfiguredScreenplayAnalyzerResolver,
 )

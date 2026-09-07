@@ -9,25 +9,22 @@ from datetime import UTC, datetime
 from typing import cast
 from uuid import UUID
 
-from app.application.provider_analysis_canary import (
+from app.core.config import get_settings_for_role
+from app.core.url_cipher import URLCipher
+from app.db.session import create_engine, create_session_factory
+from app.integrations.object_storage import MinioObjectStorage
+from app.integrations.provider_analysis_evidence import (
+    SqlAlchemyAnalysisCanaryEvidenceReader,
+)
+from app.integrations.url_security import FernetUrlEnvelope
+from app.repositories.provider_canary_repository import (
+    SqlAlchemyProviderCanaryRepository,
+)
+from app.runner.provider_registry import configure_provider_instances, provider_profile
+from app.services.provider_analysis_canary import (
     AnalysisCanaryTarget,
     CanaryObjectStorage,
     ProviderAnalysisCanaryService,
-)
-from app.core.config import get_settings_for_role
-from app.core.url_cipher import URLCipher
-from app.infrastructure.database import create_engine, create_session_factory
-from app.infrastructure.object_storage import MinioObjectStorage
-from app.infrastructure.provider_analysis_evidence import (
-    SqlAlchemyAnalysisCanaryEvidenceReader,
-)
-from app.infrastructure.provider_canary_repository import (
-    SqlAlchemyProviderCanaryRepository,
-)
-from app.infrastructure.url_security import FernetUrlEnvelope
-from app.runner.provider_registry import (
-    configure_provider_instances,
-    provider_profile,
 )
 from app.workers.canary.targets import ProviderCanaryTarget, parse_canary_targets
 

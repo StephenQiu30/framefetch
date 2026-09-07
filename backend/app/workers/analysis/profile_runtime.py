@@ -6,15 +6,9 @@ from dataclasses import dataclass, replace
 from importlib.metadata import version
 from pathlib import Path
 
-from app.application.ai_providers import (
-    AiProviderAuthMode,
-    AiProviderEngine,
-    AiProviderProfile,
-)
-from app.application.analysis_execution import VideoAnalyzer
 from app.core.ai_provider_cipher import FernetAiProviderSecretCipher
 from app.core.config import Settings
-from app.infrastructure.ai_cli import (
+from app.integrations.ai_cli import (
     AnalysisCliError,
     ClaudeCliVideoAnalyzer,
     CliAdapterConfig,
@@ -22,10 +16,16 @@ from app.infrastructure.ai_cli import (
     media_preflight,
     preflight,
 )
-from app.infrastructure.ai_deepseek import (
+from app.integrations.ai_deepseek import (
     DeepSeekAdapterConfig,
     LangChainDeepSeekAnalyzer,
 )
+from app.services.ai_providers import (
+    AiProviderAuthMode,
+    AiProviderEngine,
+    AiProviderProfile,
+)
+from app.services.analysis_execution import VideoAnalyzer
 
 
 @dataclass(frozen=True, slots=True)

@@ -4,14 +4,14 @@ import base64
 from uuid import UUID
 
 import pytest
-from app.application.downloads import (
+from app.integrations.thumbnail_storage import MinioThumbnailStorage
+from app.services.downloads import (
     GetThumbnail,
     PersistThumbnail,
     ThumbnailObject,
     ThumbnailSource,
     ThumbnailStorageError,
 )
-from app.infrastructure.thumbnail_storage import MinioThumbnailStorage
 
 INSPECTION_ID = UUID("11111111-1111-4111-8111-111111111111")
 OWNER = "a" * 64

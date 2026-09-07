@@ -3,15 +3,15 @@ from datetime import timedelta
 from uuid import uuid4
 
 import pytest
-from app.application.analysis import AnalysisPublish
-from app.application.quotas import QuotaExceeded, QuotaPolicy
-from app.infrastructure.analysis_report_docx import PythonDocxAnalysisReportRenderer
-from app.infrastructure.analysis_report_repository import (
+from app.integrations.analysis_report_docx import PythonDocxAnalysisReportRenderer
+from app.models import ArtifactRow
+from app.repositories.analysis_report_repository import (
     ReportObject,
     SqlAlchemyAnalysisReportRepository,
 )
-from app.infrastructure.analysis_repository import SqlAlchemyAnalysisRepository
-from app.infrastructure.database.models import ArtifactRow
+from app.repositories.analysis_repository import SqlAlchemyAnalysisRepository
+from app.services.analysis import AnalysisPublish
+from app.services.quotas import QuotaExceeded, QuotaPolicy
 from app.workers.report.message import ReportRequested
 from app.workers.report.publisher import ReportPublisher
 from sqlalchemy import func, select

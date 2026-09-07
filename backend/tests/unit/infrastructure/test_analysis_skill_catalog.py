@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from app.analysis_skills import BUILTIN_ANALYSIS_SKILLS, AnalysisSkillRegistry
 from app.domain.analysis import AnalysisInputKind, AnalysisResultContract
-from app.infrastructure.analysis_skill_catalog import BuiltinAnalysisSkillCatalog
+from app.integrations.analysis_skill_catalog import BuiltinAnalysisSkillCatalog
 
 
 def _document(

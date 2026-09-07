@@ -4,8 +4,17 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from app.application import downloads as application
-from app.infrastructure import database
+from app.models import (
+    ArtifactRow,
+    DownloadJobRow,
+    DownloadThumbnailRow,
+    MediaImportAttemptRow,
+    MediaImportRow,
+    MediaInspectionRow,
+)
+from app.repositories.contracts import ArtifactCreate
+from app.repositories.download_repository import SqlAlchemyDownloadRepository
+from app.services import downloads as application
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
@@ -16,7 +25,7 @@ NOW = datetime(2026, 8, 6, tzinfo=UTC)
 async def test_download_repository_handles_the_complete_application_lifecycle(
     postgres_engine: AsyncEngine,
 ) -> None:
-    repository = database.SqlAlchemyDownloadRepository(
+    repository = SqlAlchemyDownloadRepository(
         async_sessionmaker(postgres_engine, expire_on_commit=False)
     )
     store = repository
@@ -131,7 +140,7 @@ async def test_download_repository_handles_the_complete_application_lifecycle(
         job_id,
         "worker-1",
         claimed.attempt,
-        database.ArtifactCreate(
+        ArtifactCreate(
             bucket="video-artifacts",
             sha256="0" * 64,
             size_bytes=1024,
@@ -147,7 +156,7 @@ async def test_download_repository_handles_the_complete_application_lifecycle(
     assert artifact.object_key.endswith("/video.mp4")
     assert (await store.get_job(job_id)).status == "succeeded"
     async with async_sessionmaker(postgres_engine, expire_on_commit=False)() as session:
-        inspection = await session.get(database.MediaInspectionRow, inspection_id)
+        inspection = await session.get(MediaInspectionRow, inspection_id)
         assert inspection is not None
         inspection.expires_at = NOW - timedelta(minutes=1)
         await session.commit()
@@ -177,13 +186,13 @@ async def test_history_includes_browser_imports_and_searches_filename(
     postgres_engine: AsyncEngine,
 ) -> None:
     sessions = async_sessionmaker(postgres_engine, expire_on_commit=False)
-    repository = database.SqlAlchemyDownloadRepository(sessions)
+    repository = SqlAlchemyDownloadRepository(sessions)
     store = repository
     job_id = uuid4()
     owner = "b" * 64
     async with sessions.begin() as session:
         session.add(
-            database.DownloadJobRow(
+            DownloadJobRow(
                 id=job_id,
                 source_kind="browser_import",
                 inspection_id=None,
@@ -202,7 +211,7 @@ async def test_history_includes_browser_imports_and_searches_filename(
         )
         await session.flush()
         session.add(
-            database.MediaImportRow(
+            MediaImportRow(
                 id=job_id,
                 owner_hash=owner,
                 idempotency_key="local-video-import",
@@ -221,7 +230,7 @@ async def test_history_includes_browser_imports_and_searches_filename(
             )
         )
         session.add(
-            database.ArtifactRow(
+            ArtifactRow(
                 id=uuid4(),
                 job_id=job_id,
                 attempt=1,
@@ -237,7 +246,7 @@ async def test_history_includes_browser_imports_and_searches_filename(
             )
         )
         session.add(
-            database.DownloadThumbnailRow(
+            DownloadThumbnailRow(
                 job_id=job_id,
                 bucket="video-artifacts",
                 object_key=f"thumbnails/{job_id}/first-frame.jpg",
@@ -279,7 +288,7 @@ async def test_download_repository_prepares_and_finishes_owned_file_deletion(
     postgres_engine: AsyncEngine,
 ) -> None:
     sessions = async_sessionmaker(postgres_engine, expire_on_commit=False)
-    repository = database.SqlAlchemyDownloadRepository(sessions)
+    repository = SqlAlchemyDownloadRepository(sessions)
     store = repository
     job_id = uuid4()
     owner = "d" * 64
@@ -288,7 +297,7 @@ async def test_download_repository_prepares_and_finishes_owned_file_deletion(
     thumbnail_key = f"thumbnails/{job_id}/{'e' * 64}.jpg"
     async with sessions.begin() as session:
         session.add(
-            database.DownloadJobRow(
+            DownloadJobRow(
                 id=job_id,
                 source_kind="browser_import",
                 owner_hash=owner,
@@ -307,7 +316,7 @@ async def test_download_repository_prepares_and_finishes_owned_file_deletion(
         await session.flush()
         session.add_all(
             (
-                database.MediaImportRow(
+                MediaImportRow(
                     id=job_id,
                     owner_hash=owner,
                     idempotency_key="delete-import",
@@ -324,7 +333,7 @@ async def test_download_repository_prepares_and_finishes_owned_file_deletion(
                     created_at=NOW,
                     updated_at=NOW,
                 ),
-                database.ArtifactRow(
+                ArtifactRow(
                     id=uuid4(),
                     job_id=job_id,
                     attempt=1,
@@ -338,7 +347,7 @@ async def test_download_repository_prepares_and_finishes_owned_file_deletion(
                     media_metadata={},
                     created_at=NOW,
                 ),
-                database.DownloadThumbnailRow(
+                DownloadThumbnailRow(
                     job_id=job_id,
                     bucket="video-artifacts",
                     object_key=thumbnail_key,
@@ -352,7 +361,7 @@ async def test_download_repository_prepares_and_finishes_owned_file_deletion(
         )
         await session.flush()
         session.add(
-            database.MediaImportAttemptRow(
+            MediaImportAttemptRow(
                 resource_id=job_id,
                 attempt=1,
                 status="ready",
@@ -380,7 +389,7 @@ async def test_download_repository_prepares_and_finishes_owned_file_deletion(
     }
     async with sessions() as session:
         artifact = await session.scalar(
-            select(database.ArtifactRow).where(database.ArtifactRow.job_id == job_id)
+            select(ArtifactRow).where(ArtifactRow.job_id == job_id)
         )
         assert artifact is not None
         assert artifact.deleted_at == NOW
@@ -388,14 +397,14 @@ async def test_download_repository_prepares_and_finishes_owned_file_deletion(
     await store.finish_download_deletion(job_id, owner)
 
     async with sessions() as session:
-        assert await session.get(database.DownloadJobRow, job_id) is None
+        assert await session.get(DownloadJobRow, job_id) is None
 
 
 @pytest.mark.asyncio
 async def test_download_repository_handles_cancellation(
     postgres_engine: AsyncEngine,
 ) -> None:
-    repository = database.SqlAlchemyDownloadRepository(
+    repository = SqlAlchemyDownloadRepository(
         async_sessionmaker(postgres_engine, expire_on_commit=False)
     )
     store = repository
@@ -451,7 +460,7 @@ async def test_download_repository_handles_cancellation(
 async def test_get_inspection_filters_expired_formats(
     postgres_engine: AsyncEngine,
 ) -> None:
-    repository = database.SqlAlchemyDownloadRepository(
+    repository = SqlAlchemyDownloadRepository(
         async_sessionmaker(postgres_engine, expire_on_commit=False)
     )
     store = repository

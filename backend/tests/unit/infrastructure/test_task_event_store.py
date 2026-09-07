@@ -4,8 +4,8 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
-from app.infrastructure.database.models import TaskEventRow
-from app.infrastructure.task_event_store import TaskEventStore
+from app.models import TaskEventRow
+from app.repositories.task_event_store import TaskEventStore
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 

@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
-from app.workers.imports.workspace import PrivateImportWorkspace
+from app.integrations.imports.workspace import PrivateImportWorkspace
 
 TASK_ID = "import_11111111111141118111111111111111_1"
 

@@ -5,18 +5,9 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
-from app.application.analysis import AnalysisCreate
-from app.domain.analysis import (
-    AnalysisMedia,
-    AnalysisResult,
-    parse_analysis_result,
-)
-from app.infrastructure.database.models import (
-    ArtifactRow,
-    DownloadJobRow,
-    MediaFormatRow,
-    MediaInspectionRow,
-)
+from app.domain.analysis import AnalysisMedia, AnalysisResult, parse_analysis_result
+from app.models import ArtifactRow, DownloadJobRow, MediaFormatRow, MediaInspectionRow
+from app.services.analysis import AnalysisCreate
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from tests.unit.workers.analysis.fixtures import valid_mapping
 

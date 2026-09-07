@@ -1,7 +1,7 @@
 import hashlib
 
 import pytest
-from app.application.analysis_execution import (
+from app.services.analysis_execution import (
     AnalysisArtifactError,
     ScreenplaySceneSource,
     plan_screenplay_rewrite,

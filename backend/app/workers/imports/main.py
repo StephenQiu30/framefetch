@@ -6,8 +6,21 @@ import asyncio
 from dataclasses import dataclass
 from datetime import timedelta
 
-from app.application.downloads import PersistDownloadThumbnail
-from app.application.import_execution import (
+from app.core.config import Settings, get_settings_for_role
+from app.db.session import create_engine, create_session_factory
+from app.integrations.imports.verifier_factory import build_screenplay_verifier
+from app.integrations.imports.video import Mp4ImportVerifier, VideoVerificationSettings
+from app.integrations.imports.workspace import PrivateImportWorkspace
+from app.integrations.messaging import RabbitMqTopology
+from app.integrations.object_storage import MinioObjectStorage
+from app.integrations.thumbnail_storage import MinioThumbnailStorage
+from app.repositories.document_import_execution_repository import (
+    SqlAlchemyDocumentImportExecutionRepository,
+)
+from app.repositories.download_repository import SqlAlchemyDownloadRepository
+from app.repositories.media_import_repository import SqlAlchemyMediaImportRepository
+from app.services.downloads import PersistDownloadThumbnail
+from app.services.import_execution import (
     DocumentImportExecution,
     DocumentImportRecoverySweeper,
     ImportExecution,
@@ -15,17 +28,6 @@ from app.application.import_execution import (
     ImportRecoverySweeper,
     RoutedImportExecution,
 )
-from app.core.config import Settings, get_settings_for_role
-from app.infrastructure.database import (
-    SqlAlchemyDocumentImportExecutionRepository,
-    SqlAlchemyDownloadRepository,
-    SqlAlchemyMediaImportRepository,
-    create_engine,
-    create_session_factory,
-)
-from app.infrastructure.messaging import RabbitMqTopology
-from app.infrastructure.object_storage import MinioObjectStorage
-from app.infrastructure.thumbnail_storage import MinioThumbnailStorage
 from app.workers.download.thumbnail import ArtifactThumbnailRecovery
 from app.workers.imports.consumer import RabbitMqImportConsumer
 from app.workers.imports.runtime_support import (
@@ -34,12 +36,6 @@ from app.workers.imports.runtime_support import (
     worker_id,
 )
 from app.workers.imports.thumbnail_backfill import DownloadThumbnailBackfill
-from app.workers.imports.verifier_factory import build_screenplay_verifier
-from app.workers.imports.video import (
-    Mp4ImportVerifier,
-    VideoVerificationSettings,
-)
-from app.workers.imports.workspace import PrivateImportWorkspace
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 

@@ -1,7 +1,7 @@
 import pytest
 from app.core.config import Settings
 from app.core.rate_limits import RateLimitPolicy
-from app.infrastructure.rate_limiter import ValkeyRateLimiter
+from app.integrations.rate_limiter import ValkeyRateLimiter
 from pydantic import ValidationError
 
 

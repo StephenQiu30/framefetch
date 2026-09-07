@@ -6,8 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from app.application.analysis import AnalysisJobSnapshot
-from app.application.analysis_execution import (
+from app.services.analysis import AnalysisJobSnapshot
+from app.services.analysis_execution import (
     AnalysisExecution,
     AnalysisScreenplaySource,
     LocalScreenplayArtifact,

@@ -11,11 +11,13 @@ from aio_pika.abc import (
     AbstractQueue,
     AbstractRobustConnection,
 )
-from app.application.imports import ImportDisposition
 from app.domain.imports import ContentKind
-from app.infrastructure.messaging import RabbitMqTopology, configured_rabbitmq_url
-
-from .message import ImportMessageError, parse_import_verify_requested
+from app.integrations.messaging import RabbitMqTopology, configured_rabbitmq_url
+from app.services.imports import ImportDisposition
+from app.workers.imports.message import (
+    ImportMessageError,
+    parse_import_verify_requested,
+)
 
 
 class ImportHandler(Protocol):

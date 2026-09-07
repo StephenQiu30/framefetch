@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from app.application.analysis import PersistenceConflict, PersistenceNotFound
-from app.infrastructure.database.models import OutboxEventRow
-from app.infrastructure.database.models.analysis import AnalysisArtifactLockRow
+from app.models import OutboxEventRow
+from app.models.analysis import AnalysisArtifactLockRow
+from app.services.analysis import PersistenceConflict, PersistenceNotFound
 from sqlalchemy import func, select
 from tests.unit.infrastructure.analysis.factories import (
     analysis_command,

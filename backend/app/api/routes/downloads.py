@@ -15,23 +15,19 @@ from app.api.dependencies import (
     get_runtime_settings,
 )
 from app.api.errors import application_error
-from app.api.schemas.downloads import (
-    DownloadRequest,
-    DownloadResponse,
-    DownloadUrlResponse,
-)
-from app.api.schemas.history import DownloadHistoryResponse
 from app.api.upload_signing import use_browser_download_proxy
-from app.application.auth import CurrentUser
-from app.application.downloads import (
+from app.domain.downloads import DownloadStatus
+from app.runtime import DownloadUseCases
+from app.schemas.downloads import DownloadRequest, DownloadResponse, DownloadUrlResponse
+from app.schemas.history import DownloadHistoryResponse
+from app.services.auth import CurrentUser
+from app.services.downloads import (
     ApplicationError,
     ArtifactSnapshot,
     DownloadArtifactStorage,
     DownloadView,
     download_disposition,
 )
-from app.domain.downloads import DownloadStatus
-from app.runtime import DownloadUseCases
 
 router = APIRouter(prefix="/downloads", tags=["downloads"])
 User = Annotated[CurrentUser, Depends(get_current_user)]

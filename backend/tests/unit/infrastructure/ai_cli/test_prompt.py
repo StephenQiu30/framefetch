@@ -2,7 +2,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from app.domain.analysis import AnalysisResultContract
-from app.infrastructure.ai_cli.prompt import analysis_prompt
+from app.integrations.ai_cli.prompt import analysis_prompt
 from tests.unit.infrastructure.ai_cli.helpers import request
 
 

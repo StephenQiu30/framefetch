@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends
 
 from app.api.auth_dependencies import get_current_user
 from app.api.dependencies import get_provider_statuses
-from app.api.schemas.providers import ProviderListResponse
-from app.application.auth import CurrentUser
-from app.application.providers import ProviderStatusView
+from app.schemas.providers import ProviderListResponse
+from app.services.auth import CurrentUser
+from app.services.providers import ProviderStatusView
 
 router = APIRouter(prefix="/providers", tags=["providers"])
 User = Annotated[CurrentUser, Depends(get_current_user)]

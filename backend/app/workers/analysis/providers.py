@@ -2,16 +2,13 @@ from __future__ import annotations
 
 import os
 
-from app.application.ai_providers import AiProviderRepository
-from app.application.analysis_execution import AnalyzerSelection
 from app.core.ai_provider_cipher import FernetAiProviderSecretCipher
 from app.core.config import Settings
-from app.infrastructure.ai_cli import AnalysisCliError
-from app.infrastructure.ai_cli.environment import minimum_host_environment
-
-from .profile_runtime import (
-    build_profile_runtime,
-)
+from app.integrations.ai_cli import AnalysisCliError
+from app.integrations.ai_cli.environment import minimum_host_environment
+from app.services.ai_providers import AiProviderRepository
+from app.services.analysis_execution import AnalyzerSelection
+from app.workers.analysis.profile_runtime import build_profile_runtime
 
 
 class ConfiguredAnalyzerResolver:

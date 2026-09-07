@@ -3,26 +3,6 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
-from app.application.downloads import (
-    ApplicationError,
-    ArtifactSnapshot,
-    DownloadAnalyticsDailyView,
-    DownloadAnalyticsSourceView,
-    DownloadAnalyticsSummaryView,
-    DownloadAnalyticsView,
-    DownloadHistoryItemView,
-    DownloadHistorySummaryView,
-    DownloadHistoryView,
-    DownloadUrl,
-    DownloadView,
-    FormatView,
-    InspectionView,
-    ThumbnailContent,
-)
-from app.application.source_discoveries import (
-    SourceDiscoveryItemView,
-    SourceDiscoveryView,
-)
 from app.domain.downloads import (
     AudioCodecFamily,
     CompatibilityProfile,
@@ -41,6 +21,23 @@ from app.domain.source_discovery import (
     DiscoveryStatus,
 )
 from app.runtime import DownloadUseCases, SourceDiscoveryUseCases
+from app.services.downloads import (
+    ApplicationError,
+    ArtifactSnapshot,
+    DownloadAnalyticsDailyView,
+    DownloadAnalyticsSourceView,
+    DownloadAnalyticsSummaryView,
+    DownloadAnalyticsView,
+    DownloadHistoryItemView,
+    DownloadHistorySummaryView,
+    DownloadHistoryView,
+    DownloadUrl,
+    DownloadView,
+    FormatView,
+    InspectionView,
+    ThumbnailContent,
+)
+from app.services.source_discoveries import SourceDiscoveryItemView, SourceDiscoveryView
 
 NOW = datetime(2026, 8, 6, 10, tzinfo=UTC)
 INSPECTION_ID = UUID("11111111-1111-4111-8111-111111111111")

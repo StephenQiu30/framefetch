@@ -1,9 +1,9 @@
 from datetime import UTC, datetime
 
 import pytest
-from app.infrastructure.database import create_session_factory
-from app.infrastructure.database.operational_counter import increment_counter
-from app.infrastructure.operational_metrics import OperationalMetrics
+from app.db.session import create_session_factory
+from app.repositories.operational_counter import increment_counter
+from app.repositories.operational_metrics import OperationalMetrics
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 

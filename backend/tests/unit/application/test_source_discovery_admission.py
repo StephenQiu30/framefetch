@@ -1,5 +1,5 @@
 import pytest
-from app.application.source_discoveries.url_admission import canonicalize_article_url
+from app.services.source_discoveries.url_admission import canonicalize_article_url
 
 
 def test_article_path_and_query_forms_are_canonicalized() -> None:

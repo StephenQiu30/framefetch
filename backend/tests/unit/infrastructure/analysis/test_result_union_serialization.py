@@ -7,7 +7,7 @@ from app.domain.analysis import (
     AnalysisResultKind,
     parse_video_article_result,
 )
-from app.infrastructure.analysis_repository_serialization import (
+from app.repositories.analysis_repository_serialization import (
     analysis_result_document,
     analysis_result_from_document,
 )

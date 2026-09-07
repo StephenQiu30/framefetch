@@ -5,15 +5,11 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from app.infrastructure.database import (
-    ArtifactCreate,
-    DownloadCreate,
-    FormatCreate,
-    IdempotencyConflict,
-    InspectionCreate,
-    RepositoryNotFound,
-    SqlAlchemyDownloadRepository,
-)
+from app.repositories.contracts import ArtifactCreate
+from app.repositories.download_repository import SqlAlchemyDownloadRepository
+from app.repositories.errors import IdempotencyConflict, RepositoryNotFound
+from app.services.downloads.download_models import DownloadCreate
+from app.services.downloads.inspection_models import FormatCreate, InspectionCreate
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 

@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
-from app.application.analysis import (
+from app.services.analysis import (
     AnalysisApplicationError,
     AnalysisApplicationErrorCode,
     AnalysisJobSnapshot,

@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends, Query
 
 from app.api.auth_dependencies import get_current_admin
 from app.api.dependencies import get_storage_file_service
-from app.api.schemas.admin_files import (
+from app.schemas.admin_files import (
     StorageCleanupRequest,
     StorageCleanupResponse,
     StoredFileListResponse,
 )
-from app.application.auth import CurrentUser
-from app.application.storage_files import StorageFileService
+from app.services.auth import CurrentUser
+from app.services.storage_files import StorageFileService
 
 router = APIRouter(prefix="/admin/files", tags=["admin"])
 Admin = Annotated[CurrentUser, Depends(get_current_admin)]

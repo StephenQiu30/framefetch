@@ -74,7 +74,7 @@ initial inspect
 | `runner/provider_catalog.py` | YouTube 是普通 `_standard` profile | 没有 YouTube 专用会话或请求证明策略 |
 | `runner/settings.py` | 只有统一/Provider 出口代理 | 没有 Secret 路径、临时目录或会话版本配置 |
 | `runner/commands.py` | 三条 yt-dlp 路径都没有 `--cookies` | 会话从未进入真实子进程 |
-| `api/schemas/inspections.py` | 请求只有 `url` 且 extra forbid | 直接提交 Cookie 会被 422；该边界应保留 |
+| `schemas/inspections.py` | 请求只有 `url` 且 extra forbid | 直接提交 Cookie 会被 422；该边界应保留 |
 | `runner/commands.py` | 多类错误合并为 `provider_access_required` | 无法区分 Cookie、POT、IP、限流和 extractor 回归 |
 | `api/errors.py` | detail 固定称 Cookie 上传不支持 | 用户被错误引导，截图即为该结果 |
 | `download_execution/errors.py` | 不识别 `provider_*` | 下载前重解析失败会误归为 `worker_lost` 并放大重试 |

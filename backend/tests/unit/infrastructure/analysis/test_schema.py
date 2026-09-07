@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.infrastructure.database import Base
+from app.db.base import Base
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.schema import CreateTable
 

@@ -1,4 +1,4 @@
-from app.api.schemas.analysis_results import ANALYSIS_RESULT_RESPONSE_ADAPTER
+from app.schemas.analysis_results import ANALYSIS_RESULT_RESPONSE_ADAPTER
 from tests.unit.domain.analysis.screenplay_factories import (
     screenplay_analysis_result,
     screenplay_rewrite_result,

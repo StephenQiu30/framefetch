@@ -7,11 +7,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID, uuid4
 
-from app.application.download_execution import (
-    DownloadExecution,
-    DownloadExecutionSettings,
-)
-from app.application.downloads import EncryptedUrl, plan_to_documents
 from app.domain.downloads import (
     AudioCodecFamily,
     CompatibilityProfile,
@@ -23,7 +18,9 @@ from app.domain.downloads import (
     ProviderHints,
     VideoCodecFamily,
 )
-from app.infrastructure.media_runner_models import RunnerArtifact, RunnerProgress
+from app.integrations.media_runner_models import RunnerArtifact, RunnerProgress
+from app.services.download_execution import DownloadExecution, DownloadExecutionSettings
+from app.services.downloads import EncryptedUrl, plan_to_documents
 
 NOW = datetime(2026, 8, 6, 8, tzinfo=UTC)
 

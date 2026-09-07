@@ -4,11 +4,7 @@ from pathlib import Path
 
 import pytest
 from app.runner import settings as runner_settings
-from app.runner.settings import (
-    RunnerSettings,
-    egress_affinity_id,
-    get_runner_settings,
-)
+from app.runner.settings import RunnerSettings, egress_affinity_id, get_runner_settings
 from pydantic import ValidationError
 
 SECRET = "runner-shared-secret-material-at-least-32-bytes"

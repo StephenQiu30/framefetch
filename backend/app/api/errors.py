@@ -7,17 +7,11 @@ from typing import cast
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from app.application.analysis import (
-    AnalysisApplicationError,
-    AnalysisApplicationErrorCode,
-)
-from app.application.auth import AuthError, AuthErrorCode
-from app.application.downloads import ApplicationError, ApplicationErrorCode
-from app.application.imports import (
-    ImportApplicationError,
-    ImportApplicationErrorCode,
-)
 from app.core.errors import AppError
+from app.services.analysis import AnalysisApplicationError, AnalysisApplicationErrorCode
+from app.services.auth import AuthError, AuthErrorCode
+from app.services.downloads import ApplicationError, ApplicationErrorCode
+from app.services.imports import ImportApplicationError, ImportApplicationErrorCode
 
 _ERRORS: dict[ApplicationErrorCode, tuple[int, str, str]] = {
     ApplicationErrorCode.ARTICLE_ACCESS_RESTRICTED: (

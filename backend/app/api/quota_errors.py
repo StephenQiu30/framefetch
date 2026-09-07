@@ -5,10 +5,9 @@ from typing import cast
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from app.application.quotas import QuotaExceeded
+from app.api.errors import app_error_handler
 from app.core.errors import AppError
-
-from .errors import app_error_handler
+from app.services.quotas import QuotaExceeded
 
 
 async def quota_error_handler(request: Request, error: Exception) -> JSONResponse:

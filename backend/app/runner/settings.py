@@ -8,16 +8,9 @@ from urllib.parse import urlsplit
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.domain.providers import (
-    ProviderAccessMode,
-    ProviderKey,
-    ProviderSessionVersion,
-)
+from app.domain.providers import ProviderAccessMode, ProviderKey, ProviderSessionVersion
 from app.runner.provider_instances import validated_instance_hosts
-from app.runner.version import (
-    YOUTUBE_POT_PROVIDER_ATTESTATION,
-    YTDLP_ENGINE_COMMIT,
-)
+from app.runner.version import YOUTUBE_POT_PROVIDER_ATTESTATION, YTDLP_ENGINE_COMMIT
 
 _PROVIDER_KEY = re.compile(r"[a-z][a-z0-9_-]{0,31}")
 _REFERENCE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}")

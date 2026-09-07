@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 from app.api.auth_dependencies import get_current_user
-from app.application.auth import CurrentUser, UserRole
-from app.application.downloads import ApplicationError, ApplicationErrorCode
 from app.core.config import Settings
 from app.domain.downloads import DownloadStatus
 from app.main import create_app
+from app.services.auth import CurrentUser, UserRole
+from app.services.downloads import ApplicationError, ApplicationErrorCode
 from fastapi.testclient import TestClient
 from tests.integration.api.fakes import (
     DISCOVERY_ID,

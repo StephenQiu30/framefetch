@@ -7,17 +7,14 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from app.application.ai_providers import (
+from app.core.config import Settings
+from app.integrations.ai_cli import CliCapabilities, CodexAppServerVideoAnalyzer
+from app.integrations.ai_deepseek import LangChainDeepSeekAnalyzer
+from app.services.ai_providers import (
     AiProviderAuthMode,
     AiProviderEngine,
     AiProviderProfile,
 )
-from app.core.config import Settings
-from app.infrastructure.ai_cli import (
-    CliCapabilities,
-    CodexAppServerVideoAnalyzer,
-)
-from app.infrastructure.ai_deepseek import LangChainDeepSeekAnalyzer
 from app.workers.analysis import profile_runtime
 from app.workers.analysis.main import _rabbitmq_worker_url
 from app.workers.analysis.providers import (

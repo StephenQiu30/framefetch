@@ -3,9 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from app.runner.plugins.yt_dlp_plugins.extractor.mediatrack import (
-    MediaTrackReviewIE,
-)
+from app.runner.plugins.yt_dlp_plugins.extractor.mediatrack import MediaTrackReviewIE
 from yt_dlp.utils import ExtractorError
 
 URL = (

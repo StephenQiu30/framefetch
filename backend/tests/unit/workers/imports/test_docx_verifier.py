@@ -10,12 +10,12 @@ from uuid import UUID
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 import pytest
-from app.application.import_execution import (
+from app.domain.documents import ScreenplayElementKind
+from app.domain.imports import ContentKind, ImportErrorCode, ImportSourceFormat
+from app.services.import_execution import (
     ImportVerificationClaim,
     ImportVerificationRejected,
 )
-from app.domain.documents import ScreenplayElementKind
-from app.domain.imports import ContentKind, ImportErrorCode, ImportSourceFormat
 from app.workers.imports import (
     DocxScreenplayVerifier,
     DocxVerificationSettings,

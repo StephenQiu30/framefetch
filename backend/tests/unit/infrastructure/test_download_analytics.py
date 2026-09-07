@@ -4,8 +4,8 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
-from app.infrastructure.database import SqlAlchemyDownloadRepository
-from app.infrastructure.database.analytics_repository import _integer
+from app.repositories.analytics_repository import _integer
+from app.repositories.download_repository import SqlAlchemyDownloadRepository
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from tests.unit.infrastructure.analytics_helpers import (
     END,

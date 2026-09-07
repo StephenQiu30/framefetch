@@ -9,13 +9,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.application.auth import AuthError
-from app.infrastructure.realtime import (
+from app.integrations.realtime import (
     RealtimeConnection,
     RealtimeConnectionLimit,
     RealtimeHub,
 )
-from app.infrastructure.task_event_store import TaskEventStore
+from app.repositories.task_event_store import TaskEventStore
+from app.services.auth import AuthError
 
 router = APIRouter(tags=["realtime"])
 

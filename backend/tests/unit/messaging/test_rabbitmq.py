@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 from aio_pika import DeliveryMode
-from app.infrastructure.messaging import (
+from app.integrations.messaging import (
     EventEnvelope,
     PublishNotConfirmed,
     RabbitMqPublisher,
@@ -102,7 +102,7 @@ async def test_robust_topology_and_confirmed_mandatory_publish(monkeypatch) -> N
         return connection
 
     monkeypatch.setattr(
-        "app.infrastructure.messaging.rabbitmq.aio_pika.connect_robust", connect
+        "app.integrations.messaging.rabbitmq.aio_pika.connect_robust", connect
     )
     topology = RabbitMqTopology("video.events", "video.download", "download.requested")
     publisher = RabbitMqPublisher("amqp://broker/", topology)
@@ -152,7 +152,7 @@ async def test_nack_is_not_treated_as_success(monkeypatch) -> None:
         return connection
 
     monkeypatch.setattr(
-        "app.infrastructure.messaging.rabbitmq.aio_pika.connect_robust", connect
+        "app.integrations.messaging.rabbitmq.aio_pika.connect_robust", connect
     )
     publisher = RabbitMqPublisher(
         "amqp://broker/",
@@ -176,7 +176,7 @@ async def test_topology_failure_closes_partial_connection(monkeypatch) -> None:
         return connection
 
     monkeypatch.setattr(
-        "app.infrastructure.messaging.rabbitmq.aio_pika.connect_robust", connect
+        "app.integrations.messaging.rabbitmq.aio_pika.connect_robust", connect
     )
     publisher = RabbitMqPublisher(
         "amqp://broker/",

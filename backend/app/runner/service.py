@@ -31,10 +31,7 @@ from app.runner.contracts import (
 from app.runner.errors import RunnerFailure
 from app.runner.gallery import download_gallery_zip
 from app.runner.inspection_pipeline import RunnerInspectionPipeline
-from app.runner.metadata import (
-    build_download_options,
-    collection_fallback_assets,
-)
+from app.runner.metadata import build_download_options, collection_fallback_assets
 from app.runner.presentation import inspect_response
 from app.runner.provider_registry import (
     ProviderRequest,
@@ -45,11 +42,7 @@ from app.runner.provider_sessions import ProviderSessionStore
 from app.runner.resolved_info import write_resolved_info
 from app.runner.settings import RunnerSettings
 from app.runner.thumbnails import ThumbnailFetcher
-from app.runner.utilities import (
-    file_sha256,
-    require_source_identity,
-    safe_media_url,
-)
+from app.runner.utilities import file_sha256, require_source_identity, safe_media_url
 from app.runner.verification import verify_probe
 from app.runner.workspace import (
     TaskWorkspace,

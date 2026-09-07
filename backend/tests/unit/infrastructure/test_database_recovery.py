@@ -4,13 +4,10 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from app.infrastructure.database import (
-    DownloadCreate,
-    FormatCreate,
-    InspectionCreate,
-    SqlAlchemyDownloadRepository,
-    SqlAlchemyOutboxRepository,
-)
+from app.repositories.download_repository import SqlAlchemyDownloadRepository
+from app.repositories.outbox_repository import SqlAlchemyOutboxRepository
+from app.services.downloads.download_models import DownloadCreate
+from app.services.downloads.inspection_models import FormatCreate, InspectionCreate
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 

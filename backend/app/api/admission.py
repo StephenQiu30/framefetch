@@ -7,15 +7,15 @@ from fastapi import Depends, Request
 
 from app.api.auth_dependencies import get_current_user
 from app.api.dependencies import get_runtime_settings
-from app.application.auth import CurrentUser
 from app.core.config import Settings
 from app.core.errors import AppError
 from app.core.rate_limits import RateLimitOperation
-from app.infrastructure.rate_limiter import (
+from app.integrations.rate_limiter import (
     RateLimiterUnavailable,
     RateLimitExceeded,
     ValkeyRateLimiter,
 )
+from app.services.auth import CurrentUser
 
 
 class RateLimitAdmission:

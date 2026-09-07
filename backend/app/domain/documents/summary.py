@@ -3,8 +3,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from .screenplay import ScreenplayScene
-from .structure import ScreenplayElementKind
+from app.domain.documents.screenplay import ScreenplayScene
+from app.domain.documents.structure import ScreenplayElementKind
 
 _LIST_ITEM = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+\S")
 

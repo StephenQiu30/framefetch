@@ -6,7 +6,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from app.application.analysis_execution import (
+from app.services.analysis_execution import (
     AnalysisDisposition,
     AnalysisExecution,
     AnalysisPersistenceRejected,

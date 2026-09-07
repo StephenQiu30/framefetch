@@ -4,24 +4,24 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
-from app.application.downloads import (
-    EncryptedUrl,
-    InspectionSaveResult,
-    InspectionSnapshot,
-)
-from app.application.downloads.fingerprints import HmacRequestFingerprinter
-from app.application.source_discoveries import (
-    InspectDiscoveredItem,
-    SourceDiscoveryItemSelection,
-    SourceDiscoveryItemSnapshot,
-    SourceDiscoverySnapshot,
-)
 from app.domain.downloads import AccessDecision, IdentityState
 from app.domain.source_discovery import (
     DiscoveryDecisionHint,
     DiscoveryItemKind,
     DiscoveryItemStatus,
     DiscoveryStatus,
+)
+from app.services.downloads import (
+    EncryptedUrl,
+    InspectionSaveResult,
+    InspectionSnapshot,
+)
+from app.services.downloads.fingerprints import HmacRequestFingerprinter
+from app.services.source_discoveries import (
+    InspectDiscoveredItem,
+    SourceDiscoveryItemSelection,
+    SourceDiscoveryItemSnapshot,
+    SourceDiscoverySnapshot,
 )
 
 NOW = datetime(2026, 8, 27, tzinfo=UTC)
@@ -66,7 +66,7 @@ class Downloads:
         self.commands: list[object] = []
 
     async def save_inspection(self, command: object) -> InspectionSaveResult:
-        from app.application.downloads import InspectionCreate
+        from app.services.downloads import InspectionCreate
 
         assert isinstance(command, InspectionCreate)
         self.commands.append(command)

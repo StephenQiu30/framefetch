@@ -5,12 +5,12 @@ from pathlib import Path
 from uuid import UUID
 
 import pytest
-from app.application.import_execution import (
+from app.domain.documents import ScreenplayElementKind
+from app.domain.imports import ContentKind, ImportErrorCode, ImportSourceFormat
+from app.services.import_execution import (
     ImportVerificationClaim,
     ImportVerificationRejected,
 )
-from app.domain.documents import ScreenplayElementKind
-from app.domain.imports import ContentKind, ImportErrorCode, ImportSourceFormat
 from app.workers.imports import TextScreenplayVerifier, TextVerificationSettings
 
 RESOURCE_ID = UUID("11111111-1111-4111-8111-111111111111")

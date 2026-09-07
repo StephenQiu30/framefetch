@@ -6,21 +6,18 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Response, status
 
 from app.api.admission import enforce_rate_limit
-from app.api.auth_dependencies import (
-    get_auth_service,
-    get_current_user,
-)
+from app.api.auth_dependencies import get_auth_service, get_current_user
 from app.api.dependencies import get_runtime_settings
 from app.api.errors import auth_application_error
 from app.api.openapi import ERROR_RESPONSES
-from app.api.schemas.auth import EmailPasswordRequest, RegisterRequest, UserResponse
-from app.api.schemas.native_auth import (
+from app.core.config import Settings
+from app.schemas.auth import EmailPasswordRequest, RegisterRequest, UserResponse
+from app.schemas.native_auth import (
     NativeLogoutRequest,
     NativeRefreshRequest,
     NativeSessionResponse,
 )
-from app.application.auth import AuthError, AuthService, CurrentUser
-from app.core.config import Settings
+from app.services.auth import AuthError, AuthService, CurrentUser
 
 router = APIRouter(
     prefix="/api/app/v1/auth",

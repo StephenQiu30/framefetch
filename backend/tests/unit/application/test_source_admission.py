@@ -1,5 +1,5 @@
-from app.application.downloads.source_admission import classify_restricted_source
 from app.domain.downloads import AccessDecision
+from app.services.downloads.source_admission import classify_restricted_source
 
 
 def test_wechat_channels_public_share_continues_to_provider_runner() -> None:

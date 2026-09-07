@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 import pytest
-from app.application.analysis import AnalysisPublish, PersistenceConflict
+from app.services.analysis import AnalysisPublish, PersistenceConflict
 from tests.unit.domain.analysis.screenplay_factories import screenplay_analysis_result
 from tests.unit.infrastructure.analysis.test_publish import NOW, validating_job
 

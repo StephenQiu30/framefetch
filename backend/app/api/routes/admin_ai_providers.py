@@ -7,19 +7,19 @@ from fastapi import APIRouter, Depends, Response, status
 
 from app.api.auth_dependencies import get_current_admin
 from app.api.dependencies import get_ai_provider_service
-from app.api.schemas.ai_providers import (
+from app.core.errors import AppError
+from app.schemas.ai_providers import (
     AiProviderProfileListResponse,
     AiProviderProfileResponse,
     CreateAiProviderProfileRequest,
     UpdateAiProviderProfileRequest,
 )
-from app.application.ai_providers import (
+from app.services.ai_providers import (
     AiProviderError,
     AiProviderErrorCode,
     AiProviderService,
 )
-from app.application.auth import CurrentUser
-from app.core.errors import AppError
+from app.services.auth import CurrentUser
 
 router = APIRouter(prefix="/admin/ai-providers", tags=["admin"])
 Admin = Annotated[CurrentUser, Depends(get_current_admin)]

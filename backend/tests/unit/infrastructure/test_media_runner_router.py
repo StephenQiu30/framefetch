@@ -3,16 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from app.application.downloads import (
+from app.domain.providers import ProviderAccessContextRef, ProviderAccessMode
+from app.integrations.media_runner import MediaRunnerRouter
+from app.integrations.media_runner_models import MediaRunnerClientError, RunnerArtifact
+from app.services.downloads import (
     MediaInspectionAuthRequired,
     MediaInspectionTemporarilyUnavailable,
     RunnerInspection,
-)
-from app.domain.providers import ProviderAccessContextRef, ProviderAccessMode
-from app.infrastructure.media_runner import MediaRunnerRouter
-from app.infrastructure.media_runner_models import (
-    MediaRunnerClientError,
-    RunnerArtifact,
 )
 
 

@@ -5,8 +5,76 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from app.application.ai_providers import AiProviderService
-from app.application.analysis import (
+from app.core.ai_provider_cipher import FernetAiProviderSecretCipher
+from app.core.config import Settings
+from app.core.url_cipher import URLCipher
+from app.db.session import create_engine, create_session_factory
+from app.integrations.analysis_skill_catalog import BuiltinAnalysisSkillCatalog
+from app.integrations.article_discovery import WeChatArticleDiscoveryAdapter
+from app.integrations.jwt_tokens import JwtTokenService
+from app.integrations.media_runner_factory import (
+    media_runner_router,
+    operator_provider_keys,
+)
+from app.integrations.object_storage import MinioObjectStorage
+from app.integrations.passwords import Argon2PasswordHasher
+from app.integrations.provider_status import configured_provider_statuses
+from app.integrations.rate_limiter import ValkeyRateLimiter
+from app.integrations.readiness import build_runtime_readiness
+from app.integrations.realtime import RabbitMqRealtimeConsumer, RealtimeHub
+from app.integrations.thumbnail_storage import MinioThumbnailStorage
+from app.integrations.url_security import FernetUrlEnvelope, MediaUrlValidator
+from app.repositories.ai_provider_repository import SqlAlchemyAiProviderRepository
+from app.repositories.analysis_repository import SqlAlchemyAnalysisRepository
+from app.repositories.analysis_worker_registry import (
+    ANALYSIS_MESSAGE_SCHEMA_VERSION,
+    SqlAlchemyAnalysisWorkerRegistry,
+)
+from app.repositories.auth_repository import SqlAlchemyAuthRepository
+from app.repositories.document_catalog_repository import (
+    SqlAlchemyDocumentCatalogRepository,
+)
+from app.repositories.document_delete_repository import (
+    SqlAlchemyDocumentDeleteRepository,
+)
+from app.repositories.document_import_repository import (
+    SqlAlchemyDocumentImportRepository,
+)
+from app.repositories.download_repository import SqlAlchemyDownloadRepository
+from app.repositories.media_import_repository import SqlAlchemyMediaImportRepository
+from app.repositories.operational_metrics import OperationalMetrics
+from app.repositories.provider_canary_repository import (
+    SqlAlchemyProviderCanaryRepository,
+)
+from app.repositories.provider_catalog_repository import (
+    SqlAlchemyProviderCatalogRepository,
+)
+from app.repositories.provider_status_evidence import (
+    MergedProviderStatusEvidenceReader,
+    SqlAlchemyDownloadEvidenceReader,
+)
+from app.repositories.redis_auth_repository import (
+    RedisAuthRepository,
+    ValkeyAuthSessionStore,
+)
+from app.repositories.source_discovery_repository import (
+    SqlAlchemySourceDiscoveryRepository,
+)
+from app.repositories.storage_file_repository import SqlAlchemyStorageFileRepository
+from app.repositories.task_event_store import TaskEventStore
+from app.repositories.user_repository import SqlAlchemyUserRepository
+from app.runner.provider_registry import configure_provider_instances
+from app.runtime import (
+    AnalysisUseCases,
+    ApiRuntime,
+    ApiServices,
+    DocumentImportUseCases,
+    DownloadUseCases,
+    MediaImportUseCases,
+    SourceDiscoveryUseCases,
+)
+from app.services.ai_providers import AiProviderService
+from app.services.analysis import (
     CancelAnalysis,
     CreateAnalysis,
     CreateDocumentAnalysis,
@@ -19,9 +87,9 @@ from app.application.analysis import (
     ListAnalysisSkills,
     RetryAnalysis,
 )
-from app.application.auth import AuthService, UserService
-from app.application.documents import DeleteDocument, GetDocument, ListDocuments
-from app.application.downloads import (
+from app.services.auth import AuthService, UserService
+from app.services.documents import DeleteDocument, GetDocument, ListDocuments
+from app.services.downloads import (
     CancelDownload,
     CreateDownload,
     DeleteDownload,
@@ -38,7 +106,7 @@ from app.application.downloads import (
     PersistThumbnail,
     RetryDownload,
 )
-from app.application.imports import (
+from app.services.imports import (
     CancelImport,
     CompleteImportUpload,
     CreateImportResource,
@@ -46,77 +114,14 @@ from app.application.imports import (
     GetImport,
     UploadLimits,
 )
-from app.application.provider_canaries import ProviderStatusService
-from app.application.provider_catalog import ProviderCatalogService
-from app.application.source_discoveries import (
+from app.services.provider_canaries import ProviderStatusService
+from app.services.provider_catalog import ProviderCatalogService
+from app.services.source_discoveries import (
     CreateSourceDiscovery,
     GetSourceDiscovery,
     InspectDiscoveredItem,
 )
-from app.application.storage_files import StorageFileService
-from app.core.ai_provider_cipher import FernetAiProviderSecretCipher
-from app.core.config import Settings
-from app.core.url_cipher import URLCipher
-from app.infrastructure.ai_provider_repository import SqlAlchemyAiProviderRepository
-from app.infrastructure.analysis_repository import SqlAlchemyAnalysisRepository
-from app.infrastructure.analysis_skill_catalog import BuiltinAnalysisSkillCatalog
-from app.infrastructure.analysis_worker_registry import (
-    ANALYSIS_MESSAGE_SCHEMA_VERSION,
-    SqlAlchemyAnalysisWorkerRegistry,
-)
-from app.infrastructure.article_discovery import WeChatArticleDiscoveryAdapter
-from app.infrastructure.auth_repository import SqlAlchemyAuthRepository
-from app.infrastructure.database import (
-    SqlAlchemyDocumentCatalogRepository,
-    SqlAlchemyDocumentDeleteRepository,
-    SqlAlchemyDocumentImportRepository,
-    SqlAlchemyDownloadRepository,
-    SqlAlchemyMediaImportRepository,
-    SqlAlchemySourceDiscoveryRepository,
-    create_engine,
-    create_session_factory,
-)
-from app.infrastructure.jwt_tokens import JwtTokenService
-from app.infrastructure.media_runner_factory import (
-    media_runner_router,
-    operator_provider_keys,
-)
-from app.infrastructure.object_storage import MinioObjectStorage
-from app.infrastructure.operational_metrics import OperationalMetrics
-from app.infrastructure.passwords import Argon2PasswordHasher
-from app.infrastructure.provider_canary_repository import (
-    SqlAlchemyProviderCanaryRepository,
-)
-from app.infrastructure.provider_catalog_repository import (
-    SqlAlchemyProviderCatalogRepository,
-)
-from app.infrastructure.provider_status import configured_provider_statuses
-from app.infrastructure.provider_status_evidence import (
-    MergedProviderStatusEvidenceReader,
-    SqlAlchemyDownloadEvidenceReader,
-)
-from app.infrastructure.rate_limiter import ValkeyRateLimiter
-from app.infrastructure.readiness import build_runtime_readiness
-from app.infrastructure.realtime import RabbitMqRealtimeConsumer, RealtimeHub
-from app.infrastructure.redis_auth_repository import (
-    RedisAuthRepository,
-    ValkeyAuthSessionStore,
-)
-from app.infrastructure.storage_file_repository import SqlAlchemyStorageFileRepository
-from app.infrastructure.task_event_store import TaskEventStore
-from app.infrastructure.thumbnail_storage import MinioThumbnailStorage
-from app.infrastructure.url_security import FernetUrlEnvelope, MediaUrlValidator
-from app.infrastructure.user_repository import SqlAlchemyUserRepository
-from app.runner.provider_registry import configure_provider_instances
-from app.runtime import (
-    AnalysisUseCases,
-    ApiRuntime,
-    ApiServices,
-    DocumentImportUseCases,
-    DownloadUseCases,
-    MediaImportUseCases,
-    SourceDiscoveryUseCases,
-)
+from app.services.storage_files import StorageFileService
 
 
 def build_api_runtime(settings: Settings) -> ApiRuntime:

@@ -5,13 +5,10 @@ import hashlib
 from dataclasses import replace
 
 import pytest
-from app.application.download_execution import ExecutionDisposition
-from app.application.downloads import plan_to_documents
 from app.domain.downloads import AudioCodecFamily, DownloadErrorCode, ProviderHints
-from app.infrastructure.media_runner_models import (
-    MediaRunnerClientError,
-    RunnerArtifact,
-)
+from app.integrations.media_runner_models import MediaRunnerClientError, RunnerArtifact
+from app.services.download_execution import ExecutionDisposition
+from app.services.downloads import plan_to_documents
 from tests.unit.application.download_execution.helpers import download_plan, fixture
 
 

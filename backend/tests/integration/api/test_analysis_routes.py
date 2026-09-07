@@ -6,18 +6,6 @@ from pathlib import Path
 from uuid import UUID
 
 from app.api.auth_dependencies import get_current_user
-from app.application.analysis import (
-    DOCX_MEDIA_TYPE,
-    MARKDOWN_MEDIA_TYPE,
-    AnalysisApplicationError,
-    AnalysisApplicationErrorCode,
-    AnalysisJobView,
-    AnalysisReportFile,
-    AnalysisReportSnapshot,
-    AnalysisSkillView,
-    render_analysis_report_markdown,
-)
-from app.application.auth import CurrentUser, UserRole
 from app.core.config import Settings
 from app.domain.analysis import (
     AnalysisInputKind,
@@ -33,6 +21,18 @@ from app.domain.analysis import (
 )
 from app.main import create_app
 from app.runtime import AnalysisUseCases
+from app.services.analysis import (
+    DOCX_MEDIA_TYPE,
+    MARKDOWN_MEDIA_TYPE,
+    AnalysisApplicationError,
+    AnalysisApplicationErrorCode,
+    AnalysisJobView,
+    AnalysisReportFile,
+    AnalysisReportSnapshot,
+    AnalysisSkillView,
+    render_analysis_report_markdown,
+)
+from app.services.auth import CurrentUser, UserRole
 from fastapi.testclient import TestClient
 
 NOW = datetime(2026, 8, 6, 10, tzinfo=UTC)

@@ -6,8 +6,6 @@ from pathlib import Path
 from uuid import UUID
 
 import pytest
-from app.application.import_execution import VerifiedDocumentImport
-from app.application.imports import ImportResourceCreate
 from app.domain.documents import (
     DocumentParseSummary,
     ScreenplayElement,
@@ -15,16 +13,20 @@ from app.domain.documents import (
     ScreenplayScene,
 )
 from app.domain.imports import ContentKind, ImportErrorCode, ImportSourceFormat
-from app.infrastructure.database import (
-    SqlAlchemyDocumentImportExecutionRepository,
-    SqlAlchemyDocumentImportRepository,
-)
-from app.infrastructure.database.models import (
+from app.models import (
     DocumentArtifactRow,
     DocumentImportAttemptRow,
     DocumentRow,
     OutboxEventRow,
 )
+from app.repositories.document_import_execution_repository import (
+    SqlAlchemyDocumentImportExecutionRepository,
+)
+from app.repositories.document_import_repository import (
+    SqlAlchemyDocumentImportRepository,
+)
+from app.services.import_execution import VerifiedDocumentImport
+from app.services.imports import ImportResourceCreate
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 

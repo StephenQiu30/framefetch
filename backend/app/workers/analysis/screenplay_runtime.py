@@ -2,23 +2,24 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.application.analysis_execution import (
+from app.core.config import Settings
+from app.services.analysis_execution import (
     ScreenplayAnalysisExecutor,
     ScreenplayExecutionRouter,
     ScreenplayRewriteExecutor,
 )
-from app.application.analysis_execution.ports import (
+from app.services.analysis_execution.ports import (
     AnalysisExecutionRepository,
     AnalyzerResolver,
     Clock,
 )
-from app.core.config import Settings
-
-from .screenplay_artifacts import (
+from app.workers.analysis.screenplay_artifacts import (
     LocalScreenplayArtifactLoader,
     ScreenplayStorage,
 )
-from .screenplay_providers import ConfiguredScreenplayAnalyzerResolver
+from app.workers.analysis.screenplay_providers import (
+    ConfiguredScreenplayAnalyzerResolver,
+)
 
 
 @dataclass(frozen=True, slots=True)

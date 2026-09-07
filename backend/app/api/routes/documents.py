@@ -15,7 +15,10 @@ from app.api.dependencies import (
     get_runtime_settings,
 )
 from app.api.errors import import_application_error
-from app.api.schemas.documents import (
+from app.api.upload_signing import use_local_browser_upload_endpoint
+from app.domain.imports import ContentKind, ImportSourceFormat
+from app.runtime import DocumentImportUseCases
+from app.schemas.documents import (
     CompleteDocumentImportRequest,
     DocumentDetailResponse,
     DocumentImportRequest,
@@ -23,11 +26,8 @@ from app.api.schemas.documents import (
     DocumentPageResponse,
     DocumentUploadSessionResponse,
 )
-from app.api.upload_signing import use_local_browser_upload_endpoint
-from app.application.auth import CurrentUser
-from app.application.imports import CompletedUploadPart, ImportApplicationError
-from app.domain.imports import ContentKind, ImportSourceFormat
-from app.runtime import DocumentImportUseCases
+from app.services.auth import CurrentUser
+from app.services.imports import CompletedUploadPart, ImportApplicationError
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 User = Annotated[CurrentUser, Depends(get_current_user)]

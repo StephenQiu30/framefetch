@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.workers.canary.targets import (
-    ProviderCanaryTarget,
-    parse_canary_targets,
-)
+from app.workers.canary.targets import ProviderCanaryTarget, parse_canary_targets
 from pydantic import SecretStr
 
 _CASES = Path(__file__).with_name("fixed_public_cases.json")

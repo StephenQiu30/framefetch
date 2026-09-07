@@ -8,26 +8,21 @@ from dataclasses import dataclass
 from datetime import timedelta
 from urllib.parse import quote, urlsplit, urlunsplit
 
-from app.application.analysis_execution import (
-    AnalysisExecution,
-    AnalysisExecutionSettings,
-)
 from app.core.ai_provider_cipher import FernetAiProviderSecretCipher
 from app.core.config import Settings, get_settings_for_role
 from app.core.url_cipher import URLCipher
-from app.infrastructure.ai_provider_repository import SqlAlchemyAiProviderRepository
-from app.infrastructure.analysis_repository import SqlAlchemyAnalysisRepository
-from app.infrastructure.analysis_worker_registry import (
+from app.db.session import create_engine, create_session_factory
+from app.integrations.messaging import RabbitMqTopology
+from app.integrations.object_storage import MinioObjectStorage
+from app.repositories.ai_provider_repository import SqlAlchemyAiProviderRepository
+from app.repositories.analysis_execution import AnalysisExecutionPersistence
+from app.repositories.analysis_repository import SqlAlchemyAnalysisRepository
+from app.repositories.analysis_worker_registry import (
     ANALYSIS_MESSAGE_SCHEMA_VERSION,
     SqlAlchemyAnalysisWorkerRegistry,
 )
-from app.infrastructure.database import (
-    SqlAlchemyDownloadRepository,
-    create_engine,
-    create_session_factory,
-)
-from app.infrastructure.messaging import RabbitMqTopology
-from app.infrastructure.object_storage import MinioObjectStorage
+from app.repositories.download_repository import SqlAlchemyDownloadRepository
+from app.services.analysis_execution import AnalysisExecution, AnalysisExecutionSettings
 from app.workers.analysis.agent_lock import (
     AnalysisAgentAlreadyRunning,
     analysis_agent_process_lock,
@@ -35,16 +30,12 @@ from app.workers.analysis.agent_lock import (
 from app.workers.analysis.artifacts import LocalAnalysisArtifactLoader
 from app.workers.analysis.consumer import RabbitMqAnalysisConsumer
 from app.workers.analysis.heartbeat import AnalysisWorkerHeartbeat
-from app.workers.analysis.persistence import AnalysisExecutionPersistence
 from app.workers.analysis.providers import ConfiguredAnalyzerResolver
 from app.workers.analysis.screenplay_runtime import (
     ScreenplayWorkerComponents,
     build_screenplay_components,
 )
-from app.workers.analysis.sweeper import (
-    AnalysisRecoverySweeper,
-    RecoverySettings,
-)
+from app.workers.analysis.sweeper import AnalysisRecoverySweeper, RecoverySettings
 from app.workers.analysis.utilities import install_signal_handlers, utc_now, worker_id
 from sqlalchemy.ext.asyncio import AsyncEngine
 
