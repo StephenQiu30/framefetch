@@ -15,11 +15,7 @@ def test_qqvideo_single_video_is_playback_only() -> None:
     assert result.provider_media_id == "q326831cny0"
     assert result.access_decision is AccessDecision.PLAYBACK_ONLY
     assert result.restriction_reason == "tencent_consumer_download_disabled"
-    assert result.user_action == (
-        "支持识别腾讯视频单视频链接并引导官方播放；"
-        "消费端私有接口、VIP、付费及 DRM 内容不提供下载。"
-        "自有媒资请通过腾讯云 VOD 官方导出或上传明文文件。"
-    )
+    assert "持久会话" in result.user_action
 
 
 def test_known_platform_host_never_falls_back_to_generic() -> None:
@@ -44,3 +40,26 @@ def test_public_article_requires_discovery() -> None:
 
 def test_unrelated_source_continues_to_provider_runner() -> None:
     assert classify_restricted_source("https://media.example/video/1") is None
+
+
+def test_configured_tencent_single_video_can_reach_operator_runner() -> None:
+    assert (
+        classify_restricted_source(
+            "https://v.qq.com/x/cover/mzc00200fr1ry1o/m00441h6knj.html",
+            operator_providers=frozenset({"qqvideo"}),
+        )
+        is None
+    )
+
+
+def test_operator_enablement_does_not_allow_playlists_or_arbitrary_ports() -> None:
+    for url in (
+        "https://v.qq.com/channel/cartoon",
+        "https://v.qq.com/x/cover/example123.html",
+        "https://v.qq.com:8443/x/page/q326831cny0.html",
+    ):
+        result = classify_restricted_source(
+            url, operator_providers=frozenset({"qqvideo"})
+        )
+        assert result is not None
+        assert result.access_decision is AccessDecision.UNSUPPORTED

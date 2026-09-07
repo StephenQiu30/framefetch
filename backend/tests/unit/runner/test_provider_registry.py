@@ -15,7 +15,7 @@ from app.runner.provider_registry import (
     provider_profile,
     provider_request,
 )
-from app.runner.provider_session_policy import browser_session_providers
+from app.runner.provider_session_policy import session_providers
 
 
 def provider_request_url(url: str) -> str:
@@ -72,7 +72,7 @@ def test_operator_profiles_and_session_policies_are_the_same_provider_set() -> N
         if ProviderAccessMode.OPERATOR_MANAGED in profile.access_modes
     }
 
-    assert operator_profiles == browser_session_providers()
+    assert operator_profiles == session_providers()
 
 
 def test_registry_rejects_negative_yt_dlp_retry_budget() -> None:
@@ -98,7 +98,6 @@ def test_registry_rejects_negative_yt_dlp_retry_budget() -> None:
         "https://clips.twitch.tv/FaintLightGullWholeWheat",
         "https://www.pinterest.com/pin/664281013778109217/",
         "https://weibo.com/7827771738/N4xlMvjhI",
-        "https://v.youku.com/v_show/id_XOTUxMzg4NDMy.html",
         "https://www.snapchat.com/spotlight/W7_EDlXWTBiXAEEniNoMPwAAYYWtidGhudGZpAX1TKn0JAX1TKnXJAAAAAA",
         "https://www.linkedin.com/posts/the-mathworks_2_what-is-mathworks-cloud-center-activity-7151241570371948544-4Gu7",
         "https://t.me/europa_press/613",
@@ -119,13 +118,12 @@ def test_hongguo_official_share_is_a_single_video_profile() -> None:
     assert profile.capabilities == frozenset({ProviderCapability.SINGLE_VIDEO})
 
 
-def test_qqvideo_is_recognized_but_disabled_at_runtime() -> None:
+def test_qqvideo_is_opt_in_operator_only_and_unverified() -> None:
     url = "https://v.qq.com/x/page/q326831cny0.html"
-
-    assert provider_profile(url).support_status is ProviderSupportStatus.DISABLED
-    with pytest.raises(RunnerFailure) as captured:
-        provider_request_url(url)
-    assert captured.value.code == "provider_unsupported"
+    profile = provider_profile(url)
+    assert profile.support_status is ProviderSupportStatus.UNKNOWN
+    assert profile.access_modes == (ProviderAccessMode.OPERATOR_MANAGED,)
+    assert provider_request_url(url) == url
 
 
 def test_preserves_unlisted_and_non_vimeo_urls() -> None:

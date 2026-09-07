@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from uuid import UUID
 
 from app.domain.downloads import MediaKind
+from app.domain.providers import ProviderAccessMode, ProviderKey
 from app.services.downloads.errors import (
     ApplicationError,
     ApplicationErrorCode,
@@ -70,6 +71,7 @@ class InspectMedia:
         inspection_ttl: timedelta,
         max_duration_seconds: int,
         persist_thumbnail: PersistThumbnail | None = None,
+        operator_providers: frozenset[str] = frozenset(),
     ) -> None:
         if inspection_ttl <= timedelta(0) or max_duration_seconds <= 0:
             raise ValueError("inspection limits must be positive")
@@ -83,6 +85,7 @@ class InspectMedia:
         self._ttl = inspection_ttl
         self._max_duration = max_duration_seconds
         self._persist_thumbnail = persist_thumbnail
+        self._operator_providers = operator_providers
 
     async def __call__(
         self, url: str, owner_hash: str, idempotency_key: str
@@ -93,7 +96,9 @@ class InspectMedia:
             validated_url = self._url_validator.validate(url)
         except ValueError as exc:
             raise ApplicationError(ApplicationErrorCode.INVALID_URL) from exc
-        restricted = classify_restricted_source(validated_url)
+        restricted = classify_restricted_source(
+            validated_url, operator_providers=self._operator_providers
+        )
         if restricted is not None:
             return await self._save_restricted(
                 validated_url,
@@ -307,6 +312,13 @@ def _inspection_metadata(result: RunnerInspection) -> dict[str, object]:
     metadata: dict[str, object] = {
         "provider_access_context": result.access_context.to_document()
     }
+    if (
+        result.access_context.provider_key in {ProviderKey.YOUKU, ProviderKey.QQVIDEO}
+        and result.access_context.access_mode is ProviderAccessMode.OPERATOR_MANAGED
+    ):
+        # A complete account-visible stream is not an official export grant.
+        metadata["entitlement_state"] = "unknown"
+        metadata["rights_basis"] = None
     if result.media_kind in {MediaKind.IMAGE_GALLERY, MediaKind.VIDEO_COLLECTION}:
         metadata["media_kind"] = result.media_kind.value
         metadata["asset_count"] = result.asset_count

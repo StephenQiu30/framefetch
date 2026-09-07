@@ -73,6 +73,7 @@ def runner_result(*, duration: int = 30) -> RunnerInspection:
 def use_case(
     repository: FakeRepository,
     result: RunnerInspection,
+    operator_providers: frozenset[str] = frozenset(),
 ) -> tuple[InspectMedia, FakeRunner, FakeCipher]:
     runner, cipher = FakeRunner(result), FakeCipher()
     return (
@@ -86,6 +87,7 @@ def use_case(
             new_id=uuid4,
             inspection_ttl=timedelta(minutes=15),
             max_duration_seconds=7_200,
+            operator_providers=operator_providers,
         ),
         runner,
         cipher,
@@ -319,3 +321,30 @@ async def test_get_inspection_keeps_expired_metadata_readable() -> None:
     expired = await get(created.id, OWNER)
     assert expired.id == created.id
     assert expired.expires_at == NOW
+
+
+@pytest.mark.parametrize(
+    "provider,url",
+    [
+        ("qqvideo", "https://v.qq.com/x/cover/mzc00200fr1ry1o/m00441h6knj.html"),
+        ("youku", "https://v.youku.com/v_show/id_fixture.html"),
+    ],
+)
+async def test_personal_routes_reach_runner_without_claiming_public_or_official_rights(
+    provider, url
+) -> None:
+    context = replace(
+        access_context(),
+        provider_key=provider,
+        access_mode=ProviderAccessMode.OPERATOR_MANAGED,
+        credential_version_id="file-synthetic",
+    )
+    inspection = replace(
+        runner_result(), access_context=context, extractor_key=provider
+    )
+    execute, _, _ = use_case(FakeRepository(), inspection, frozenset({provider}))
+    response = await execute(url, OWNER, "personal-inspection")
+    assert response.formats
+    assert response.access_decision.value == "downloadable"
+    assert response.entitlement_state.value == "unknown"
+    assert response.rights_basis is None

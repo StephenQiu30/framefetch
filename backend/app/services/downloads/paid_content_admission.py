@@ -49,6 +49,8 @@ def paid_content_admission(
     for domains, key, name in (
         (("bilibili.com", "b23.tv"), "bilibili", "哔哩哔哩内容"),
         (("douyin.com", "iesdouyin.com"), "douyin", "抖音内容"),
+        (("youku.com",), "youku", "优酷内容"),
+        (("v.qq.com",), "qqvideo", "腾讯视频内容"),
     ):
         if any(host == domain or host.endswith(f".{domain}") for domain in domains):
             provider, title = key, name

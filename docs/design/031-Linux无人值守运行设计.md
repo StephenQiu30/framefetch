@@ -16,7 +16,7 @@
 - [文件读取器](../../backend/app/runner/provider_cookie_file.py)每次操作重新打开文件，限制 1 MiB、普通文件、无最终符号链接、无硬链接、无其他用户权限，并校验平台域、格式、到期时间和必需 Cookie 名。普通用户 API 不接受 Cookie。
 - [会话装配](../../backend/app/runner/provider_sessions.py)继续生成唯一的 `0600` 操作 jar。文件来源的访问上下文使用带密钥摘要形成不透明版本；文件替换后旧任务不能静默使用新会话。只要有效负载与部署 HMAC 密钥不变，路径和机器变化不会改变版本。
 - 操作期间 Cookie 更新只写临时副本，不覆盖只读来源；此模式不会自动延长会话寿命，也不证明平台端未撤销授权。换机后平台要求重新验证与程序重启丢配置是不同事件。
-- 生产 Compose 为 YouTube、抖音、小红书、X、Instagram、Facebook、Reddit、Pinterest 提供按平台只读目录。目录级挂载允许部署方原子替换文件；不把全部平台 Cookie 挂到同一 Runner。
+- 生产 Compose 为 YouTube、抖音、小红书、X、Instagram、Facebook、Reddit、Pinterest、优酷、腾讯视频提供按平台只读目录。目录级挂载允许部署方原子替换文件；不把全部平台 Cookie 挂到同一 Runner。
 - 两套业务 Compose 的受控 Runner 均按 profile 启用。生产示例默认不配置受控路由，个人只保存已配置的平台组合，避免未安装的会话来源阻止启动。
 - 视频号仍依赖元宝动态浏览器状态，保留可选 macOS 路径；文件模式明确拒绝，不通过虚构未来到期时间宣称它能独立运行。
 
@@ -34,4 +34,4 @@
 - [YTDLnis README](https://github.com/deniscerri/ytdlnis/blob/main/README.md)：提供 Cookie 支持和应用内更新入口。它不是无需维护的平台协议实现；这里只借鉴个人产品的配置与更新体验。
 - [yt-dlp FAQ](https://github.com/yt-dlp/yt-dlp/wiki/FAQ)：媒体请求可能绑定 Cookie、IP 和请求头。相同文件换机器不构成所有平台必然可用的证明，仍需实际验证。
 
-本批仅交付可重建的文件会话来源与部署拓扑。真实平台下载、视频号迁移、自动会话续期和宿主机断电恢复没有在本轮被宣称完成。
+031 交付可重建的文件会话来源与部署拓扑；新增平台接入见 [032](032-腾讯视频与优酷个人下载设计.md)。真实平台下载、视频号迁移、自动会话续期和宿主机断电恢复没有在本轮被宣称完成。

@@ -233,7 +233,10 @@ class RunnerInspectionPipeline:
                 probed_duration = duration
         enriched_payload = dict(payload)
         enriched_payload["formats"] = enriched_formats
-        if probed_duration is not None:
+        if (
+            probed_duration is not None
+            and payload.get("_framefetch_full_stream") is not True
+        ):
             enriched_payload["duration"] = probed_duration
         return enriched_payload
 
@@ -290,7 +293,10 @@ class RunnerInspectionPipeline:
                 enriched_payload = dict(payload)
                 enriched_payload["formats"] = enriched_formats
                 probed_duration = _probe_duration(probe)
-                if probed_duration is not None:
+                if (
+                    probed_duration is not None
+                    and payload.get("_framefetch_full_stream") is not True
+                ):
                     enriched_payload["duration"] = probed_duration
                 return enriched_payload
             except (RunnerFailure, OSError):

@@ -186,3 +186,11 @@ def _require_path(
     if pattern.fullmatch(parsed.path) is None or parsed.query not in allowed_queries:
         raise RunnerFailure("provider_unsupported", status=422)
     return url
+
+
+def qqvideo_url(url: str, parsed: SplitResult) -> str:
+    if parsed.port not in (None, 443) or not re.fullmatch(
+        r"/x/(?:page|cover/[A-Za-z0-9_]+)/[A-Za-z0-9_]+\.html", parsed.path
+    ):
+        raise RunnerFailure("provider_unsupported", status=422)
+    return f"https://v.qq.com{parsed.path}"

@@ -87,3 +87,16 @@ def test_accepts_a_silent_artifact_for_a_silent_plan() -> None:
 
     assert verified.video_streams == 1
     assert verified.audio_streams == 0
+
+
+def test_short_preview_cannot_be_published_as_a_complete_episode() -> None:
+    with pytest.raises(RunnerFailure) as caught:
+        verify_probe(
+            probe(),
+            plan=download_request().plan.to_domain(),
+            expected_container=Container.MP4,
+            expected_duration=1800,
+            max_duration=7200,
+            tolerance_seconds=3,
+        )
+    assert caught.value.code == "media_validation_failed"

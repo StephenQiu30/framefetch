@@ -245,6 +245,7 @@ def build_api_runtime(settings: Settings) -> ApiRuntime:
         inspection_ttl=timedelta(seconds=settings.inspection_ttl_seconds),
         max_duration_seconds=settings.max_video_duration_seconds,
         persist_thumbnail=persist_thumbnail,
+        operator_providers=frozenset(settings.runner_operator_base_urls),
     )
     inspect_discovered_item = InspectDiscoveredItem(
         source_discovery_repository,

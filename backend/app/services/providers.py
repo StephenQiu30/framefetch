@@ -12,14 +12,13 @@ from app.domain.providers import (
     ProviderSupportStatus,
 )
 
-YOUKU_PUBLIC_ONLY_ACTION = (
-    "仅支持无需登录即可访问的公开、非 DRM 单视频；"
-    "VIP、付费或试看内容请在优酷官方客户端播放。"
+YOUKU_DOWNLOAD_ACTION = (
+    "公开单视频可直接解析；个人会话线路支持尝试获取账号可访问的完整非 DRM 内容。"
+    "VIP 实际可用性待样本验证，试看或加密内容不会作为完整视频交付。"
 )
-QQVIDEO_PLAYBACK_ONLY_ACTION = (
-    "支持识别腾讯视频单视频链接并引导官方播放；"
-    "消费端私有接口、VIP、付费及 DRM 内容不提供下载。"
-    "自有媒资请通过腾讯云 VOD 官方导出或上传明文文件。"
+QQVIDEO_DOWNLOAD_ACTION = (
+    "腾讯视频个人下载线路需部署者配置持久会话后启用，当前尚未完成 VIP 实测。"
+    "仅处理账号可访问的完整非 DRM 单视频；未启用时请前往官方平台播放。"
 )
 
 
@@ -71,9 +70,9 @@ def provider_user_action(
         "公开样本" if access_mode is ProviderAccessMode.ANONYMOUS else "受控线路样本"
     )
     if provider_key == ProviderKey.YOUKU:
-        return YOUKU_PUBLIC_ONLY_ACTION
+        return YOUKU_DOWNLOAD_ACTION
     if provider_key == ProviderKey.QQVIDEO:
-        return QQVIDEO_PLAYBACK_ONLY_ACTION
+        return QQVIDEO_DOWNLOAD_ACTION
     if status is ProviderSupportStatus.ACCESS_REQUIRED and download_available:
         return "真实下载已完成验证；当前链接仍可能因平台授权或验证要求失败。"
     if provider_key == ProviderKey.WECHAT_CHANNELS:

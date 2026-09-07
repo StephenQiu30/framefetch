@@ -25,6 +25,7 @@ def test_fixed_public_matrix_covers_every_registered_provider_and_stage() -> Non
         profile.key
         for profile in current_provider_registry().profiles
         if profile.support_status is not ProviderSupportStatus.DISABLED
+        and ProviderAccessMode.ANONYMOUS in profile.access_modes
     }
     operator_providers = {provider.value for provider in browser_session_providers()}
     for provider, provider_targets in grouped.items():

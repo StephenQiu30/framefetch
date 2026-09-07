@@ -691,6 +691,40 @@ services:
         bind:
           create_host_path: false
 
+  youku-operator-runner:
+    <<: *provider-session-runner
+    container_name: youku-operator-runner
+    profiles: [youku-operator]
+    environment:
+      <<: *provider-session-environment
+      RUNNER_OPERATOR_SESSION_VERSIONS: '{"youku":"browser"}'
+      RUNNER_PROVIDER_COOKIE_FILE: /run/provider-source/cookies.txt
+    volumes:
+      - runner_work:/work
+      - type: bind
+        source: "${PROVIDER_SESSION_DIR:-./.provider-sessions}/youku"
+        target: /run/provider-source
+        read_only: true
+        bind:
+          create_host_path: false
+
+  qqvideo-operator-runner:
+    <<: *provider-session-runner
+    container_name: qqvideo-operator-runner
+    profiles: [qqvideo-operator]
+    environment:
+      <<: *provider-session-environment
+      RUNNER_OPERATOR_SESSION_VERSIONS: '{"qqvideo":"browser"}'
+      RUNNER_PROVIDER_COOKIE_FILE: /run/provider-source/cookies.txt
+    volumes:
+      - runner_work:/work
+      - type: bind
+        source: "${PROVIDER_SESSION_DIR:-./.provider-sessions}/qqvideo"
+        target: /run/provider-source
+        read_only: true
+        bind:
+          create_host_path: false
+
   wechat-channels-operator-runner:
     <<: *provider-session-runner
     container_name: wechat-channels-operator-runner

@@ -40,3 +40,4 @@
 | 029 | 付费内容识别与授权获取 | [Design](design/029-付费内容识别与授权获取设计.md) | [PRD](prd/029-付费内容识别与授权获取需求.md) | [Plan](plans/029-付费内容识别与授权获取计划.md) | [Acceptance](acceptance/029-付费内容识别与授权获取验收.md) |
 | 030 | 运行故障隔离与恢复 | [Design](design/030-运行故障隔离与恢复设计.md) | [PRD](prd/030-运行故障隔离与恢复需求.md) | [Plan](plans/030-运行故障隔离与恢复计划.md) | [Acceptance](acceptance/030-运行故障隔离与恢复验收.md) |
 | 031 | 个人部署重启与换机；文件来源已实现，实机待验收 | [Design](design/031-Linux无人值守运行设计.md) | [PRD](prd/031-Linux无人值守运行需求.md) | [Plan](plans/031-Linux无人值守运行计划.md) | [Acceptance](acceptance/031-Linux无人值守运行验收.md) |
+| 032 | 腾讯与优酷个人下载；代码已接入，VIP 实测待完成 | [Design](design/032-腾讯视频与优酷个人下载设计.md) | [PRD](prd/032-腾讯视频与优酷个人下载需求.md) | [Plan](plans/032-腾讯视频与优酷个人下载计划.md) | [Acceptance](acceptance/032-腾讯视频与优酷个人下载验收.md) |

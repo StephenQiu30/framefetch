@@ -494,3 +494,22 @@ def test_wechat_channels_uses_the_same_isolated_browser_session_contract() -> No
             str(entry).startswith("/run/provider-session:")
             for entry in service["tmpfs"]
         )
+
+
+def test_personal_video_compose_profiles_keep_file_and_network_isolation() -> None:
+    compose = yaml.safe_load(PROD_COMPOSE_PATH.read_text())
+    for provider in ("youku", "qqvideo"):
+        service = compose["services"][f"{provider}-operator-runner"]
+        assert service["profiles"] == [f"{provider}-operator"]
+        assert "proxy_uplink_net" not in service["networks"]
+        assert service["environment"]["RUNNER_MAX_ACTIVE_TASKS"] == "1"
+        assert (
+            service["environment"]["RUNNER_OPERATOR_SESSION_VERSIONS"]
+            == f'{{"{provider}":"browser"}}'
+        )
+        sources = [item for item in service["volumes"] if isinstance(item, dict)]
+        assert len(sources) == 1
+        assert sources[0]["source"].endswith("/" + provider)
+        assert sources[0]["read_only"] is True
+        assert sources[0]["bind"]["create_host_path"] is False
+        assert "ports" not in service

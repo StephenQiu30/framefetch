@@ -1080,3 +1080,28 @@ async def test_inspect_retries_a_transient_thumbnail_response_once(
         ("GET", "https://images.example.com/cover.jpg"),
     ]
     assert delays == [0.25]
+
+
+@pytest.mark.parametrize("use_local_sample", [False, True])
+async def test_personal_full_duration_is_not_replaced_by_probe_preview(
+    tmp_path: Path, use_local_sample: bool
+) -> None:
+    info = split_media_info()
+    info["duration"] = 1800
+    info["_framefetch_full_stream"] = True
+    info["formats"] = [
+        {
+            "format_id": "sparse",
+            "ext": "mp4",
+            "url": "https://cdn.example.com/video.mp4",
+        }
+    ]
+    supervisor = (
+        RemoteProbeFailureSupervisor(info)
+        if use_local_sample
+        else FixtureSupervisor(info)
+    )
+    service = MediaRunnerService(settings(tmp_path), supervisor=supervisor)
+    response = await service.inspect("https://v.youku.com/v_show/id_fixture.html")
+    assert response.media.duration_seconds == 1800
+    assert response.streams[0].height == 1080

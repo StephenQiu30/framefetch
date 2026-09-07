@@ -7,12 +7,12 @@ extraction policy. Recognized restrictions and malformed flags fail closed.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NoReturn
 
 from yt_dlp.utils import ExtractorError  # type: ignore[import-untyped]
 
 
-def reject(reason: str) -> None:
+def reject(reason: str) -> NoReturn:
     raise ExtractorError(f"FrameFetch {reason}", expected=True)
 
 

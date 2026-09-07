@@ -30,11 +30,20 @@ def enforce_media_rights(
 ) -> None:
     if _has_drm(payload):
         raise RunnerFailure("drm_protected", status=422)
+    personal = (
+        provider_key in {ProviderKey.YOUKU, ProviderKey.QQVIDEO}
+        and access_mode is ProviderAccessMode.OPERATOR_MANAGED
+    )
+    if personal and payload.get("_framefetch_full_stream") is not True:
+        raise RunnerFailure("content_access_metadata_invalid", status=422)
     availability = payload.get("availability")
     if isinstance(availability, str):
         normalized = availability.casefold()
         restricted = _RESTRICTED_AVAILABILITY.get(normalized)
-        if restricted is not None:
+        if restricted is not None and not (
+            personal
+            and normalized in {"premium_only", "subscriber_only", "vip_only", "paid"}
+        ):
             raise RunnerFailure(restricted, status=403)
         if (
             provider_key == ProviderKey.YOUTUBE
@@ -43,15 +52,10 @@ def enforce_media_rights(
             raise RunnerFailure("content_entitlement_unknown", status=422)
     if payload.get("is_private") is True:
         raise RunnerFailure("content_private", status=403)
-    if any(
-        payload.get(field) is True
-        for field in (
-            "is_premium",
-            "is_member_only",
-            "is_preview",
-            "requires_purchase",
-        )
-    ):
+    restricted_flags: tuple[str, ...] = ("is_preview", "requires_purchase")
+    if not personal:
+        restricted_flags += ("is_premium", "is_member_only")
+    if any(payload.get(field) is True for field in restricted_flags):
         raise RunnerFailure("content_not_entitled", status=403)
     entries = payload.get("entries")
     if isinstance(entries, list):

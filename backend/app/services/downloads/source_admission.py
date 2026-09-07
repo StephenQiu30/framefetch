@@ -17,7 +17,7 @@ from app.domain.downloads import (
     SourceOrigin,
 )
 from app.domain.providers import ProviderKey
-from app.services.providers import QQVIDEO_PLAYBACK_ONLY_ACTION
+from app.services.providers import QQVIDEO_DOWNLOAD_ACTION
 
 _ARTICLE_PATH = re.compile(r"/s/[A-Za-z0-9_-]{6,256}")
 _ARTICLE_QUERY_KEYS = frozenset({"__biz", "mid", "idx", "sn", "chksm", "scene"})
@@ -59,7 +59,9 @@ class RestrictedSourceAdmission:
         }
 
 
-def classify_restricted_source(url: str) -> RestrictedSourceAdmission | None:
+def classify_restricted_source(
+    url: str, *, operator_providers: frozenset[str] = frozenset()
+) -> RestrictedSourceAdmission | None:
     parsed = urlsplit(url)
     host = (parsed.hostname or "").casefold()
     if host == "mp.weixin.qq.com":
@@ -112,7 +114,11 @@ def classify_restricted_source(url: str) -> RestrictedSourceAdmission | None:
             user_action="仅支持公开的微信视频号 /sph/ 单视频分享链接。",
         )
     if host == "v.qq.com":
-        media_id = _qqvideo_media_id(parsed.path)
+        media_id = (
+            _qqvideo_media_id(parsed.path) if parsed.port in (None, 443) else None
+        )
+        if media_id is not None and ProviderKey.QQVIDEO in operator_providers:
+            return None
         return RestrictedSourceAdmission(
             provider_key=ProviderKey.QQVIDEO,
             provider_media_id=media_id or _opaque_source_id(url),
@@ -137,7 +143,7 @@ def classify_restricted_source(url: str) -> RestrictedSourceAdmission | None:
                 if media_id is not None
                 else "unsupported_qqvideo_url"
             ),
-            user_action=QQVIDEO_PLAYBACK_ONLY_ACTION,
+            user_action=QQVIDEO_DOWNLOAD_ACTION,
         )
     return None
 

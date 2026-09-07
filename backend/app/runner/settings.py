@@ -224,11 +224,13 @@ class RunnerSettings(BaseSettings):
                 raise ValueError(
                     "operator runner requires provider Cookie sync or file"
                 )
-            if cookie_file is not None:
-                from app.runner.provider_session_policy import ProviderSessionSource
+            from app.runner.provider_session_policy import ProviderSessionSource
 
-                if policy.source is not ProviderSessionSource.CHROME_PROFILE:
+            if cookie_file is not None:
+                if policy.source is ProviderSessionSource.EPHEMERAL_YUANBAO:
                     raise ValueError("provider requires dynamic browser session state")
+            elif policy.source is ProviderSessionSource.COOKIE_FILE:
+                raise ValueError("provider requires a persistent Cookie file")
         elif self.runner_operator_session_versions:
             raise ValueError("anonymous runner cannot configure provider sessions")
         if self.runner_youtube_pot_base_url is not None:

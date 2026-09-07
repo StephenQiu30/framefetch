@@ -174,6 +174,8 @@ def test_plugin_loads_in_standalone_ytdlp_process(tmp_path: Path) -> None:
         check=False,
         timeout=30,
     )
+    assert "personal_video (YoukuIE)" in completed.stderr
+    assert "personal_video (VQQVideoIE)" in completed.stderr
     assert "content_access (BiliBiliIE)" in completed.stderr
     assert "share_page (DouyinIE)" in completed.stderr
     assert "Error while importing" not in completed.stderr

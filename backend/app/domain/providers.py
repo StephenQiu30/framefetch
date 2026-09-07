@@ -58,8 +58,8 @@ class ProviderProfileVersion(StrEnum):
     REDDIT = "reddit-public-video"
     PINTEREST = "pinterest-public-video-pin"
     WEIBO = "weibo-public-video"
-    YOUKU = "youku-public-video"
-    QQVIDEO = "qqvideo-public-video"
+    YOUKU = "youku-personal-v1"
+    QQVIDEO = "qqvideo-personal-v1"
     SNAPCHAT = "snapchat-spotlight"
     LINKEDIN = "linkedin-public-post"
     TELEGRAM = "telegram-public-channel-post"
@@ -86,6 +86,8 @@ class ProviderCookieDomain(StrEnum):
     REDDIT = "reddit.com"
     PINTEREST = "pinterest.com"
     YUANBAO = "yuanbao.tencent.com"
+    YOUKU = "youku.com"
+    QQVIDEO = "v.qq.com"
 
 
 class ProviderAccessMode(StrEnum):

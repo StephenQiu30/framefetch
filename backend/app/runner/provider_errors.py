@@ -43,12 +43,25 @@ class FailureRule:
 
 
 PROVIDER_FAILURE_RULES: tuple[FailureRule, ...] = (
+    FailureRule(
+        "credential_required",
+        422,
+        any_stderr=(b"framefetch credential_required",),
+        providers=frozenset({ProviderKey.QQVIDEO}),
+    ),
     *(
         FailureRule(
             reason.value,
             422,
             any_stderr=(f"framefetch {reason.value}".encode(),),
-            providers=frozenset({ProviderKey.BILIBILI, ProviderKey.DOUYIN}),
+            providers=frozenset(
+                {
+                    ProviderKey.BILIBILI,
+                    ProviderKey.DOUYIN,
+                    ProviderKey.YOUKU,
+                    ProviderKey.QQVIDEO,
+                }
+            ),
         )
         for reason in ContentRestriction
     ),
@@ -191,6 +204,7 @@ PROVIDER_FAILURE_RULES: tuple[FailureRule, ...] = (
         "drm_protected",
         422,
         any_stderr=(
+            b"framefetch drm_protected",
             b"only drm protected formats",
             b"this video is drm protected",
             b"this format is drm protected",

@@ -17,6 +17,7 @@ class CookieRequirement(StrEnum):
 
 class ProviderSessionSource(StrEnum):
     CHROME_PROFILE = "chrome_profile"
+    COOKIE_FILE = "cookie_file"
     EPHEMERAL_YUANBAO = "ephemeral_yuanbao"
 
 
@@ -96,6 +97,19 @@ _BROWSER_SESSION_POLICIES = {
             CookieRequirement.ALL,
         ),
         ProviderBrowserSessionPolicy(
+            ProviderKey.YOUKU,
+            ProviderSessionVersion.BROWSER,
+            frozenset({"P_sck"}),
+            source=ProviderSessionSource.COOKIE_FILE,
+        ),
+        ProviderBrowserSessionPolicy(
+            ProviderKey.QQVIDEO,
+            ProviderSessionVersion.BROWSER,
+            frozenset({"vqq_vuserid", "vqq_vusession"}),
+            CookieRequirement.ALL,
+            ProviderSessionSource.COOKIE_FILE,
+        ),
+        ProviderBrowserSessionPolicy(
             ProviderKey.WECHAT_CHANNELS,
             ProviderSessionVersion.BROWSER,
             frozenset({"hy_user", "hy_token"}),
@@ -117,4 +131,12 @@ def browser_session_policy(
 
 
 def browser_session_providers() -> frozenset[ProviderKey]:
+    return frozenset(
+        key
+        for key, policy in _BROWSER_SESSION_POLICIES.items()
+        if policy.source is not ProviderSessionSource.COOKIE_FILE
+    )
+
+
+def session_providers() -> frozenset[ProviderKey]:
     return frozenset(_BROWSER_SESSION_POLICIES)
