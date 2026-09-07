@@ -5,7 +5,6 @@ from pathlib import Path
 from uuid import UUID
 
 from app.api.auth_dependencies import get_current_user
-from app.api.dependencies import MediaImportUseCases
 from app.application.auth import CurrentUser, UserRole
 from app.application.imports import (
     ImportApplicationError,
@@ -17,6 +16,7 @@ from app.application.imports import (
 from app.core.config import Settings
 from app.domain.imports import ContentKind, ImportSourceFormat, ImportStatus
 from app.main import create_app
+from app.runtime import MediaImportUseCases
 from fastapi.testclient import TestClient
 
 NOW = datetime(2026, 8, 14, 10, 0, tzinfo=UTC)
@@ -87,7 +87,7 @@ def client(
         "get": StubUseCase(import_view()),
         "cancel": StubUseCase(import_view(ImportStatus.CANCELLED)),
     }
-    app.state.media_import_use_cases = MediaImportUseCases(
+    app.state.services.media_import_use_cases = MediaImportUseCases(
         create_resource=stubs["create"],  # type: ignore[arg-type]
         create_upload_session=stubs["session"],  # type: ignore[arg-type]
         complete_upload=stubs["complete"],  # type: ignore[arg-type]

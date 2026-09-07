@@ -7,11 +7,7 @@ from fastapi import APIRouter, Depends, Response, status
 
 from app.api.admission import RateLimitAdmission
 from app.api.auth_dependencies import get_current_user
-from app.api.dependencies import (
-    DownloadUseCases,
-    IdempotencyKey,
-    get_download_use_cases,
-)
+from app.api.dependencies import IdempotencyKey, get_download_use_cases
 from app.api.errors import application_error
 from app.api.schemas.inspections import (
     InspectionRequest,
@@ -20,6 +16,7 @@ from app.api.schemas.inspections import (
 )
 from app.application.auth import CurrentUser
 from app.application.downloads import ApplicationError
+from app.runtime import DownloadUseCases
 
 router = APIRouter(prefix="/inspections", tags=["inspections"])
 User = Annotated[CurrentUser, Depends(get_current_user)]

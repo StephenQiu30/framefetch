@@ -7,11 +7,7 @@ from fastapi import APIRouter, Depends, Response, status
 
 from app.api.admission import RateLimitAdmission
 from app.api.auth_dependencies import get_current_user
-from app.api.dependencies import (
-    IdempotencyKey,
-    SourceDiscoveryUseCases,
-    get_source_discovery_use_cases,
-)
+from app.api.dependencies import IdempotencyKey, get_source_discovery_use_cases
 from app.api.errors import application_error
 from app.api.schemas.source_discoveries import (
     SourceDiscoveryRequest,
@@ -19,6 +15,7 @@ from app.api.schemas.source_discoveries import (
 )
 from app.application.auth import CurrentUser
 from app.application.downloads import ApplicationError
+from app.runtime import SourceDiscoveryUseCases
 
 router = APIRouter(prefix="/source-discoveries", tags=["source-discoveries"])
 User = Annotated[CurrentUser, Depends(get_current_user)]

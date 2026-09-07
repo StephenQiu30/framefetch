@@ -72,7 +72,7 @@ def test_all_analysis_creation_routes_enforce_admission(path: str) -> None:
             assert kwargs["operation"] in {"analysis", "analysis_retry"}
             raise RateLimitExceeded(9)
 
-    app.state.rate_limiter = Limiter()
+    app.state.services.rate_limiter = Limiter()
     with TestClient(app) as client:
         response = client.post(path, json={}, headers={"Idempotency-Key": "review"})
     assert response.status_code == 429

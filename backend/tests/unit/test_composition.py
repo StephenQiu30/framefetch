@@ -26,9 +26,9 @@ def test_non_test_app_wires_download_use_cases(tmp_path: Path) -> None:
     application = create_app(settings)
 
     with TestClient(application) as client:
-        assert application.state.download_use_cases is not None
-        assert application.state.analysis_use_cases is not None
-        assert application.state.auth_service is not None
+        assert application.state.services.download_use_cases is not None
+        assert application.state.services.analysis_use_cases is not None
+        assert application.state.services.auth_service is not None
         assert client.get("/health/live").status_code == 200
 
 
@@ -45,7 +45,7 @@ def test_non_test_app_wires_runtime_readiness_into_the_route(tmp_path: Path) -> 
         return False
 
     with TestClient(application) as client:
-        application.state.readiness_probe.check = unavailable
+        application.state.services.readiness_probe.check = unavailable
         response = client.get("/health/ready")
 
     assert response.status_code == 503

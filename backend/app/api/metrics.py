@@ -26,7 +26,7 @@ async def metrics(
             detail="The requested resource was not found.",
         )
     collector: OperationalMetrics | None = getattr(
-        request.app.state, "operational_metrics", None
+        request.app.state.services, "operational_metrics", None
     )
     if collector is None:
         raise AppError(

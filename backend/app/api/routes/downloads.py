@@ -9,7 +9,6 @@ from fastapi.responses import StreamingResponse
 from app.api.admission import RateLimitAdmission
 from app.api.auth_dependencies import get_current_user
 from app.api.dependencies import (
-    DownloadUseCases,
     IdempotencyKey,
     get_download_storage,
     get_download_use_cases,
@@ -32,6 +31,7 @@ from app.application.downloads import (
     download_disposition,
 )
 from app.domain.downloads import DownloadStatus
+from app.runtime import DownloadUseCases
 
 router = APIRouter(prefix="/downloads", tags=["downloads"])
 User = Annotated[CurrentUser, Depends(get_current_user)]

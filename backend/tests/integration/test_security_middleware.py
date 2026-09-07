@@ -104,8 +104,8 @@ def test_rate_limit_returns_problem_details_and_retry_after(tmp_path: Path) -> N
         async def check(self, **_kwargs: object) -> None:
             raise RateLimitExceeded(7)
 
-    app.state.rate_limiter = BlockedLimiter()
-    app.state.auth_service = object()
+    app.state.services.rate_limiter = BlockedLimiter()
+    app.state.services.auth_service = object()
     with TestClient(app) as client:
         response = client.post(
             "/api/auth/login",

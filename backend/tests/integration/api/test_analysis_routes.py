@@ -6,7 +6,6 @@ from pathlib import Path
 from uuid import UUID
 
 from app.api.auth_dependencies import get_current_user
-from app.api.dependencies import AnalysisUseCases
 from app.application.analysis import (
     DOCX_MEDIA_TYPE,
     MARKDOWN_MEDIA_TYPE,
@@ -33,6 +32,7 @@ from app.domain.analysis import (
     VisualAsset,
 )
 from app.main import create_app
+from app.runtime import AnalysisUseCases
 from fastapi.testclient import TestClient
 
 NOW = datetime(2026, 8, 6, 10, tzinfo=UTC)
@@ -181,7 +181,7 @@ def client(tmp_path: Path) -> tuple[TestClient, dict[str, StubUseCase]]:
         "delete": StubUseCase(None),
         "latest_document": StubUseCase(None),
     }
-    application.state.analysis_use_cases = AnalysisUseCases(
+    application.state.services.analysis_use_cases = AnalysisUseCases(
         list_analysis_skills=lambda input_kind: (
             (
                 AnalysisSkillView(

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, cast
+from typing import Annotated
 
 from fastapi import Depends, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -18,33 +18,17 @@ from app.application.auth import (
 from app.core.config import Settings
 from app.core.errors import AppError
 
-from .dependencies import get_runtime_settings
+from .dependencies import get_runtime_settings, get_services, require_service
 
 native_bearer = HTTPBearer(auto_error=False, scheme_name="NativeBearerAuth")
 
 
 def get_auth_service(request: Request) -> AuthService:
-    service = getattr(request.app.state, "auth_service", None)
-    if service is None:
-        raise AppError(
-            status=503,
-            code="service_unavailable",
-            title="Service unavailable",
-            detail="The authentication service is not available.",
-        )
-    return cast(AuthService, service)
+    return require_service(get_services(request).auth_service, "authentication")
 
 
 def get_user_service(request: Request) -> UserService:
-    service = getattr(request.app.state, "user_service", None)
-    if service is None:
-        raise AppError(
-            status=503,
-            code="service_unavailable",
-            title="Service unavailable",
-            detail="The user service is not available.",
-        )
-    return cast(UserService, service)
+    return require_service(get_services(request).user_service, "user")
 
 
 async def get_current_user(

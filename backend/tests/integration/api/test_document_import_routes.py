@@ -5,7 +5,6 @@ from pathlib import Path
 from uuid import UUID
 
 from app.api.auth_dependencies import get_current_user
-from app.api.dependencies import DocumentImportUseCases
 from app.application.auth import CurrentUser, UserRole
 from app.application.documents import DocumentPage, DocumentView
 from app.application.imports import (
@@ -17,6 +16,7 @@ from app.core.config import Settings
 from app.domain.documents import DocumentParseSummary
 from app.domain.imports import ContentKind, ImportSourceFormat, ImportStatus
 from app.main import create_app
+from app.runtime import DocumentImportUseCases
 from fastapi.testclient import TestClient
 
 NOW = datetime(2026, 8, 14, 14, 0, tzinfo=UTC)
@@ -106,7 +106,7 @@ def client(tmp_path: Path) -> tuple[TestClient, dict[str, StubUseCase]]:
         "delete": StubUseCase(None),
         "cancel": StubUseCase(document_view(ImportStatus.CANCELLED)),
     }
-    app.state.document_import_use_cases = DocumentImportUseCases(
+    app.state.services.document_import_use_cases = DocumentImportUseCases(
         create_resource=stubs["create"],  # type: ignore[arg-type]
         create_upload_session=stubs["session"],  # type: ignore[arg-type]
         complete_upload=stubs["complete"],  # type: ignore[arg-type]

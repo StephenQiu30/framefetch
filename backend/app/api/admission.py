@@ -39,7 +39,7 @@ async def enforce_rate_limit(
 ) -> None:
     limiter = cast(
         ValkeyRateLimiter | None,
-        getattr(request.app.state, "rate_limiter", None),
+        getattr(request.app.state.services, "rate_limiter", None),
     )
     if limiter is None:
         return

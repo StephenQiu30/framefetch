@@ -2,19 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from sqlalchemy.ext.asyncio import AsyncEngine
-
-from app.api.dependencies import (
-    AnalysisUseCases,
-    DocumentImportUseCases,
-    DownloadUseCases,
-    MediaImportUseCases,
-    SourceDiscoveryUseCases,
-)
 from app.application.ai_providers import AiProviderService
 from app.application.analysis import (
     CancelAnalysis,
@@ -35,7 +25,6 @@ from app.application.downloads import (
     CancelDownload,
     CreateDownload,
     DeleteDownload,
-    DownloadArtifactStorage,
     GetDownload,
     GetDownloadAnalytics,
     GetDownloadArtifact,
@@ -88,7 +77,6 @@ from app.infrastructure.database import (
     create_session_factory,
 )
 from app.infrastructure.jwt_tokens import JwtTokenService
-from app.infrastructure.media_runner import MediaRunnerRouter
 from app.infrastructure.media_runner_factory import (
     media_runner_router,
     operator_provider_keys,
@@ -108,7 +96,7 @@ from app.infrastructure.provider_status_evidence import (
     SqlAlchemyDownloadEvidenceReader,
 )
 from app.infrastructure.rate_limiter import ValkeyRateLimiter
-from app.infrastructure.readiness import RuntimeReadiness, build_runtime_readiness
+from app.infrastructure.readiness import build_runtime_readiness
 from app.infrastructure.realtime import RabbitMqRealtimeConsumer, RealtimeHub
 from app.infrastructure.redis_auth_repository import (
     RedisAuthRepository,
@@ -120,46 +108,20 @@ from app.infrastructure.thumbnail_storage import MinioThumbnailStorage
 from app.infrastructure.url_security import FernetUrlEnvelope, MediaUrlValidator
 from app.infrastructure.user_repository import SqlAlchemyUserRepository
 from app.runner.provider_registry import configure_provider_instances
-
-
-@dataclass(slots=True)
-class ApiRuntime:
-    auth_service: AuthService
-    user_service: UserService
-    use_cases: DownloadUseCases
-    analysis_use_cases: AnalysisUseCases
-    media_import_use_cases: MediaImportUseCases
-    document_import_use_cases: DocumentImportUseCases
-    source_discovery_use_cases: SourceDiscoveryUseCases
-    engine: AsyncEngine
-    runner: MediaRunnerRouter
-    auth_session_store: ValkeyAuthSessionStore
-    rate_limiter: ValkeyRateLimiter | None
-    readiness: RuntimeReadiness
-    realtime_hub: RealtimeHub
-    task_event_store: TaskEventStore
-    realtime_consumer: RabbitMqRealtimeConsumer
-    operational_metrics: OperationalMetrics
-    provider_status_service: ProviderStatusService
-    provider_catalog_service: ProviderCatalogService
-    ai_provider_service: AiProviderService
-    storage_file_service: StorageFileService
-    download_storage: DownloadArtifactStorage
-
-    async def start(self) -> None:
-        await self.realtime_consumer.start()
-
-    async def close(self) -> None:
-        await self.realtime_consumer.close()
-        await self.readiness.close()
-        await self.runner.close()
-        await self.auth_session_store.close()
-        if self.rate_limiter is not None:
-            await self.rate_limiter.close()
-        await self.engine.dispose()
+from app.runtime import (
+    AnalysisUseCases,
+    ApiRuntime,
+    ApiServices,
+    DocumentImportUseCases,
+    DownloadUseCases,
+    MediaImportUseCases,
+    SourceDiscoveryUseCases,
+)
 
 
 def build_api_runtime(settings: Settings) -> ApiRuntime:
+    if not settings.valkey_url:
+        raise ValueError("API auth sessions require VALKEY_URL")
     configure_provider_instances(settings.peertube_allowed_instances)
     engine = create_engine(settings.database_url)
     sessions = create_session_factory(engine)
@@ -193,8 +155,6 @@ def build_api_runtime(settings: Settings) -> ApiRuntime:
         stale_after=timedelta(seconds=settings.analysis_worker_stale_seconds),
     )
     auth_database_repository = SqlAlchemyAuthRepository(sessions)
-    if not settings.valkey_url:
-        raise ValueError("API auth sessions require VALKEY_URL")
     auth_session_store = ValkeyAuthSessionStore(settings.valkey_url)
     auth_repository = RedisAuthRepository(
         auth_database_repository,
@@ -487,24 +447,42 @@ def build_api_runtime(settings: Settings) -> ApiRuntime:
         ),
     )
     return ApiRuntime(
-        auth_service=auth_service,
-        user_service=user_service,
-        use_cases=use_cases,
-        analysis_use_cases=analysis_use_cases,
-        media_import_use_cases=media_import_use_cases,
-        document_import_use_cases=document_import_use_cases,
-        source_discovery_use_cases=source_discovery_use_cases,
+        services=ApiServices(
+            auth_service=auth_service,
+            user_service=user_service,
+            download_use_cases=use_cases,
+            analysis_use_cases=analysis_use_cases,
+            media_import_use_cases=media_import_use_cases,
+            document_import_use_cases=document_import_use_cases,
+            source_discovery_use_cases=source_discovery_use_cases,
+            rate_limiter=rate_limiter,
+            readiness_probe=build_runtime_readiness(
+                settings,
+                engine,
+                valkey_check=rate_limiter.ping if rate_limiter is not None else None,
+            ),
+            realtime_hub=realtime_hub,
+            task_event_store=TaskEventStore(sessions),
+            operational_metrics=OperationalMetrics(sessions),
+            provider_status_service=ProviderStatusService(
+                MergedProviderStatusEvidenceReader(
+                    SqlAlchemyProviderCanaryRepository(sessions),
+                    SqlAlchemyDownloadEvidenceReader(sessions),
+                ),
+                provider_baselines,
+                now=clock,
+                context_reader=runner,
+                approved_keys=settings.provider_verified_keys,
+                catalog=provider_catalog_repository,
+            ),
+            provider_catalog_service=provider_catalog_service,
+            ai_provider_service=ai_provider_service,
+            storage_file_service=storage_file_service,
+            download_storage=storage,
+        ),
         engine=engine,
         runner=runner,
         auth_session_store=auth_session_store,
-        rate_limiter=rate_limiter,
-        readiness=build_runtime_readiness(
-            settings,
-            engine,
-            valkey_check=rate_limiter.ping if rate_limiter is not None else None,
-        ),
-        realtime_hub=realtime_hub,
-        task_event_store=TaskEventStore(sessions),
         realtime_consumer=RabbitMqRealtimeConsumer(
             settings.rabbitmq_url,
             settings.rabbitmq_exchange,
@@ -513,22 +491,6 @@ def build_api_runtime(settings: Settings) -> ApiRuntime:
             heartbeat=settings.rabbitmq_heartbeat_seconds,
             reconnect_interval=settings.rabbitmq_reconnect_interval_seconds,
         ),
-        operational_metrics=OperationalMetrics(sessions),
-        provider_status_service=ProviderStatusService(
-            MergedProviderStatusEvidenceReader(
-                SqlAlchemyProviderCanaryRepository(sessions),
-                SqlAlchemyDownloadEvidenceReader(sessions),
-            ),
-            provider_baselines,
-            now=clock,
-            context_reader=runner,
-            approved_keys=settings.provider_verified_keys,
-            catalog=provider_catalog_repository,
-        ),
-        provider_catalog_service=provider_catalog_service,
-        ai_provider_service=ai_provider_service,
-        storage_file_service=storage_file_service,
-        download_storage=storage,
     )
 
 

@@ -56,9 +56,9 @@ class RacingStore(FakeStore):
 
 def test_socket_auth_replay_and_subscription(tmp_path) -> None:
     app = create_app(Settings(app_env="test"))
-    app.state.auth_service = FakeAuth()
-    app.state.realtime_hub = RealtimeHub()
-    app.state.task_event_store = FakeStore()
+    app.state.services.auth_service = FakeAuth()
+    app.state.services.realtime_hub = RealtimeHub()
+    app.state.services.task_event_store = FakeStore()
     client = TestClient(app)
     client.cookies.set("video_access_token", "valid")
 
@@ -116,7 +116,7 @@ def test_socket_rejects_different_development_origin_host() -> None:
 
 def test_socket_rejects_missing_cookie(tmp_path) -> None:
     app = create_app(Settings(app_env="test"))
-    app.state.auth_service = FakeAuth()
+    app.state.services.auth_service = FakeAuth()
     with TestClient(app) as client:
         with pytest.raises(WebSocketDisconnect) as caught:
             with client.websocket_connect("/api/ws/tasks"):
@@ -126,10 +126,10 @@ def test_socket_rejects_missing_cookie(tmp_path) -> None:
 
 def test_socket_buffers_events_during_replay_takeover(tmp_path) -> None:
     app = create_app(Settings(app_env="test"))
-    app.state.auth_service = FakeAuth()
+    app.state.services.auth_service = FakeAuth()
     hub = RealtimeHub()
-    app.state.realtime_hub = hub
-    app.state.task_event_store = RacingStore(hub)
+    app.state.services.realtime_hub = hub
+    app.state.services.task_event_store = RacingStore(hub)
     client = TestClient(app)
     client.cookies.set("video_access_token", "valid")
 
@@ -154,9 +154,9 @@ def test_socket_buffers_events_during_replay_takeover(tmp_path) -> None:
 
 def test_socket_enforces_owner_connection_limit(tmp_path) -> None:
     app = create_app(Settings(app_env="test"))
-    app.state.auth_service = FakeAuth()
-    app.state.realtime_hub = RealtimeHub(max_connections=2, max_per_owner=1)
-    app.state.task_event_store = FakeStore()
+    app.state.services.auth_service = FakeAuth()
+    app.state.services.realtime_hub = RealtimeHub(max_connections=2, max_per_owner=1)
+    app.state.services.task_event_store = FakeStore()
     client = TestClient(app)
     client.cookies.set("video_access_token", "valid")
 
@@ -170,10 +170,10 @@ def test_socket_enforces_owner_connection_limit(tmp_path) -> None:
 
 def test_socket_closes_when_owner_session_is_invalidated(tmp_path) -> None:
     app = create_app(Settings(app_env="test"))
-    app.state.auth_service = FakeAuth()
+    app.state.services.auth_service = FakeAuth()
     hub = RealtimeHub()
-    app.state.realtime_hub = hub
-    app.state.task_event_store = FakeStore()
+    app.state.services.realtime_hub = hub
+    app.state.services.task_event_store = FakeStore()
     client = TestClient(app)
     client.cookies.set("video_access_token", "valid")
 

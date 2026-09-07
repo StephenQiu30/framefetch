@@ -7,15 +7,12 @@ from fastapi import APIRouter, Depends, Response, status
 
 from app.api.admission import RateLimitAdmission
 from app.api.auth_dependencies import get_current_user
-from app.api.dependencies import (
-    AnalysisUseCases,
-    IdempotencyKey,
-    get_analysis_use_cases,
-)
+from app.api.dependencies import IdempotencyKey, get_analysis_use_cases
 from app.api.errors import analysis_application_error
 from app.api.schemas.analyses import AnalysisRequest, AnalysisResponse
 from app.application.analysis import AnalysisApplicationError
 from app.application.auth import CurrentUser
+from app.runtime import AnalysisUseCases
 
 router = APIRouter(tags=["analyses"])
 User = Annotated[CurrentUser, Depends(get_current_user)]

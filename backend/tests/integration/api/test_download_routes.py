@@ -56,8 +56,8 @@ def client(tmp_path: Path) -> tuple[TestClient, dict[str, StubUseCase]]:
     )
     container, stubs = use_cases()
     discovery_container, discovery_stubs = source_discovery_use_cases()
-    app.state.download_use_cases = container
-    app.state.source_discovery_use_cases = discovery_container
+    app.state.services.download_use_cases = container
+    app.state.services.source_discovery_use_cases = discovery_container
     stubs.update(discovery_stubs)
     app.dependency_overrides[get_current_user] = lambda: TEST_USER
     return TestClient(app), stubs
@@ -215,7 +215,7 @@ def test_download_routes_delegate_with_session_owner(tmp_path: Path) -> None:
 def test_download_file_route_streams_an_owned_range(tmp_path: Path) -> None:
     test_client, stubs = client(tmp_path)
     stubs["get"].result = download_view(title="Owned video")
-    test_client.app.state.download_storage = FakeDownloadStorage()
+    test_client.app.state.services.download_storage = FakeDownloadStorage()
 
     with test_client:
         response = test_client.get(
@@ -236,7 +236,7 @@ def test_download_file_route_streams_an_owned_range(tmp_path: Path) -> None:
 def test_download_file_head_returns_preview_metadata(tmp_path: Path) -> None:
     test_client, stubs = client(tmp_path)
     stubs["get"].result = download_view(title="Owned video")
-    test_client.app.state.download_storage = FakeDownloadStorage()
+    test_client.app.state.services.download_storage = FakeDownloadStorage()
 
     with test_client:
         response = test_client.head(

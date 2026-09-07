@@ -2,60 +2,28 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Annotated, cast
 
 from fastapi import Header, Request
+from starlette.requests import HTTPConnection
 
 from app.application.ai_providers import AiProviderService
-from app.application.analysis import (
-    CancelAnalysis,
-    CreateAnalysis,
-    CreateDocumentAnalysis,
-    DeleteAnalysis,
-    ExportAnalysisMarkdown,
-    ExportAnalysisReport,
-    GetAnalysis,
-    GetLatestDocumentAnalysis,
-    GetLatestDownloadAnalysis,
-    ListAnalysisSkills,
-    RetryAnalysis,
-)
-from app.application.documents import DeleteDocument, GetDocument, ListDocuments
 from app.application.downloads import (
-    CancelDownload,
-    CreateDownload,
-    DeleteDownload,
     DownloadArtifactStorage,
-    GetDownload,
-    GetDownloadAnalytics,
-    GetDownloadArtifact,
-    GetDownloadHistory,
-    GetDownloadThumbnail,
-    GetInspection,
-    GetThumbnail,
-    InspectMedia,
-    IssueDownloadUrl,
-    RetryDownload,
 )
-from app.application.imports import (
-    CancelImport,
-    CompleteImportUpload,
-    CreateImportResource,
-    CreateUploadSession,
-    GetImport,
-)
-from app.application.provider_canaries import ProviderStatusService
 from app.application.provider_catalog import ProviderCatalogService
 from app.application.providers import ProviderStatusView
-from app.application.source_discoveries import (
-    CreateSourceDiscovery,
-    GetSourceDiscovery,
-    InspectDiscoveredItem,
-)
 from app.application.storage_files import StorageFileService
 from app.core.config import Settings
 from app.core.errors import AppError
+from app.runtime import (
+    AnalysisUseCases,
+    ApiServices,
+    DocumentImportUseCases,
+    DownloadUseCases,
+    MediaImportUseCases,
+    SourceDiscoveryUseCases,
+)
 
 IdempotencyKey = Annotated[
     str,
@@ -74,175 +42,64 @@ def get_runtime_settings(request: Request) -> Settings:
 
 
 def get_download_storage(request: Request) -> DownloadArtifactStorage:
-    storage = getattr(request.app.state, "download_storage", None)
-    if storage is None:
-        raise AppError(
-            status=503,
-            code="service_unavailable",
-            title="Service unavailable",
-            detail="The download storage service is not available.",
-        )
-    return cast(DownloadArtifactStorage, storage)
-
-
-@dataclass(frozen=True, slots=True)
-class DownloadUseCases:
-    inspect_media: InspectMedia
-    inspect_discovered_item: InspectDiscoveredItem
-    get_inspection: GetInspection
-    get_thumbnail: GetThumbnail
-    get_download_thumbnail: GetDownloadThumbnail
-    create_download: CreateDownload
-    delete_download: DeleteDownload
-    get_download: GetDownload
-    get_download_artifact: GetDownloadArtifact
-    get_download_history: GetDownloadHistory
-    get_download_analytics: GetDownloadAnalytics
-    cancel_download: CancelDownload
-    retry_download: RetryDownload
-    issue_download_url: IssueDownloadUrl
-
-
-@dataclass(frozen=True, slots=True)
-class SourceDiscoveryUseCases:
-    create: CreateSourceDiscovery
-    get: GetSourceDiscovery
-
-
-@dataclass(frozen=True, slots=True)
-class AnalysisUseCases:
-    list_analysis_skills: ListAnalysisSkills
-    create_analysis: CreateAnalysis
-    create_document_analysis: CreateDocumentAnalysis
-    delete_analysis: DeleteAnalysis
-    get_analysis: GetAnalysis
-    get_latest_download_analysis: GetLatestDownloadAnalysis
-    get_latest_document_analysis: GetLatestDocumentAnalysis
-    cancel_analysis: CancelAnalysis
-    retry_analysis: RetryAnalysis
-    export_analysis_report: ExportAnalysisReport
-    export_analysis_markdown: ExportAnalysisMarkdown
-
-
-@dataclass(frozen=True, slots=True)
-class MediaImportUseCases:
-    create_resource: CreateImportResource
-    create_upload_session: CreateUploadSession
-    complete_upload: CompleteImportUpload
-    get_import: GetImport
-    cancel_import: CancelImport
-
-
-@dataclass(frozen=True, slots=True)
-class DocumentImportUseCases:
-    create_resource: CreateImportResource
-    create_upload_session: CreateUploadSession
-    complete_upload: CompleteImportUpload
-    get_import: GetImport
-    cancel_import: CancelImport
-    get_document: GetDocument
-    list_documents: ListDocuments
-    delete_document: DeleteDocument
+    return require_service(get_services(request).download_storage, "download storage")
 
 
 def get_download_use_cases(request: Request) -> DownloadUseCases:
-    container = getattr(request.app.state, "download_use_cases", None)
-    if container is None:
-        raise AppError(
-            status=503,
-            code="service_unavailable",
-            title="Service unavailable",
-            detail="The download service is not available.",
-        )
-    return cast(DownloadUseCases, container)
+    return require_service(get_services(request).download_use_cases, "download")
 
 
 def get_source_discovery_use_cases(request: Request) -> SourceDiscoveryUseCases:
-    container = getattr(request.app.state, "source_discovery_use_cases", None)
-    if container is None:
-        raise AppError(
-            status=503,
-            code="service_unavailable",
-            title="Service unavailable",
-            detail="The source discovery service is not available.",
-        )
-    return cast(SourceDiscoveryUseCases, container)
+    return require_service(
+        get_services(request).source_discovery_use_cases, "source discovery"
+    )
 
 
 def get_analysis_use_cases(request: Request) -> AnalysisUseCases:
-    container = getattr(request.app.state, "analysis_use_cases", None)
-    if container is None:
-        raise AppError(
-            status=503,
-            code="service_unavailable",
-            title="Service unavailable",
-            detail="The analysis service is not available.",
-        )
-    return cast(AnalysisUseCases, container)
+    return require_service(get_services(request).analysis_use_cases, "analysis")
 
 
 def get_media_import_use_cases(request: Request) -> MediaImportUseCases:
-    container = getattr(request.app.state, "media_import_use_cases", None)
-    if container is None:
-        raise AppError(
-            status=503,
-            code="service_unavailable",
-            title="Service unavailable",
-            detail="The media import service is not available.",
-        )
-    return cast(MediaImportUseCases, container)
+    return require_service(get_services(request).media_import_use_cases, "media import")
 
 
 def get_document_import_use_cases(request: Request) -> DocumentImportUseCases:
-    container = getattr(request.app.state, "document_import_use_cases", None)
-    if container is None:
-        raise AppError(
-            status=503,
-            code="service_unavailable",
-            title="Service unavailable",
-            detail="The document import service is not available.",
-        )
-    return cast(DocumentImportUseCases, container)
+    return require_service(
+        get_services(request).document_import_use_cases, "document import"
+    )
 
 
 def get_provider_catalog_service(request: Request) -> ProviderCatalogService:
-    service = getattr(request.app.state, "provider_catalog_service", None)
-    if service is None:
-        raise AppError(
-            status=503,
-            code="service_unavailable",
-            title="Service unavailable",
-            detail="The Provider catalog service is not available.",
-        )
-    return cast(ProviderCatalogService, service)
+    return require_service(
+        get_services(request).provider_catalog_service, "Provider catalog"
+    )
 
 
 def get_ai_provider_service(request: Request) -> AiProviderService:
-    service = getattr(request.app.state, "ai_provider_service", None)
-    if service is None:
-        raise AppError(
-            status=503,
-            code="service_unavailable",
-            title="Service unavailable",
-            detail="The AI Provider service is not available.",
-        )
-    return cast(AiProviderService, service)
+    return require_service(get_services(request).ai_provider_service, "AI Provider")
 
 
 def get_storage_file_service(request: Request) -> StorageFileService:
-    service = getattr(request.app.state, "storage_file_service", None)
+    return require_service(get_services(request).storage_file_service, "storage file")
+
+
+async def get_provider_statuses(request: Request) -> tuple[ProviderStatusView, ...]:
+    service = get_services(request).provider_status_service
+    if service is not None:
+        return await service.list()
+    return cast(tuple[ProviderStatusView, ...], request.app.state.provider_statuses)
+
+
+def get_services(connection: HTTPConnection) -> ApiServices:
+    return cast(ApiServices, connection.app.state.services)
+
+
+def require_service[T](service: T | None, name: str) -> T:
     if service is None:
         raise AppError(
             status=503,
             code="service_unavailable",
             title="Service unavailable",
-            detail="The storage file service is not available.",
+            detail=f"The {name} service is not available.",
         )
-    return cast(StorageFileService, service)
-
-
-async def get_provider_statuses(request: Request) -> tuple[ProviderStatusView, ...]:
-    service = getattr(request.app.state, "provider_status_service", None)
-    if service is not None:
-        return await cast(ProviderStatusService, service).list()
-    return cast(tuple[ProviderStatusView, ...], request.app.state.provider_statuses)
+    return service

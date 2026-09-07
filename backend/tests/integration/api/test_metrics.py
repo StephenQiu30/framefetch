@@ -21,7 +21,7 @@ def test_internal_metrics_require_scrape_key_and_stay_out_of_openapi(
             metrics_access_key="controlled-metrics-key",
         )
     )
-    app.state.operational_metrics = FakeMetrics()
+    app.state.services.operational_metrics = FakeMetrics()
     with TestClient(app) as client:
         assert client.get("/internal/metrics").status_code == 404
         response = client.get(

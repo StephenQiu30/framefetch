@@ -54,8 +54,8 @@ async def auth_client(
             auth_jwt_audience="video-web-test",
         )
     )
-    app.state.auth_service = service
-    app.state.user_service = user_service
+    app.state.services.auth_service = service
+    app.state.services.user_service = user_service
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://testserver"
     ) as client:

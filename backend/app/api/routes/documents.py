@@ -10,7 +10,6 @@ from fastapi import APIRouter, Depends, Query, Request, Response, status
 from app.api.admission import RateLimitAdmission
 from app.api.auth_dependencies import get_current_user
 from app.api.dependencies import (
-    DocumentImportUseCases,
     IdempotencyKey,
     get_document_import_use_cases,
     get_runtime_settings,
@@ -28,6 +27,7 @@ from app.api.upload_signing import use_local_browser_upload_endpoint
 from app.application.auth import CurrentUser
 from app.application.imports import CompletedUploadPart, ImportApplicationError
 from app.domain.imports import ContentKind, ImportSourceFormat
+from app.runtime import DocumentImportUseCases
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 User = Annotated[CurrentUser, Depends(get_current_user)]

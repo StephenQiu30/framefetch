@@ -27,7 +27,7 @@ async def task_socket(websocket: WebSocket) -> None:
         await websocket.close(code=4403)
         return
     access_token = websocket.cookies.get(settings.auth_access_cookie_name)
-    auth_service = websocket.app.state.auth_service
+    auth_service = websocket.app.state.services.auth_service
     try:
         user = await auth_service.current_user(access_token or "")
     except (AuthError, AttributeError):
@@ -35,8 +35,8 @@ async def task_socket(websocket: WebSocket) -> None:
     if user is None:
         await websocket.close(code=4401)
         return
-    hub: RealtimeHub = websocket.app.state.realtime_hub
-    store: TaskEventStore = websocket.app.state.task_event_store
+    hub: RealtimeHub = websocket.app.state.services.realtime_hub
+    store: TaskEventStore = websocket.app.state.services.task_event_store
     try:
         connection = hub.register(user.owner_hash)
     except RealtimeConnectionLimit:

@@ -30,7 +30,7 @@ async def live() -> dict[str, str]:
 )
 async def ready(request: Request) -> JSONResponse:
     """Reject traffic when any configured runtime dependency is unavailable."""
-    dependency = getattr(request.app.state, "readiness_probe", None)
+    dependency = getattr(request.app.state.services, "readiness_probe", None)
     if dependency is not None:
         probe = cast("ReadinessProbe", dependency)
         if not await probe.check():

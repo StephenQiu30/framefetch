@@ -136,7 +136,7 @@ async def logout_user(
     if refresh_token:
         await auth.logout(refresh_token)
     clear_auth_cookies(response, settings)
-    hub = getattr(request.app.state, "realtime_hub", None)
+    hub = getattr(request.app.state.services, "realtime_hub", None)
     if user is not None and hub is not None:
         hub.invalidate_owner(user.owner_hash)
 

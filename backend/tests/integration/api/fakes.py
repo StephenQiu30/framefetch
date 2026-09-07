@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
-from app.api.dependencies import DownloadUseCases, SourceDiscoveryUseCases
 from app.application.downloads import (
     ApplicationError,
     ArtifactSnapshot,
@@ -41,6 +40,7 @@ from app.domain.source_discovery import (
     DiscoveryItemStatus,
     DiscoveryStatus,
 )
+from app.runtime import DownloadUseCases, SourceDiscoveryUseCases
 
 NOW = datetime(2026, 8, 6, 10, tzinfo=UTC)
 INSPECTION_ID = UUID("11111111-1111-4111-8111-111111111111")

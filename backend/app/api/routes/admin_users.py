@@ -69,7 +69,7 @@ async def update_user_access(
         )
     except AuthError as exc:
         raise auth_application_error(exc) from exc
-    hub = getattr(request.app.state, "realtime_hub", None)
+    hub = getattr(request.app.state.services, "realtime_hub", None)
     if hub is not None:
         owner_hash = hashlib.sha256(str(updated.id).encode()).hexdigest()
         hub.invalidate_owner(owner_hash)

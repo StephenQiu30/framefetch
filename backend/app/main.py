@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 
@@ -14,11 +11,12 @@ from app.api.openapi import API_DESCRIPTION, OPENAPI_TAGS, SWAGGER_UI_PARAMETERS
 from app.api.quota_errors import quota_error_handler
 from app.api.router import router
 from app.application.quotas import QuotaExceeded
-from app.composition import ApiRuntime, build_api_runtime
 from app.core.config import Settings, get_settings
 from app.core.errors import AppError
 from app.infrastructure.media_runner_factory import operator_provider_keys
 from app.infrastructure.provider_status import current_provider_statuses
+from app.lifespan import api_lifespan
+from app.runtime import ApiRuntime, ApiServices
 
 
 def create_app(
@@ -26,21 +24,6 @@ def create_app(
     runtime: ApiRuntime | None = None,
 ) -> FastAPI:
     effective = settings or get_settings()
-    owned_runtime = runtime is None and effective.app_env != "test"
-
-    @asynccontextmanager
-    async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        configured_runtime = build_api_runtime(effective) if owned_runtime else runtime
-        try:
-            if configured_runtime is not None:
-                _bind_runtime(application, configured_runtime)
-            if owned_runtime and configured_runtime is not None:
-                await configured_runtime.start()
-            yield
-        finally:
-            if owned_runtime and configured_runtime is not None:
-                await configured_runtime.close()
-
     application = FastAPI(
         title="视频下载与分析服务 API",
         description=API_DESCRIPTION,
@@ -51,14 +34,13 @@ def create_app(
         redoc_url="/redoc",
         swagger_ui_parameters=SWAGGER_UI_PARAMETERS,
         version=effective.app_version,
-        lifespan=lifespan,
+        lifespan=lambda application: api_lifespan(application, effective, runtime),
     )
     application.state.settings = effective
     application.state.provider_statuses = current_provider_statuses(
         operator_provider_keys(effective)
     )
-    if runtime is not None:
-        _bind_runtime(application, runtime)
+    application.state.services = runtime.services if runtime else ApiServices()
     application.include_router(router)
     application.middleware("http")(
         lambda request, call_next: request_guard(
@@ -83,34 +65,6 @@ def create_app(
     application.add_exception_handler(AppError, app_error_handler)
     application.add_exception_handler(RequestValidationError, validation_error_handler)
     return application
-
-
-def _bind_runtime(application: FastAPI, configured_runtime: ApiRuntime) -> None:
-    application.state.auth_service = configured_runtime.auth_service
-    application.state.user_service = configured_runtime.user_service
-    application.state.download_use_cases = configured_runtime.use_cases
-    application.state.analysis_use_cases = configured_runtime.analysis_use_cases
-    application.state.media_import_use_cases = configured_runtime.media_import_use_cases
-    application.state.document_import_use_cases = (
-        configured_runtime.document_import_use_cases
-    )
-    application.state.source_discovery_use_cases = (
-        configured_runtime.source_discovery_use_cases
-    )
-    application.state.rate_limiter = configured_runtime.rate_limiter
-    application.state.readiness_probe = configured_runtime.readiness
-    application.state.realtime_hub = configured_runtime.realtime_hub
-    application.state.task_event_store = configured_runtime.task_event_store
-    application.state.operational_metrics = configured_runtime.operational_metrics
-    application.state.provider_status_service = (
-        configured_runtime.provider_status_service
-    )
-    application.state.provider_catalog_service = (
-        configured_runtime.provider_catalog_service
-    )
-    application.state.ai_provider_service = configured_runtime.ai_provider_service
-    application.state.storage_file_service = configured_runtime.storage_file_service
-    application.state.download_storage = configured_runtime.download_storage
 
 
 app = create_app()

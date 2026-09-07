@@ -26,7 +26,7 @@ def test_health_and_ready_contract() -> None:
 
 def test_ready_returns_503_when_a_runtime_dependency_is_unavailable() -> None:
     app = create_app(Settings(app_env="test"))
-    app.state.readiness_probe = StubReadinessProbe(False)
+    app.state.services.readiness_probe = StubReadinessProbe(False)
 
     with TestClient(app) as client:
         response = client.get("/health/ready")
