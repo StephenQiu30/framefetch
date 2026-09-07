@@ -13,7 +13,12 @@ from app.runner.provider_cookie_lease import (
     ProviderCookieLeaseStatus,
     seal_cookie_lease,
 )
-from app.runner.provider_cookie_queue import AGENT_READY_PAYLOAD, ProviderCookieRequest
+from app.runner.provider_cookie_queue import (
+    AGENT_PROBE_RESPONSE,
+    AGENT_READY_PAYLOAD,
+    ProviderCookieOperation,
+    ProviderCookieRequest,
+)
 from app.runner.provider_cookie_sync import ProviderCookieSyncClient
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
@@ -154,7 +159,7 @@ async def test_sync_rejects_symlink_directories_without_writing(tmp_path: Path) 
     sync_client = client(linked)
 
     assert (
-        sync_client.is_ready(ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER)
+        await sync_client.is_ready(ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER)
         is False
     )
     with pytest.raises(RunnerFailure) as caught:
@@ -173,7 +178,7 @@ async def test_sync_rejects_symlink_queue_directory(tmp_path: Path) -> None:
     sync_client = client(root)
 
     assert (
-        sync_client.is_ready(ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER)
+        await sync_client.is_ready(ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER)
         is False
     )
     with pytest.raises(RunnerFailure) as caught:
@@ -200,25 +205,80 @@ async def test_sync_rejects_symlink_response(tmp_path: Path) -> None:
     assert list((root / "responses").iterdir()) == []
 
 
-def test_readiness_only_validates_bridge_directories(tmp_path: Path) -> None:
+async def test_installed_but_unresponsive_agent_is_not_ready(tmp_path: Path) -> None:
     root = bridge_root(tmp_path)
-    sync_client = client(root)
-
-    assert (
-        sync_client.is_ready(ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER)
-        is True
+    sync_client = client(root, timeout_seconds=0.01, poll_interval_seconds=0.001)
+    assert not await sync_client.is_ready(
+        ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER
     )
     assert list((root / "requests").iterdir()) == []
     assert list((root / "responses").iterdir()) == []
 
 
-def test_readiness_requires_the_installed_agent_marker(tmp_path: Path) -> None:
+@pytest.mark.parametrize("payload", [AGENT_PROBE_RESPONSE, COOKIE])
+async def test_readiness_requires_exact_bound_probe_response(
+    tmp_path: Path, payload: bytes
+) -> None:
+    root = bridge_root(tmp_path)
+    sync_client = client(root, poll_interval_seconds=0.001)
+    task = asyncio.create_task(
+        sync_client.is_ready(ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER)
+    )
+    request = await wait_for_request(root)
+    assert (
+        ProviderCookieRequest.parse(request.read_bytes()).operation
+        is ProviderCookieOperation.PROBE
+    )
+    write_lease_response(
+        root, request, ProviderCookieLease(ProviderCookieLeaseStatus.OK, payload)
+    )
+    assert await task is (payload == AGENT_PROBE_RESPONSE)
+    assert list((root / "requests").iterdir()) == []
+    assert list((root / "responses").iterdir()) == []
+
+
+async def test_cancelled_probe_cleans_request(tmp_path: Path) -> None:
+    root = bridge_root(tmp_path)
+    sync_client = client(root)
+    task = asyncio.create_task(
+        sync_client.is_ready(ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER)
+    )
+    await wait_for_request(root)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert list((root / "requests").iterdir()) == []
+    assert list((root / "responses").iterdir()) == []
+
+
+async def test_probe_rejects_response_bound_to_another_request(tmp_path: Path) -> None:
+    root = bridge_root(tmp_path)
+    sync_client = client(root, poll_interval_seconds=0.001)
+    task = asyncio.create_task(
+        sync_client.is_ready(ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER)
+    )
+    request = await wait_for_request(root)
+    requested = ProviderCookieRequest.parse(request.read_bytes())
+    write_response(
+        root,
+        seal_cookie_lease(
+            ProviderCookieLease(ProviderCookieLeaseStatus.OK, AGENT_PROBE_RESPONSE),
+            requested.public_key,
+            associated_data=b"another-request",
+        ),
+    )
+    assert not await task
+    assert list((root / "requests").iterdir()) == []
+    assert list((root / "responses").iterdir()) == []
+
+
+async def test_readiness_requires_the_installed_agent_marker(tmp_path: Path) -> None:
     root = bridge_root(tmp_path)
     (root / ".agent-installed").unlink()
     sync_client = client(root)
 
     assert (
-        sync_client.is_ready(ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER)
+        await sync_client.is_ready(ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER)
         is False
     )
 

@@ -309,14 +309,16 @@ def test_compose_assigns_each_application_container_its_process_entrypoint() -> 
         assert f'command: ["python", "-m", "{module}"]' in service_config
 
 
-def test_compose_waits_for_runner_and_api_dependency_readiness() -> None:
+def test_compose_isolates_media_dependencies_and_preserves_api_readiness() -> None:
     for path in (COMPOSE_PATH, PROD_COMPOSE_PATH):
         compose = yaml.safe_load(path.read_text(encoding="utf-8"))
         services = compose["services"]
 
-        assert services["api"]["depends_on"]["media-runner"]["condition"] == (
-            "service_healthy"
-        )
+        for service in ("api", "worker-download", "provider-canary"):
+            dependencies = services[service].get("depends_on", {})
+            assert not (
+                {"media-runner", "egress-proxy", *_OPERATOR_RUNNERS} & set(dependencies)
+            )
         assert "127.0.0.1:8111/health/ready" in " ".join(
             services["api"]["healthcheck"]["test"]
         )
@@ -330,11 +332,8 @@ def test_compose_waits_for_runner_and_api_dependency_readiness() -> None:
             services["media-runner"]["healthcheck"]["test"]
         )
 
-        if path == PROD_COMPOSE_PATH:
-            for service in _OPERATOR_RUNNERS:
-                assert services["api"]["depends_on"][service]["condition"] == (
-                    "service_healthy"
-                )
+        for service in ("worker-download", "media-runner", *_OPERATOR_RUNNERS):
+            assert services[service]["stop_grace_period"] == "90s"
 
 
 def test_project_documents_container_and_complete_local_entrypoints() -> None:

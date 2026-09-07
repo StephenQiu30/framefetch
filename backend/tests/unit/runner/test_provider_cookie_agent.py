@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import plistlib
 import stat
 import subprocess
@@ -13,6 +14,8 @@ from app.runner.provider_cookie_lease import (
     ProviderCookieLease,
     ProviderCookieLeaseStatus,
 )
+from app.runner.provider_cookie_queue import ProviderCookieOperation
+from app.runner.provider_cookie_sync import ProviderCookieSyncClient
 
 
 def _result(code: int) -> subprocess.CompletedProcess[str]:
@@ -97,7 +100,10 @@ def test_agent_routes_each_request_to_an_in_memory_export(
         _publish: object,
         **_kwargs: object,
     ) -> None:
-        if expected is ProviderKey.INSTAGRAM:
+        if (
+            expected is ProviderKey.INSTAGRAM
+            and _kwargs.get("operation") is ProviderCookieOperation.REFRESH
+        ):
             callback(expected, ProviderSessionVersion.BROWSER)
 
     monkeypatch.setattr(agent, "drain_request_batch", drain)
@@ -121,3 +127,39 @@ def test_non_macos_commands_are_rejected(monkeypatch: pytest.MonkeyPatch) -> Non
 
     with pytest.raises(SystemExit, match="requires macOS"):
         agent.main(("status",))
+
+
+async def test_agent_probe_recovers_after_no_response_without_browser_access(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    root = tmp_path / ProviderKey.YOUTUBE.value
+    agent.prepare_runtime(root)
+    agent._write_ready_marker(root)
+    exports: list[object] = []
+
+    def forbidden_export(**kwargs: object) -> ProviderCookieLease:
+        exports.append(kwargs)
+        raise AssertionError("health probe must not access the browser")
+
+    monkeypatch.setattr(agent, "export_provider_cookie_lease_bounded", forbidden_export)
+    client = ProviderCookieSyncClient(
+        root, timeout_seconds=0.02, poll_interval_seconds=0.001
+    )
+    assert not await client.is_ready(
+        ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER
+    )
+
+    client = ProviderCookieSyncClient(
+        root, timeout_seconds=1, poll_interval_seconds=0.001
+    )
+    probe = asyncio.create_task(
+        client.is_ready(ProviderKey.YOUTUBE, ProviderSessionVersion.BROWSER)
+    )
+    async with asyncio.timeout(1):
+        while not list((root / "requests").iterdir()):
+            await asyncio.sleep(0.001)
+    await asyncio.to_thread(agent.drain_requests, tmp_path, profile="Default")
+    assert await probe
+    assert exports == []
+    assert list((root / "requests").iterdir()) == []
+    assert list((root / "responses").iterdir()) == []

@@ -168,3 +168,5 @@ npm run build
 下载 Repository 直接实现应用层端口并返回唯一的应用模型；不建立重复的数据库 DTO、Store 或字段复制层。下载仓库使用显式组合组织事务能力，Outbox 发布由独立的 `SqlAlchemyOutboxRepository` 负责。数据库会话仍由仓库事务管理。API 工厂只定义应用；外部运行时资源在 FastAPI lifespan 启动时创建，启动失败和停止时释放。测试可在不连接外部服务的情况下导入入口并生成 OpenAPI。
 
 API 使用 `runtime.py` 定义类型化的 `ApiServices`，在 `app.state.services` 中只挂载一次，通过 FastAPI 依赖函数读取；`lifespan.py` 管理资源所有权和释放，不逐项复制服务到动态 State。外部注入的运行时由调用方管理。
+
+API readiness 检查业务核心依赖，不把匿名或受控 Runner 的健康作为全局可用条件。API、下载 Worker 和 Canary 的启动不得等待所有 Provider 健康；Worker/Canary 仍等待共享工作目录初始化。受控 Runner 的代理 readiness 必须使用不读取 Cookie 的有界 probe 往返，安装标记不能代替响应。下载 Worker 与 Runner 的容器停止宽限必须覆盖 Worker 有限排空预算。对应设计和目标环境验收见 030 四件套。

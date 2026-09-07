@@ -4,7 +4,7 @@ import asyncio
 import json
 import os
 import shutil
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -13,13 +13,17 @@ from app.runner.settings import RunnerSettings
 from app.runner.version import YTDLP_ENGINE_VERSION
 
 
+async def _session_ready() -> bool:
+    return True
+
+
 class RunnerReadiness:
     def __init__(
         self,
         settings: RunnerSettings,
         *,
         binary_exists: Callable[[str], str | None] = shutil.which,
-        session_ready: Callable[[], bool] = lambda: True,
+        session_ready: Callable[[], Awaitable[bool]] = _session_ready,
     ) -> None:
         self._settings = settings
         self._binary_exists = binary_exists
@@ -36,15 +40,15 @@ class RunnerReadiness:
             return False
         if not _runtime_packages_ready(self._settings):
             return False
-        if not self._session_ready():
-            return False
         workspace = self._settings.runner_workspace_root
         if not _writable_directory(workspace):
             return False
-        egress_ready = await _tcp_ready(self._settings.runner_egress_proxy)
-        if not egress_ready:
-            return False
-        return True
+        # Both probes are bounded and independent; keep the health response
+        # within the container's three-second HTTP timeout.
+        egress_ready, session_ready = await asyncio.gather(
+            _tcp_ready(self._settings.runner_egress_proxy), self._session_ready()
+        )
+        return egress_ready and session_ready
 
 
 def _writable_directory(path: Path) -> bool:

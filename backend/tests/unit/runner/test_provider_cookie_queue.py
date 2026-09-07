@@ -2,18 +2,33 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from app.domain.providers import ProviderKey, ProviderSessionVersion
 from app.runner.provider_cookie_lease import (
     ProviderCookieLease,
     ProviderCookieLeaseStatus,
 )
 from app.runner.provider_cookie_queue import (
+    ProviderCookieOperation,
     ProviderCookieRequest,
     drain_request_batch,
     prepare_runtime,
 )
 
 PUBLIC_KEY = b"k" * 32
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        b"probe:tiktok\nbrowser\na2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2s\n",
+        b"probe:probe:youtube\nbrowser\na2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2s\n",
+        b"probe:youtube\nunknown\na2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2s\n",
+    ],
+)
+def test_probe_rejects_unknown_or_unallowlisted_identity(payload: bytes) -> None:
+    with pytest.raises(ValueError):
+        ProviderCookieRequest.parse(payload)
 
 
 def _request(path: Path, provider: ProviderKey) -> None:
@@ -100,9 +115,16 @@ def test_queue_removes_untyped_or_unallowlisted_requests(tmp_path: Path) -> None
     assert not tuple(responses.iterdir())
 
 
-def test_queue_rejects_a_request_for_another_provider(tmp_path: Path) -> None:
+@pytest.mark.parametrize("operation", list(ProviderCookieOperation))
+def test_queue_rejects_a_request_for_another_provider(
+    tmp_path: Path, operation: ProviderCookieOperation
+) -> None:
     requests, responses = prepare_runtime(tmp_path)
-    _request(requests / f"{'3' * 32}.request", ProviderKey.INSTAGRAM)
+    (requests / f"{'3' * 32}.request").write_bytes(
+        ProviderCookieRequest(
+            ProviderKey.INSTAGRAM, ProviderSessionVersion.BROWSER, PUBLIC_KEY, operation
+        ).serialize()
+    )
     calls: list[object] = []
 
     drain_request_batch(

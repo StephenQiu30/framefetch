@@ -294,7 +294,7 @@ engine_commit
 
 - `RUNNER_PROVIDER_EGRESS_PROXIES` 为 `youtube` 显式映射部署方自己运维的内部出口网关；未配置时的共享 `default` 路由只是安全回退，不构成 YouTube 生产可用性承诺。
 - 专用出口要求长期稳定的合规来源、可审计变更、低并发和冷却策略；禁止抓取公共代理列表、自动轮换匿名出口或使用用户个人网络/浏览器会话填补服务端缺口。
-- Runner readiness 只证明固定执行依赖健康；POT sidecar 由 PID1 supervisor 内部以 `/ping` 连续失败阈值管理子进程，不参与 API/公共 Runner readiness 或 Compose health wait gate。YouTube 命令自己的语义预检负责快速失败和精确归因。平台可用性必须由同一实际出口上的授权 metadata/media canary 证明。Sidecar 故障只降级 YouTube，API、其他 Provider 和 AI 分析不因该单平台依赖失败而不可用。
+- Runner readiness 证明固定执行依赖和受控代理的无凭据 probe 响应，安装标记不能单独证明健康；POT sidecar 由 PID1 supervisor 内部以 `/ping` 连续失败阈值管理子进程，不参与 API/公共 Runner readiness 或 Compose health wait gate。YouTube 命令自己的语义预检负责快速失败和精确归因。平台可用性必须由同一实际出口上的授权 metadata/media canary 证明。Sidecar 故障只降级 YouTube，API、其他 Provider 和 AI 分析不因该单平台依赖失败而不可用。
 
 ## 10. 其他平台策略
 

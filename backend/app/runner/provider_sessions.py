@@ -52,12 +52,12 @@ class ProviderSessionStore:
             if enforce_memory_backing:
                 require_memory_backed_root(self._temp_root)
 
-    def is_ready(self) -> bool:
+    async def is_ready(self) -> bool:
         if self._settings.runner_access_mode is ProviderAccessMode.ANONYMOUS:
             return True
         assert self._cookie_sync is not None
         provider, version = next(iter(self._versions.items()))
-        return self._cookie_sync.is_ready(provider, version)
+        return await self._cookie_sync.is_ready(provider, version)
 
     def context_for(self, source: str | ProviderProfile) -> ProviderAccessContextRef:
         profile = provider_profile(source) if isinstance(source, str) else source

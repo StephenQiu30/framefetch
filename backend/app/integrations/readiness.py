@@ -63,15 +63,6 @@ def build_runtime_readiness(
         timeout=settings.readiness_timeout_seconds,
         follow_redirects=False,
     )
-    runner_urls = tuple(
-        dict.fromkeys(
-            f"{base_url.rstrip('/')}/health/ready"
-            for base_url in (
-                settings.runner_base_url,
-                *settings.runner_operator_base_urls.values(),
-            )
-        )
-    )
     minio_scheme = "https" if settings.minio_internal_secure else "http"
     minio_url = (
         f"{minio_scheme}://{settings.minio_endpoint.rstrip('/')}/minio/health/live"
@@ -103,13 +94,11 @@ def build_runtime_readiness(
 
     checks: list[AsyncCheck] = [
         database_check,
-        *(lambda url=url: http_check(url) for url in runner_urls),
         lambda: http_check(minio_url),
         rabbitmq_check,
     ]
-    # Analysis worker liveness is feature-level information. The API remains
-    # ready so durable analysis requests can be queued while the host agent
-    # is being restarted by its platform service manager.
+    # Media Runner and analysis worker health are feature-level information.
+    # Core APIs stay available while media services recover.
     if valkey_check is not None:
         checks.append(valkey_check)
     return RuntimeReadiness(

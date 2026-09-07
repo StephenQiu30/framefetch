@@ -9,6 +9,7 @@ import stat
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 
 from app.domain.providers import ProviderKey, ProviderSessionVersion
@@ -25,7 +26,13 @@ _REQUEST = re.compile(r"(?P<token>[0-9a-f]{32})\.request")
 DEFAULT_ACK_TIMEOUT_SECONDS = 1.0
 AGENT_READY_MARKER = ".agent-installed"
 AGENT_READY_PAYLOAD = b"provider-cookie-agent\n"
+AGENT_PROBE_RESPONSE = b"provider-cookie-agent-responsive\n"
 _MAX_REQUEST_BYTES = 128
+
+
+class ProviderCookieOperation(StrEnum):
+    REFRESH = "refresh"
+    PROBE = "probe"
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,12 +40,14 @@ class ProviderCookieRequest:
     provider: ProviderKey
     version: ProviderSessionVersion
     public_key: bytes
+    operation: ProviderCookieOperation = ProviderCookieOperation.REFRESH
 
     def serialize(self) -> bytes:
         encoded_key = encode_public_key(self.public_key)
-        return f"{self.provider.value}\n{self.version.value}\n{encoded_key}\n".encode(
-            "ascii"
-        )
+        provider = self.provider.value
+        if self.operation is ProviderCookieOperation.PROBE:
+            provider = f"probe:{provider}"
+        return (f"{provider}\n{self.version.value}\n{encoded_key}\n").encode("ascii")
 
     @classmethod
     def parse(cls, payload: bytes) -> ProviderCookieRequest:
@@ -46,6 +55,10 @@ class ProviderCookieRequest:
             provider_value, version_value, key_value, trailer = payload.decode(
                 "ascii"
             ).split("\n")
+            operation = ProviderCookieOperation.REFRESH
+            if provider_value.startswith("probe:"):
+                operation = ProviderCookieOperation.PROBE
+                provider_value = provider_value.removeprefix("probe:")
             provider = ProviderKey(provider_value)
             version = ProviderSessionVersion(version_value)
             public_key = decode_public_key(key_value)
@@ -53,7 +66,7 @@ class ProviderCookieRequest:
                 raise ValueError("invalid provider Cookie request")
         except (RunnerFailure, UnicodeDecodeError, ValueError) as exc:
             raise ValueError("invalid provider Cookie request") from exc
-        return cls(provider, version, public_key)
+        return cls(provider, version, public_key, operation)
 
 
 def prepare_runtime(runtime_root: Path) -> tuple[Path, Path]:
@@ -75,10 +88,15 @@ def drain_request_batch(
     publish: Callable[[Path, ProviderCookieRequest, ProviderCookieLease], None],
     *,
     acknowledgement_timeout_seconds: float = DEFAULT_ACK_TIMEOUT_SECONDS,
+    operation: ProviderCookieOperation | None = None,
 ) -> None:
     """Serve one snapshot so launchd can schedule later arrivals separately."""
     requests, responses = prepare_runtime(runtime_root)
-    pending = _pending_requests(requests, expected_provider)
+    pending = tuple(
+        item
+        for item in _pending_requests(requests, expected_provider)
+        if operation is None or item[2].operation is operation
+    )
     if not pending:
         return
     published: list[tuple[Path, Path]] = []
@@ -91,17 +109,22 @@ def drain_request_batch(
             did_publish = False
             try:
                 if _is_regular_request(request):
-                    key = requested.provider, requested.version
-                    if key not in results:
-                        try:
-                            results[key] = refresh(
-                                requested.provider, requested.version
-                            )
-                        except Exception:
-                            results[key] = ProviderCookieLease(
-                                ProviderCookieLeaseStatus.SESSION_UNAVAILABLE
-                            )
-                    result = results[key]
+                    if requested.operation is ProviderCookieOperation.PROBE:
+                        result = ProviderCookieLease(
+                            ProviderCookieLeaseStatus.OK, AGENT_PROBE_RESPONSE
+                        )
+                    else:
+                        key = requested.provider, requested.version
+                        if key not in results:
+                            try:
+                                results[key] = refresh(
+                                    requested.provider, requested.version
+                                )
+                            except Exception:
+                                results[key] = ProviderCookieLease(
+                                    ProviderCookieLeaseStatus.SESSION_UNAVAILABLE
+                                )
+                        result = results[key]
                     publish(response, requested, result)
                     published.append((request, response))
                     did_publish = True

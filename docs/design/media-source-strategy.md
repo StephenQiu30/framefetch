@@ -147,7 +147,7 @@ canary。Registry 的基线表示当前版本已经完成的发布验收，不�
 标记转为历史时间，不撤销已经发布的支持能力。完整 Analysis 仍使用严格 attestation，
 不能由普通下载推导。证据读取按 Provider/Profile/访问模式和 stage 分别保留窗口，media
 流量不能挤掉 metadata 或 analysis；探针调度也把当前 Profile 版本纳入 due identity，版本
-升级后立即生成新证据，不依赖 target id 的命名约定。Compose readiness 只检查匿名 Media Runner 和业务核心依赖；
+升级后立即生成新证据，不依赖 target id 的命名约定。API readiness 只检查业务核心依赖，媒体 Runner 使用独立健康检查；
 可选 Operator Runner 与平台 canary 的故障只降级对应平台，不让整个 API、上传、
 匿名下载或 AI 配置不可用。
 

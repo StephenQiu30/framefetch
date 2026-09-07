@@ -21,8 +21,8 @@ docker compose --env-file .env -f docker-compose.yml \
 curl --fail http://127.0.0.1:8111/health/ready
 ```
 
-全局就绪检查会探测匿名 Runner 和所有已配置的 Operator Runner；任一受控端点缺失时
-API 不得错报就绪。`provider-canary` 必须显示 `runner_work:/work` 挂载，且容器内
+全局就绪检查只证明核心 API 依赖可用，媒体 Runner 和受控会话使用各自探针。
+API 就绪不能替代固定 Provider metadata/media 验收。`provider-canary` 必须显示 `runner_work:/work` 挂载，且容器内
 `RUNNER_WORKSPACE_ROOT=/work`。
 
 `PROVIDER_CANARY_TARGETS` 的每条目标必须显式声明 `access_mode`。公开路由写

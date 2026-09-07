@@ -21,6 +21,7 @@ from app.runner.provider_cookie_queue import (
     AGENT_READY_MARKER,
     AGENT_READY_PAYLOAD,
     DEFAULT_ACK_TIMEOUT_SECONDS,
+    ProviderCookieOperation,
     ProviderCookieRequest,
     drain_request_batch,
     prepare_runtime,
@@ -206,14 +207,20 @@ def drain_requests(
         )
 
     with termination_guard():
-        for provider in sorted(browser_session_providers(), key=str):
-            drain_request_batch(
-                _provider_runtime(runtime_root, provider),
-                provider,
-                refresh,
-                _atomic_write_response,
-                acknowledgement_timeout_seconds=acknowledgement_timeout_seconds,
-            )
+        # Respond to the current probe snapshot before any browser export.
+        for operation in (
+            ProviderCookieOperation.PROBE,
+            ProviderCookieOperation.REFRESH,
+        ):
+            for provider in sorted(browser_session_providers(), key=str):
+                drain_request_batch(
+                    _provider_runtime(runtime_root, provider),
+                    provider,
+                    refresh,
+                    _atomic_write_response,
+                    acknowledgement_timeout_seconds=acknowledgement_timeout_seconds,
+                    operation=operation,
+                )
 
 
 def _provider_runtime(runtime_root: Path, provider: ProviderKey) -> Path:

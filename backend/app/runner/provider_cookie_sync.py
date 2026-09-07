@@ -21,13 +21,16 @@ from app.runner.provider_cookie_lease import (
     public_key_bytes,
 )
 from app.runner.provider_cookie_queue import (
+    AGENT_PROBE_RESPONSE,
     AGENT_READY_MARKER,
     AGENT_READY_PAYLOAD,
+    ProviderCookieOperation,
     ProviderCookieRequest,
 )
 
 _TOKEN = re.compile(r"[0-9a-f]{32}")
 _MAX_TIMEOUT_SECONDS = 20.0
+_PROBE_TIMEOUT_SECONDS = 2.0
 
 
 def _new_token() -> str:
@@ -37,7 +40,7 @@ def _new_token() -> str:
 class ProviderCookieSync(Protocol):
     """Minimal refresh boundary consumed by the provider session store."""
 
-    def is_ready(
+    async def is_ready(
         self, provider: ProviderKey, version: ProviderSessionVersion
     ) -> bool: ...
 
@@ -70,14 +73,7 @@ class ProviderCookieSyncClient:
         self._token_factory = token_factory
         self._private_key_factory = private_key_factory
 
-    def is_ready(self, provider: ProviderKey, version: ProviderSessionVersion) -> bool:
-        requested = ProviderCookieRequest(
-            provider,
-            version,
-            public_key_bytes(X25519PrivateKey.generate()),
-        )
-        if ProviderCookieRequest.parse(requested.serialize()) != requested:
-            return False
+    def _is_installed(self) -> bool:
         descriptors: tuple[int, int, int] | None = None
         try:
             descriptors = self._open_directories()
@@ -108,16 +104,49 @@ class ProviderCookieSyncClient:
                 self._close_directories(descriptors)
         return True
 
+    async def is_ready(
+        self, provider: ProviderKey, version: ProviderSessionVersion
+    ) -> bool:
+        if not self._is_installed():
+            return False
+        try:
+            response = await self._exchange(
+                provider,
+                version,
+                operation=ProviderCookieOperation.PROBE,
+                timeout=min(self._timeout, _PROBE_TIMEOUT_SECONDS),
+            )
+        except (RunnerFailure, ValueError):
+            return False
+        return response == AGENT_PROBE_RESPONSE
+
     async def sync(
         self, provider: ProviderKey, version: ProviderSessionVersion
+    ) -> bytes:
+        return await self._exchange(
+            provider,
+            version,
+            operation=ProviderCookieOperation.REFRESH,
+            timeout=self._timeout,
+        )
+
+    async def _exchange(
+        self,
+        provider: ProviderKey,
+        version: ProviderSessionVersion,
+        *,
+        operation: ProviderCookieOperation,
+        timeout: float,
     ) -> bytes:
         private_key = self._private_key_factory()
         requested = ProviderCookieRequest(
             provider,
             version,
             public_key_bytes(private_key),
+            operation,
         )
         request_payload = requested.serialize()
+        ProviderCookieRequest.parse(request_payload)
         token = self._token_factory()
         if _TOKEN.fullmatch(token) is None:
             raise RunnerFailure("provider_session_unavailable", status=503)
@@ -141,7 +170,7 @@ class ProviderCookieSyncClient:
                 os.fsync(descriptor)
             finally:
                 os.close(descriptor)
-            deadline = asyncio.get_running_loop().time() + self._timeout
+            deadline = asyncio.get_running_loop().time() + timeout
             while True:
                 remaining = deadline - asyncio.get_running_loop().time()
                 if remaining <= 0:

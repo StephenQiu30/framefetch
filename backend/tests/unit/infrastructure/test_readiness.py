@@ -8,7 +8,7 @@ import aio_pika
 import httpx
 import pytest
 from app.core.config import Settings
-from app.integrations.readiness import build_runtime_readiness
+from app.integrations.readiness import AsyncCheck, build_runtime_readiness
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -40,6 +40,7 @@ async def runtime_probe(
     engine: AsyncEngine,
     *,
     operator_runners: dict[str, str] | None = None,
+    valkey_check: AsyncCheck | None = None,
 ) -> AsyncIterator[Any]:
     client = httpx.AsyncClient(transport=handler)
     settings = Settings(
@@ -52,7 +53,9 @@ async def runtime_probe(
         minio_endpoint="minio.test:9000",
         readiness_timeout_seconds=1,
     )
-    probe = build_runtime_readiness(settings, engine, client=client)
+    probe = build_runtime_readiness(
+        settings, engine, client=client, valkey_check=valkey_check
+    )
     try:
         yield probe
     finally:
@@ -60,7 +63,7 @@ async def runtime_probe(
 
 
 @pytest.mark.usefixtures("rabbitmq_is_available")
-async def test_runtime_readiness_checks_database_runner_minio_and_rabbitmq(
+async def test_runtime_readiness_checks_database_minio_and_rabbitmq(
     postgres_engine: AsyncEngine,
 ) -> None:
     async def respond(request: httpx.Request) -> httpx.Response:
@@ -76,7 +79,7 @@ async def test_runtime_readiness_fails_closed_without_exposing_dependency_error(
     postgres_engine: AsyncEngine,
 ) -> None:
     async def respond(request: httpx.Request) -> httpx.Response:
-        status = 503 if request.url.host == "runner.test" else 200
+        status = 503 if request.url.host == "minio.test" else 200
         return httpx.Response(status)
 
     async with runtime_probe(httpx.MockTransport(respond), postgres_engine) as probe:
@@ -84,7 +87,7 @@ async def test_runtime_readiness_fails_closed_without_exposing_dependency_error(
 
 
 @pytest.mark.usefixtures("rabbitmq_is_available")
-async def test_runtime_readiness_checks_every_configured_operator_runner(
+async def test_runtime_readiness_does_not_contact_media_runners(
     postgres_engine: AsyncEngine,
 ) -> None:
     seen: set[str] = set()
@@ -100,24 +103,26 @@ async def test_runtime_readiness_checks_every_configured_operator_runner(
     ) as probe:
         assert await probe.check() is True
 
-    assert "runner.test" in seen
+    assert "runner.test" not in seen
     assert "minio.test" in seen
-    assert "x-runner.test" in seen
+    assert "x-runner.test" not in seen
 
 
 @pytest.mark.usefixtures("rabbitmq_is_available")
-async def test_runtime_readiness_fails_when_a_configured_operator_is_unhealthy(
+async def test_runtime_readiness_survives_all_runners_being_unreachable(
     postgres_engine: AsyncEngine,
 ) -> None:
     async def respond(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(503 if request.url.host == "x-runner.test" else 200)
+        if request.url.host != "minio.test":
+            raise httpx.ConnectError("runner offline", request=request)
+        return httpx.Response(200)
 
     async with runtime_probe(
         httpx.MockTransport(respond),
         postgres_engine,
         operator_runners={"x": "http://x-runner.test"},
     ) as probe:
-        assert await probe.check() is False
+        assert await probe.check() is True
 
 
 @pytest.mark.usefixtures("rabbitmq_is_available")
@@ -143,3 +148,21 @@ async def test_runtime_readiness_does_not_depend_on_analysis_worker(
 
     async with runtime_probe(httpx.MockTransport(respond), postgres_engine) as probe:
         assert await probe.check() is True
+
+
+@pytest.mark.usefixtures("rabbitmq_is_available")
+@pytest.mark.parametrize("dependency", ["rabbitmq", "valkey"])
+async def test_core_dependency_failure_still_rejects_readiness(
+    postgres_engine: AsyncEngine, monkeypatch: pytest.MonkeyPatch, dependency: str
+) -> None:
+    async def unavailable(*_args: object, **_kwargs: object) -> None:
+        raise ConnectionError("core dependency offline")
+
+    if dependency == "rabbitmq":
+        monkeypatch.setattr(aio_pika, "connect", unavailable)
+    async with runtime_probe(
+        httpx.MockTransport(lambda _: httpx.Response(200)),
+        postgres_engine,
+        valkey_check=unavailable if dependency == "valkey" else None,
+    ) as probe:
+        assert await probe.check() is False

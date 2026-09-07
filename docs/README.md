@@ -36,3 +36,4 @@
 | 027 | 开场钩子审查 Skill | [Design](design/archive/027-开场钩子审查Skill设计.md) | [PRD](prd/archive/027-开场钩子审查Skill需求.md) | [Plan](plans/archive/027-开场钩子审查Skill计划.md) | [Acceptance](acceptance/archive/027-开场钩子审查Skill验收.md) |
 | 028 | AI 分析 Skill 与文档基础解析增强 | [Design](design/028-AI分析Skill与文档基础解析增强设计.md) | [PRD](prd/028-AI分析Skill与文档基础解析增强需求.md) | [Plan](plans/028-AI分析Skill与文档基础解析增强计划.md) | [Acceptance](acceptance/028-AI分析Skill与文档基础解析增强验收.md) |
 | 029 | 付费内容识别与授权获取 | [Design](design/029-付费内容识别与授权获取设计.md) | [PRD](prd/029-付费内容识别与授权获取需求.md) | [Plan](plans/029-付费内容识别与授权获取计划.md) | [Acceptance](acceptance/029-付费内容识别与授权获取验收.md) |
+| 030 | 运行故障隔离与恢复 | [Design](design/030-运行故障隔离与恢复设计.md) | [PRD](prd/030-运行故障隔离与恢复需求.md) | [Plan](plans/030-运行故障隔离与恢复计划.md) | [Acceptance](acceptance/030-运行故障隔离与恢复验收.md) |

@@ -8,6 +8,7 @@ x-provider-session-runner: &provider-session-runner
   build: *app-build
   image: video-server:local
   restart: unless-stopped
+  stop_grace_period: 90s
   networks:
     - runner_rpc_net
     - runner_egress_net
@@ -174,11 +175,6 @@ services:
       - runner_egress_net
     ports:
       - "127.0.0.1:${APP_HOST_PORT:-8111}:8111"
-    depends_on:
-      media-runner:
-        condition: service_healthy
-      egress-proxy:
-        condition: service_healthy
     healthcheck:
       test:
         [
@@ -269,6 +265,7 @@ services:
     image: video-server:local
     container_name: video-worker-download
     restart: unless-stopped
+    stop_grace_period: 90s
     environment:
       ANALYSIS_QUEUE: '${ANALYSIS_QUEUE:-video.analysis}'
       ANALYSIS_REPORT_QUEUE: '${ANALYSIS_REPORT_QUEUE:-video.analysis-report}'
@@ -324,10 +321,8 @@ services:
     volumes:
       - runner_work:/work
     depends_on:
-      media-runner:
-        condition: service_healthy
-      egress-proxy:
-        condition: service_healthy
+      workspace-init:
+        condition: service_completed_successfully
     command: ["python", "-m", "app.workers.download.main"]
 
   worker-import:
@@ -479,10 +474,8 @@ services:
     volumes:
       - runner_work:/work
     depends_on:
-      media-runner:
-        condition: service_healthy
-      egress-proxy:
-        condition: service_healthy
+      workspace-init:
+        condition: service_completed_successfully
     command: ["python", "-m", "app.workers.canary.main"]
 
   media-runner:
@@ -490,6 +483,7 @@ services:
     image: video-server:local
     container_name: media-runner
     restart: unless-stopped
+    stop_grace_period: 90s
     environment:
       APP_ENV: "${APP_ENV:-development}"
       RUNNER_HMAC_SECRET: "${RUNNER_HMAC_SECRET:-development-runner-secret-change-me}"

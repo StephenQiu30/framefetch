@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import pytest
 from app.repositories.download_repository import SqlAlchemyDownloadRepository
+from app.repositories.errors import LeaseConflict
 from app.repositories.outbox_repository import SqlAlchemyOutboxRepository
 from app.services.downloads.download_models import DownloadCreate
 from app.services.downloads.inspection_models import FormatCreate, InspectionCreate
@@ -178,3 +179,38 @@ async def test_retryable_failure_waits_before_outbox_release(repository) -> None
     )
     assert await repository.release_ready_retries(retry_at, limit=10) == (job_id,)
     assert (await repository.get_job(job_id)).status == "queued"
+
+
+async def test_restarted_worker_recovers_durable_job_and_fences_old_attempt(
+    postgres_engine: AsyncEngine, repository
+) -> None:
+    job_id, now = await _queued_job(repository)
+    await repository.claim_job(job_id, "before-restart", now, timedelta(seconds=30))
+    restarted = SqlAlchemyDownloadRepository(
+        async_sessionmaker(postgres_engine, expire_on_commit=False)
+    )
+    recovered_at = now + timedelta(seconds=31)
+    assert await restarted.reclaim_stale(recovered_at) == (job_id,)
+    assert await restarted.release_ready_retries(recovered_at) == (job_id,)
+    claimed = await restarted.claim_job(
+        job_id, "after-restart", recovered_at, timedelta(seconds=30)
+    )
+    assert claimed is not None and claimed.attempt == 2
+    assert (
+        await restarted.claim_job(
+            job_id, "duplicate-worker", recovered_at, timedelta(seconds=30)
+        )
+        is None
+    )
+    with pytest.raises(LeaseConflict):
+        await repository.complete_failure(
+            job_id,
+            "before-restart",
+            1,
+            error_code="cancelled",
+            error_message="late response",
+            retryable=False,
+            now=recovered_at,
+        )
+    current = await restarted.get_job(job_id)
+    assert current.status == "running" and current.lease_owner == "after-restart"

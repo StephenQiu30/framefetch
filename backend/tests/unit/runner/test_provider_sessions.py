@@ -27,7 +27,9 @@ class FakeCookieSync:
         self.payload = payload
         self.calls = 0
 
-    def is_ready(self, provider: ProviderKey, version: ProviderSessionVersion) -> bool:
+    async def is_ready(
+        self, provider: ProviderKey, version: ProviderSessionVersion
+    ) -> bool:
         assert provider is ProviderKey.YOUTUBE
         assert version is ProviderSessionVersion.BROWSER
         return self.ready
@@ -268,7 +270,7 @@ def test_non_current_session_source_is_revoked(tmp_path: Path) -> None:
     assert caught.value.code == "credential_revoked"
 
 
-def test_live_agent_readiness_does_not_export_a_session(tmp_path: Path) -> None:
+async def test_live_agent_readiness_does_not_export_a_session(tmp_path: Path) -> None:
     cookie_sync = FakeCookieSync()
     store = ProviderSessionStore(
         operator_settings(tmp_path),
@@ -276,11 +278,11 @@ def test_live_agent_readiness_does_not_export_a_session(tmp_path: Path) -> None:
         enforce_memory_backing=False,
     )
 
-    assert store.is_ready() is True
+    assert await store.is_ready() is True
     assert cookie_sync.calls == 0
 
 
-def test_live_agent_readiness_fails_when_bridge_is_unavailable(
+async def test_live_agent_readiness_fails_when_bridge_is_unavailable(
     tmp_path: Path,
 ) -> None:
     store = ProviderSessionStore(
@@ -289,4 +291,4 @@ def test_live_agent_readiness_fails_when_bridge_is_unavailable(
         enforce_memory_backing=False,
     )
 
-    assert store.is_ready() is False
+    assert await store.is_ready() is False

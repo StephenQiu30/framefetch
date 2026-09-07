@@ -338,7 +338,7 @@ def operator_settings(tmp_path: Path) -> RunnerSettings:
 
 
 class SuccessfulCookieSync:
-    def is_ready(self, *_args: object) -> bool:
+    async def is_ready(self, *_args: object) -> bool:
         return True
 
     async def sync(self, *_args: object) -> bytes:

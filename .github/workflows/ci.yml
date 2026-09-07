@@ -234,6 +234,21 @@ jobs:
           assert problem['code'] == 'invalid_credentials'
           print(f'运行时烟测通过：{len(schema["paths"])} 个 OpenAPI paths')
           PY
+          # Hosted CI only: core API must cold-start while the media runtime is down.
+          "${compose[@]}" stop media-runner
+          "${compose[@]}" up --detach --no-deps --force-recreate --wait --wait-timeout 60 --no-build api
+          python3 - <<'PY'
+          import json
+          import urllib.request
+
+          for path in ('/health/ready', '/openapi.json'):
+              with urllib.request.urlopen(f'http://127.0.0.1:8111{path}', timeout=5) as response:
+                  assert response.status == 200
+                  payload = json.load(response)
+                  assert payload.get('status') == 'ok' if path == '/health/ready' else payload.get('paths')
+          print('媒体 Runner 停止期间，API 冷启动与核心接口检查通过')
+          PY
+          "${compose[@]}" up --detach --wait --wait-timeout 120 --no-build media-runner
           "${compose[@]}" run --rm --no-deps database-init
 
   required-ci:
