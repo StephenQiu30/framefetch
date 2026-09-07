@@ -5,13 +5,13 @@ import FormatPicker from '@/components/intake/format-picker';
 import { inspection } from '../fixtures/download-fixtures';
 
 describe('FormatPicker', () => {
-  it('shows an empty state and emits the selected format', () => {
+  it('shows an empty state when no download format is available', () => {
     const onChange = vi.fn();
     render(<FormatPicker formats={[]} onChange={onChange} selectedId="" />);
 
-    expect(
-      screen.getByText('当前视频没有可用的下载版本。'),
-    ).toBeInTheDocument();
+    expect(document.querySelector('[data-slot="empty"]')).toBeInTheDocument();
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('renders every semantic format as a selectable card', () => {
