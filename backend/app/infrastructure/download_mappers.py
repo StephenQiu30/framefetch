@@ -89,6 +89,7 @@ def job_snapshot(value: StoredJob) -> JobSnapshot:
         retry_at=value.retry_at,
         finished_at=value.finished_at,
         error_code=value.error_code,
+        error_message=value.error_message,
         created_at=value.created_at,
         updated_at=value.updated_at,
         source_kind=value.source_kind,

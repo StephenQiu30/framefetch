@@ -49,10 +49,30 @@ class _ArticleHtmlParser(HTMLParser):
         self._in_activity_title = False
         self.has_article_body = False
         self.embeds: list[tuple[str, dict[str, str]]] = []
+        self._tags: list[str] = []
+        self._visible_text: list[str] = []
+        self._page_notices: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         values = {key.casefold(): value or "" for key, value in attrs}
         tag = tag.casefold()
+        if tag not in {
+            "area",
+            "base",
+            "br",
+            "col",
+            "embed",
+            "hr",
+            "img",
+            "input",
+            "link",
+            "meta",
+            "param",
+            "source",
+            "track",
+            "wbr",
+        }:
+            self._tags.append(tag)
         if tag == "title":
             self._in_title = True
         if values.get("id") == "activity-name":
@@ -69,14 +89,36 @@ class _ArticleHtmlParser(HTMLParser):
             self.embeds.append((tag, values))
 
     def handle_endtag(self, tag: str) -> None:
+        tag = tag.casefold()
+        if tag in self._tags:
+            index = len(self._tags) - 1 - self._tags[::-1].index(tag)
+            del self._tags[index:]
         if tag.casefold() == "title":
             self._in_title = False
         if tag.casefold() == "h1":
             self._in_activity_title = False
 
     def handle_data(self, data: str) -> None:
+        if any(tag in {"script", "style", "template"} for tag in self._tags):
+            return
+        self._visible_text.append(data)
+        if not self._tags or self._tags[-1] in {"html", "body", "title"}:
+            self._page_notices.append(data)
         if (self._in_title or self._in_activity_title) and not self.title:
             self.title = data
+
+    def access_restricted(self) -> bool:
+        # Text in article paragraphs and scripts is not a platform access signal.
+        visible = " ".join(self._visible_text)
+        if not self.has_article_body:
+            return any(marker in visible for marker in _RESTRICTED_MARKERS)
+        for text in self._page_notices:
+            notice = text.strip()
+            if notice in _RESTRICTED_MARKERS:
+                return True
+            if notice.endswith("环境异常，请完成验证后继续访问"):
+                return True
+        return False
 
 
 def parse_article_html(
@@ -87,15 +129,14 @@ def parse_article_html(
 ) -> ArticleDiscoveryResult:
     if not payload.strip():
         raise ArticleDiscoveryFailure("article HTML is empty")
-    head = payload[:16_384]
-    if any(marker in head for marker in _RESTRICTED_MARKERS):
-        raise ArticleAccessRestricted("article access is restricted")
     parser = _ArticleHtmlParser(max_items=max_items)
     try:
         parser.feed(payload)
         parser.close()
     except (ValueError, ArticleDiscoveryFailure) as exc:
         raise ArticleDiscoveryFailure("article HTML is invalid") from exc
+    if parser.access_restricted():
+        raise ArticleAccessRestricted("article access is restricted")
     if not parser.has_article_body:
         raise ArticleDiscoveryFailure("article body is unavailable")
 

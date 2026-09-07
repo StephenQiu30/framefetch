@@ -44,8 +44,8 @@ def test_non_test_app_wires_runtime_readiness_into_the_route(tmp_path: Path) -> 
     async def unavailable() -> bool:
         return False
 
-    application.state.readiness_probe.check = unavailable
     with TestClient(application) as client:
+        application.state.readiness_probe.check = unavailable
         response = client.get("/health/ready")
 
     assert response.status_code == 503
