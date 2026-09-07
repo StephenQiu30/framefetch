@@ -65,7 +65,7 @@ FastAPI 运行后执行：
 npm run openapi
 ```
 
-该命令根据 `openapi2ts.config.ts` 从根 Compose 的 `http://127.0.0.1:8111/openapi.json` 读取契约，生成 `src/services/video/` 中的请求函数和 `API` 类型。需要临时读取其他契约地址时使用 `OPENAPI_SCHEMA_URL`，不要修改并提交本地地址。
+该命令直接运行 `@umijs/openapi` 提供的 `openapi2ts` CLI，根据 `openapi2ts.config.ts` 从根 Compose 的 `http://127.0.0.1:8111/openapi.json` 读取契约，生成 `src/services/video/` 中的请求函数和 `API` 类型。需要临时读取其他契约地址时使用 `OPENAPI_SCHEMA_URL`，不要修改并提交本地地址；不要再增加包装生成脚本或第二套 schema 解析逻辑。
 
 `src/services/video/` 是生成目录，禁止手工修改，也不得维护平行 DTO 或手写 API 客户端。生成代码通过配置的 import statement 统一调用 `src/lib/request.ts`；页面应优先调用 `src/services/download.ts`、`analysis.ts`、`auth.ts`、`users.ts`、`provider-catalog.ts` 或 `system.ts` 等稳定业务入口。接口变化时先更新并启动 FastAPI，再执行 `npm run openapi`，最后提交契约对应的生成差异。
 

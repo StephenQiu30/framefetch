@@ -11,7 +11,7 @@
     "lint": "npm run biome:lint && npm run typecheck",
     "biome:lint": "biome lint .",
     "format:check": "biome check . --linter-enabled=false",
-    "openapi": "node scripts/generate-openapi.mjs",
+    "openapi": "openapi2ts",
     "openapi:check": "npm run openapi && git diff --exit-code -- src/services/video",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

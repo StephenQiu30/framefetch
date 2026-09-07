@@ -29,7 +29,7 @@ npm run build
 ## OpenAPI 与请求
 
 - `/openapi.json` 是前后端唯一接口契约，生成配置位于 `openapi2ts.config.ts`。
-- `src/services/video/` 由独立的 `@umijs/openapi` 生成，禁止手工修改、复制类型或创建平行客户端。
+- `src/services/video/` 由 `@umijs/openapi` 的 `openapi2ts` CLI 直接生成；配置只维护在 `openapi2ts.config.ts`，禁止增加包装生成脚本、手工修改生成文件、复制类型或创建平行客户端。
 - 接口变化时先更新 FastAPI schema 与稳定 `operationId`/tag，启动 API 后运行 `npm run openapi`。
 - 生成函数必须通过 `src/lib/request.ts` 的同源 Axios 封装；业务组件只调用 `src/services/` 暴露的稳定入口。
 - 请求层统一处理 RFC Problem Details、超时和认证恢复；页面中不得散落原始 Axios/fetch、401 刷新或错误码映射。
