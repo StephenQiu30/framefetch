@@ -35,6 +35,7 @@ class RunnerSettings(BaseSettings):
     runner_operator_account_baseline_attested: bool = False
     runner_provider_session_temp_root: Path = Path("/run/provider-session")
     runner_provider_cookie_sync_root: Path | None = None
+    runner_provider_cookie_file: Path | None = None
     peertube_allowed_instances: frozenset[str] = frozenset()
 
     runner_ytdlp_bin: str = "yt-dlp"
@@ -140,6 +141,12 @@ class RunnerSettings(BaseSettings):
             return None
         return value.expanduser().resolve()
 
+    @field_validator("runner_provider_cookie_file")
+    @classmethod
+    def normalize_cookie_file(cls, value: Path | None) -> Path | None:
+        # Preserve the final component so O_NOFOLLOW can reject symlink sources.
+        return None if value is None else value.expanduser().absolute()
+
     @field_validator("runner_ytdlp_commit", "runner_youtube_pot_provider_version")
     @classmethod
     def validate_version_reference(cls, value: str) -> str:
@@ -161,6 +168,16 @@ class RunnerSettings(BaseSettings):
         ):
             raise ValueError("provider session temp root cannot be in the workspace")
         operator = self.runner_access_mode is ProviderAccessMode.OPERATOR_MANAGED
+        cookie_file = self.runner_provider_cookie_file
+        if cookie_file is not None:
+            if not operator:
+                raise ValueError(
+                    "provider Cookie file is restricted to an operator runner"
+                )
+            if cookie_file.resolve().is_relative_to(self.runner_workspace_root):
+                raise ValueError("cookie file cannot be in the workspace")
+            if self.runner_provider_cookie_sync_root is not None:
+                raise ValueError("configure exactly one provider Cookie source")
         if self.runner_provider_cookie_sync_root is not None:
             if not operator:
                 raise ValueError(
@@ -203,8 +220,15 @@ class RunnerSettings(BaseSettings):
                 raise ValueError("operator account baseline must be attested")
             if self.runner_max_active_tasks != 1:
                 raise ValueError("operator runner concurrency must be one")
-            if self.runner_provider_cookie_sync_root is None:
-                raise ValueError("operator runner requires provider Cookie sync")
+            if self.runner_provider_cookie_sync_root is None and cookie_file is None:
+                raise ValueError(
+                    "operator runner requires provider Cookie sync or file"
+                )
+            if cookie_file is not None:
+                from app.runner.provider_session_policy import ProviderSessionSource
+
+                if policy.source is not ProviderSessionSource.CHROME_PROFILE:
+                    raise ValueError("provider requires dynamic browser session state")
         elif self.runner_operator_session_versions:
             raise ValueError("anonymous runner cannot configure provider sessions")
         if self.runner_youtube_pot_base_url is not None:

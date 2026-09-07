@@ -62,7 +62,7 @@ docker compose --env-file .env -f docker-compose.yml up -d --build --force-recre
 后端镜像、重新创建业务服务并等待健康检查。需要 Operator Runner 时，在 `.env` 的
 `COMPOSE_PROFILES` 中声明与 `RUNNER_OPERATOR_BASE_URLS` 一致的 profile。项目启动
 不会在项目启动或解析时启动宿主机浏览器，也不会调用 AI Worker 获取平台会话。
-生产受控 Provider 不使用版本化 Cookie 文件。macOS 部署显式安装统一按需助手后，
+生产八个普通 Cookie 平台使用按 Provider 隔离的持久只读文件，配置见[个人部署手册](008-个人部署重启与换机手册.md)。本机开发及可选视频号的 macOS 浏览器来源显式安装统一按需助手后，
 Operator 操作才会读取 Chrome Default 的目标域最小集合；SQL 查询本身按中央 Provider
 allowlist 选择，不把其他域行返回后再过滤。Runner 每次生成一次性公钥，宿主返回绑定该
 请求的认证加密密文；明文只在对应 Runner 的 `/run/provider-session` tmpfs 中存在到操作
@@ -148,7 +148,7 @@ AI Worker 心跳是功能级状态，不是 API 全局 readiness。Worker 短暂
 
 ## Operator Profile
 
-macOS 生产环境先安装统一宿主会话代理：
+只有浏览器来源（本机开发及生产可选视频号）需要在 macOS 安装统一宿主会话代理：
 
 ~~~bash
 cd backend
@@ -156,7 +156,7 @@ uv run python -m app.runner.provider_cookie_agent install
 uv run python -m app.runner.provider_cookie_agent status
 ~~~
 
-生产 Compose 固定启动九个平台隔离 Runner，不使用条件 Profile：
+生产受控 Runner 按 `COMPOSE_PROFILES` 选择，并在 `RUNNER_OPERATOR_BASE_URLS` 配置相同平台。文件准备和旧配置切换见[个人部署手册](008-个人部署重启与换机手册.md)，完成后使用：
 
 ~~~bash
 docker compose --env-file .env.prod -f docker-compose-prod.yml config --quiet

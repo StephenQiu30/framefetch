@@ -14,8 +14,8 @@
 
 1. 用可测试的策略责任链统一匿名与 Provider Operator 解析路径。
 2. 以错误策略对象约束降级范围，并优先暴露已配置会话过期。
-3. Operator 会话只在操作开始时从已授权 Chrome 读取，并通过一次性加密租约交付；
-   应用不持久化 Cookie、不依赖 AI Worker，也不提供普通用户 Cookie 上传入口。
+3. Operator 会话从已授权 Chrome 的操作级租约或部署方单平台只读文件取得；
+   可写副本只在 tmpfs，不依赖 AI Worker，也不提供普通用户 Cookie 上传入口。
 4. 私有封面通过认证 HTTP client 获取并在内存中显示，不让原生图片请求绕过
    Access/Refresh Cookie 恢复。
 5. 下载任务由 Worker 在执行前重新解析并校验规格；终态重试只负责入队，避免
@@ -53,6 +53,8 @@ flowchart LR
 
 ## 3. Provider Session 生命周期
 
+个人生产的文件来源、容器重建和换机操作见 [031](031-Linux无人值守运行设计.md) 与[运行手册](../operations/008-个人部署重启与换机手册.md)。以下加密队列描述适用于浏览器来源；文件来源不经过宿主队列。
+
 C 端业务进程不直接读取 Chrome Profile 或 Keychain。macOS 部署通过显式安装的
 统一宿主代理按操作读取已授权会话，容器只能领取发给本次操作的加密租约：
 
@@ -63,7 +65,7 @@ C 端业务进程不直接读取 Chrome Profile 或 Keychain。macOS 部署通�
 3. Runner 只在独占 tmpfs 中创建 `0600` 操作 jar；Cookie 原文不进入 API、数据库、
    RabbitMQ、日志、业务响应或 AI Worker。
 4. 操作结束时销毁私钥、jar 和密文；撤销时从路由移除对应 Provider，并在第一方平台
-   撤销会话，不存在应用会话文件。
+   撤销会话；浏览器模式不存在应用会话文件。
 
 微信视频号使用独立的元宝 Chrome 状态目录，只允许 `yuanbao.tencent.com` 会话和已登记
 的动态请求头。它不读取默认 Chrome Profile，也不作为其他 Provider 的备用路径。
@@ -74,7 +76,7 @@ C 端业务进程不直接读取 Chrome Profile 或 Keychain。macOS 部署通�
 | --- | --- | --- | --- |
 | 本地开发 | 伪造的一次性租约 | 单次操作 | 单元测试和隔离 Runner 契约 |
 | CI | 伪造的一次性租约 | 单次操作 | 单元测试和授权 canary |
-| 生产 | 宿主 Chrome 按需读取并认证加密 | 单次操作 | 可审计的独立 Operator Runner |
+| 个人生产 | 八个平台使用持久只读文件，视频号可选浏览器来源 | 来源持久；可写 jar 单次操作 | 按 profile 启用的独立 Operator Runner |
 
 若未来平台提供官方 OAuth 或资产导出 API，应新增官方 Connector，以用户授权范围和
 资产级导出权替代 Cookie。不得把本地授权工具、消费端私有接口或浏览器自动化扩展为

@@ -169,4 +169,4 @@ npm run build
 
 API 使用 `runtime.py` 定义类型化的 `ApiServices`，在 `app.state.services` 中只挂载一次，通过 FastAPI 依赖函数读取；`lifespan.py` 管理资源所有权和释放，不逐项复制服务到动态 State。外部注入的运行时由调用方管理。
 
-API readiness 检查业务核心依赖，不把匿名或受控 Runner 的健康作为全局可用条件。API、下载 Worker 和 Canary 的启动不得等待所有 Provider 健康；Worker/Canary 仍等待共享工作目录初始化。受控 Runner 的代理 readiness 必须使用不读取 Cookie 的有界 probe 往返，安装标记不能代替响应。下载 Worker 与 Runner 的容器停止宽限必须覆盖 Worker 有限排空预算。对应设计和目标环境验收见 030 四件套。
+API readiness 检查业务核心依赖，不把匿名或受控 Runner 的健康作为全局可用条件。API、下载 Worker 和 Canary 的启动不得等待所有 Provider 健康；Worker/Canary 仍等待共享工作目录初始化。浏览器来源 Runner 的代理 readiness 必须使用不读取 Cookie 的有界 probe 往返，安装标记不能代替响应；个人文件来源按 031 校验只读平台文件，不依赖桌面代理。下载 Worker 与 Runner 的容器停止宽限必须覆盖 Worker 有限排空预算。对应设计和目标环境验收见 030 四件套。

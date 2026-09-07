@@ -6,7 +6,7 @@
 - 前置调研：`docs/research/003-多平台下载会话与GitHub适配调研.md`
 - 实现状态：Phase 1 已落地版本化 Profile、非 Secret 访问上下文、匿名/YouTube 运维 Runner 路由、操作级 Cookie jar、权益防火墙、服务端托管 POT sidecar、稳定错误、Provider 探针结果表/定时执行器/动态状态聚合、`GET /api/providers` 与前端状态页。YouTube 已停止 yt-dlp 与 Runner 的同出口立即重试放大；授权目标的真实 Cookie/POT canary、完整视频 Agent E2E、账号权益漂移自动停用，以及遵守 `Retry-After` 的跨层总预算/cooldown 仍是生产发布门禁；Phase 2 的用户 Credential Broker/Vault 与 gallery-dl 尚未实现。
 
-> 当前实现：Provider Profile 与会话来源由中央枚举登记，生产使用一个匿名 Runner 和九个 Provider 隔离 Runner。统一 macOS `launchd QueueDirectories` 代理按 `provider + browser + ephemeral public key` 请求从 Chrome 读取最小域集合，并用一次性认证加密租约交付；应用不保存 Cookie 或专用浏览器 Profile。微信视频号只在操作期间克隆正常 Chrome 的当前元宝授权，计算动态头后销毁临时目录。配置受控 Runner 后直接路由到该 Runner，download 复用 inspect 冻结的上下文，不进行匿名/账号切换。YouTube 继续使用 `mweb`、EJS 和固定 digest 的 bgutil POT sidecar；POT 不能修复登录过期或出口挑战。
+> 当前实现：Provider Profile 与会话来源由中央枚举登记，生产默认使用匿名 Runner，九个 Provider 隔离 Runner 按 profile 选择；八个普通 Cookie 平台使用只读文件，视频号保留可选 macOS 来源。统一 macOS `launchd QueueDirectories` 代理按 `provider + browser + ephemeral public key` 请求从 Chrome 读取最小域集合，并用一次性认证加密租约交付；浏览器模式不保存 Cookie 或专用浏览器 Profile；文件模式由部署方私下持久保存单平台会话，详见 [031](031-Linux无人值守运行设计.md)。微信视频号只在操作期间克隆正常 Chrome 的当前元宝授权，计算动态头后销毁临时目录。配置受控 Runner 后直接路由到该 Runner，download 复用 inspect 冻结的上下文，不进行匿名/账号切换。YouTube 继续使用 `mweb`、EJS 和固定 digest 的 bgutil POT sidecar；POT 不能修复登录过期或出口挑战。
 
 ## 1. 目标
 
@@ -47,7 +47,7 @@ Cookie 的一刀切禁令被调整为“默认关闭、Provider allowlist、生�
 - YouTube 运维 Runner 的 inspect、download stream 和 probe sample 统一使用操作级 `--cookies`，匿名、Generic 与非 YouTube 路径不携带 Cookie。
 - YouTube bot challenge、credential、POT、rate、geo、private/entitlement、DRM 与 extractor regression 已分层；download re-inspect 的 Provider 错误不再降为 `worker_lost`。
 - Provider Profile 直接声明 yt-dlp retry 次数；YouTube 的 yt-dlp/inspection 都只尝试一次，429 与出口 challenge 交给上层冷却，不在相同 context 内立即重打。yt-dlp warning 不再被隐藏，复合 `429 + unavailable` 优先归为限流。
-- Cookie 在每次操作开始时通过 X25519/HKDF/ChaCha20-Poly1305 租约交付，明文 jar 只位于 Runner 独占 tmpfs `/run/provider-session`，不位于共享 `/work` 或宿主持久目录。
+- 浏览器模式的 Cookie 在每次操作开始时通过 X25519/HKDF/ChaCha20-Poly1305 租约交付；文件模式从部署方单平台只读 Secret 取得。可写操作 jar 只位于 Runner 独占 tmpfs `/run/provider-session`，不位于共享 `/work`。
 - inspection 冻结 `ProviderAccessContextRef` 并随下载快照传递；匿名与运维 Runner 物理分离，YouTube 可选择固定 Provider 出口和内部 POT sidecar。
 - Runner readiness 已校验 yt-dlp 包版本与锁定源 commit、bgutil 插件版本。Sidecar 不参与 API/公共 Runner readiness，也不作为 Compose `service_healthy` wait gate；版本库内脚本以只读方式挂载为容器 PID1 supervisor，独立检查 `/ping`，连续 3 次失败才终止并重启上游子进程。上游子进程 stdout/stderr 全部丢弃，防止它输出的 PO Token 或绑定标识进入持久容器日志；supervisor 只记录不含异常原文和证明数据的固定故障事件。YouTube 命令在 spawn 前和失败后执行 2 秒、禁用环境代理/重定向、精确版本的语义预检，因此 sidecar 运行中断裂不会被误归因为出口 challenge；非 YouTube 命令不执行该探测。
 
@@ -214,7 +214,7 @@ engine_commit
 规则：
 
 1. 下载任务保存上述引用，不保存 Cookie、visitor data 或 token 原文。
-2. 当前受控会话只有强类型 `browser` 协议；它是本机动态来源标识，不是 Cookie 内容快照 ID。inspect 和 download 各自在操作开始时请求对应 Provider 的一次性加密租约。
+2. 浏览器来源的强类型 `browser` 是动态来源标识；文件来源按有效载荷与部署 HMAC 密钥生成 `file-` 不透明版本，文件变化会隔离旧上下文。两种来源均在每次操作开始时获取新副本，不在普通业务 JSON 传递 Cookie。
 3. 初次 inspection 与异步 download 各创建一个操作级可写 jar；download 必须先用原 snapshot version 重新 inspect，再让 video/audio stream、probe sample 和需要远程访问的 ffprobe 串行复用该 jar。
 4. Download Worker 重解析时必须使用 inspection 冻结的同一来源引用；`browser` 会重新触发同一 Provider 来源协议。对应来源不可用时返回稳定错误，不用其他账号或匿名模式替代。
 5. POT 由同一 client/session/出口上的 Provider 按视频生成；不把 video-bound token 长期持久化。
@@ -226,7 +226,7 @@ engine_commit
 
 ### 8.1 第一阶段：运维一次性租约
 
-- 不配置 Cookie 文件路径，也不把 Cookie 内容写入环境变量。
+- 浏览器模式不配置 Cookie 文件路径；个人文件模式只配置 `RUNNER_PROVIDER_COOKIE_FILE` 路径。两者均不把 Cookie 内容写入环境变量。
 - Runner 为每次 inspect/download 生成一次性 X25519 私钥；请求包含强类型 Provider、来源标识和公钥。宿主代理按域读取当前 Chrome Cookie，以 HKDF 派生密钥并用 ChaCha20-Poly1305 绑定请求内容加密。
 - 请求队列没有 Cookie；响应队列只短暂保存只能由该请求私钥解开的密文。Runner 领取后立即确认，代理删除请求和响应；超时也会清除密文。
 - Runner 解密后验证 Netscape header、最大 1 MiB 和该 Profile 域名 allowlist，只在独占 tmpfs `/run/provider-session` 创建唯一目录；目录 `0700`、Cookie jar `0600`。
@@ -239,7 +239,7 @@ engine_commit
 
 ### 8.2 macOS 单机按需来源
 
-- 只有当前登录的 macOS 用户显式安装助手并启用对应 Operator 后，解析/下载操作才可触发 Chrome Default 来源；获批准的单机 production Compose 可以复用该宿主机来源。
+- 只有当前登录的 macOS 用户显式安装助手并启用对应 Operator 后，解析/下载操作才可触发 Chrome Default 来源；本机开发 Compose 使用该来源；production Compose 仅视频号仍保留此可选路径，其他受控平台使用 031 文件来源。
 - Chrome Cookies 数据库的 SQL 查询在选择阶段就限制为当前 Provider 的中央域 allowlist，只返回并解密中选行；其他域 Cookie 不进入 helper 的查询结果、输出或日志。
 - 单次读取在独立进程组中执行，持有 15 秒硬超时；成功后立即退出，超时、取消或异常时终止并回收整个进程组。helper 不启动、操作或持有 Chrome，不使用定时轮询或常驻端口。
 - `browser` 表示动态本机来源协议，不是 Cookie 原文哈希或内容 cohort。其平台状态历史只能证明该来源在相同非敏感上下文近期完成过制品，不证明当前 Cookie 未轮换或仍可用，不能单独将 `access_required` 提升为 `verified`。

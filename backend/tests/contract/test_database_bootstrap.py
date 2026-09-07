@@ -409,12 +409,9 @@ def test_provider_session_runners_are_physically_isolated_by_provider() -> None:
             assert "127.0.0.1:19100/health/ready" in " ".join(
                 service_config["healthcheck"]["test"]
             )
-            if path == COMPOSE_PATH:
-                assert service_config["profiles"] == [
-                    f"{provider.replace('_', '-')}-operator"
-                ]
-            else:
-                assert "profiles" not in service_config
+            assert service_config["profiles"] == [
+                f"{provider.replace('_', '-')}-operator"
+            ]
 
 
 def test_provider_cookie_agent_mount_is_physically_scoped_per_provider() -> None:
@@ -423,10 +420,32 @@ def test_provider_cookie_agent_mount_is_physically_scoped_per_provider() -> None
         PROD_COMPOSE_PATH.read_text(encoding="utf-8"),
     )
 
-    for document in compose_documents:
+    for index, document in enumerate(compose_documents):
         compose = yaml.safe_load(document)
         for service, provider in _OPERATOR_PROVIDERS.items():
             service_config = compose["services"][service]
+            if index == 1 and provider != "wechat_channels":
+                assert (
+                    "RUNNER_PROVIDER_COOKIE_SYNC_ROOT"
+                    not in service_config["environment"]
+                )
+                assert service_config["environment"]["RUNNER_PROVIDER_COOKIE_FILE"] == (
+                    "/run/provider-source/cookies.txt"
+                )
+                mounts = [
+                    volume
+                    for volume in service_config["volumes"]
+                    if isinstance(volume, dict)
+                    and volume.get("target") == "/run/provider-source"
+                ]
+                assert len(mounts) == 1
+                assert mounts[0]["read_only"] is True
+                assert mounts[0]["bind"]["create_host_path"] is False
+                assert (
+                    mounts[0]["source"]
+                    == "${PROVIDER_SESSION_DIR:-./.provider-sessions}/" + provider
+                )
+                continue
             assert (
                 service_config["environment"]["RUNNER_PROVIDER_COOKIE_SYNC_ROOT"]
                 == "/run/provider-cookie-agent"
@@ -449,6 +468,17 @@ def test_provider_cookie_agent_mount_is_physically_scoped_per_provider() -> None
         encoding="utf-8"
     )
     assert "COOKIE_SECRET_DIR" not in PROD_ENV_EXAMPLE_PATH.read_text(encoding="utf-8")
+
+
+def test_default_personal_production_does_not_require_desktop_sessions() -> None:
+    compose = yaml.safe_load(PROD_COMPOSE_PATH.read_text(encoding="utf-8"))
+    for service in compose["services"].values():
+        if not service.get("profiles"):
+            assert "Library/Caches" not in str(service)
+            assert "RUNNER_PROVIDER_COOKIE_SYNC_ROOT" not in service.get(
+                "environment", {}
+            )
+    assert "RUNNER_OPERATOR_BASE_URLS={}\n" in PROD_ENV_EXAMPLE_PATH.read_text()
 
 
 def test_wechat_channels_uses_the_same_isolated_browser_session_contract() -> None:

@@ -1,68 +1,37 @@
-# 031 Linux 无人值守运行设计
+# 031 个人部署重启与换机设计
 
-- 状态：Proposed；目标环境已由用户确认为 Linux，无桌面登录；尚未实现。
-- 核查日期：2026-09-07；代码基线：`15dc07fb`。
-- 前置能力：[030 运行故障隔离与恢复](030-运行故障隔离与恢复设计.md)。030 不代表本设计已经完成。
+- 状态：个人文件会话模式已实现，真实平台与目标机器验收待完成。
+- 用户范围：个人使用；容器重启和新电脑启动不再需要改代码适配。Linux 仍是可用目标，不要求企业授权平台。
+- 关联：[需求](../prd/031-Linux无人值守运行需求.md)、[计划](../plans/031-Linux无人值守运行计划.md)、[验收](../acceptance/031-Linux无人值守运行验收.md)。
 
-## 目标与可行性
+## 问题与最小方案
 
-在上游协议不变、授权仍有效、持久存储可用的条件下，Linux 主机或容器重启后应自动恢复服务和任务，不需要登录桌面、打开 Chrome、重新导出 Cookie 或修改适配代码。首次部署和首次授权允许一次性配置；重启不能成为重新配置的触发器。
+原生产 Compose 默认启动九个受控 Runner，却全部依赖容器外的 macOS 会话代理和 Chrome 状态。代码和镜像存在并不能恢复这些宿主条件。当前工作机已安装代理且容器显示健康，尚未取得重启前后同一平台的真实失败样本，因此不能把全部故障都归因于会话丢失。
 
-| 情况 | 处理方式 | 能否无人值守 |
-| --- | --- | --- |
-| 应用进程退出、主机重启、临时目录丢失 | 固定镜像、系统服务自启、持久状态恢复、重新领取操作凭据 | 可以实现，需 Linux 冷启动实测 |
-| 有效授权因进程内存清空而丢失 | 加密持久化授权，启动后重新签发短期操作租约 | 可以实现，当前尚无独立服务端来源 |
-| 支持官方续期的 access token 过期 | 持久保存 refresh token，有界刷新与原子轮换 | 可以实现，但必须有平台对应能力 |
-| 普通 Cookie 失效、授权撤销、平台要求重新验证 | 停止使用该凭据并提示重新授权；恢复后再准入 | 不能承诺自动续期或永久有效 |
-| 上游解析协议变化 | 候选版本构建、契约测试、平台 canary、灰度与回滚 | 可自动检测和验证，修复仍可能需要开发 |
-| 单主机或持久存储损坏 | 副本、备份恢复和跨主机执行归属 | 属于下一阶段 HA，容器自启不能替代 |
+个人使用不新增凭据数据库、独立授权服务或工作流引擎。沿用现有任务数据库、Outbox、队列和制品存储，为受控 Runner 增加部署方维护的只读 Netscape Cookie 文件来源。配置和会话放在持久目录，操作临时文件仍只存在于 tmpfs。重建容器不删除来源文件，新电脑迁移配置和状态后可读取同一来源。
 
-## 已确认的项目阻碍
+## 当前实现
 
-1. [会话装配](../../backend/app/runner/provider_sessions.py)的生产来源只有宿主文件队列客户端；[代理](../../backend/app/runner/provider_cookie_agent.py)依赖 macOS LaunchAgent。
-2. [来源适配](../../backend/app/runner/provider_session_source.py)读取 Chrome 或临时元宝浏览器状态；[策略](../../backend/app/runner/provider_session_policy.py)中的八个平台依赖 Chrome，视频号另依赖动态浏览器状态。代码中声明支持不等于当前 Linux 实测通过。
-3. [生产 Compose](../../docker-compose-prod.yml)仍把宿主 `Library/Caches/FrameFetch/provider-cookie-agent` 挂入受控 Runner。设置容器重启策略不会产生 Linux 会话代理，也不会延长凭据寿命。
-4. 既有 PostgreSQL、Outbox、lease/heartbeat 和幂等是恢复基础；仍需验证强杀、断电与重试预算。当前 Runner 执行状态和共享工作目录不能直接跨主机复制扩容。
-5. [029 授权获取设计](029-付费内容识别与授权获取设计.md)描述了官方 Connector 的准入条件，当前没有可以替代全部平台的通用官方媒体导出 Connector。
+- `RunnerSettings.runner_provider_cookie_file` 与 macOS 的 `runner_provider_cookie_sync_root` 二选一；匿名 Runner 禁止配置任一来源。
+- [文件读取器](../../backend/app/runner/provider_cookie_file.py)每次操作重新打开文件，限制 1 MiB、普通文件、无最终符号链接、无硬链接、无其他用户权限，并校验平台域、格式、到期时间和必需 Cookie 名。普通用户 API 不接受 Cookie。
+- [会话装配](../../backend/app/runner/provider_sessions.py)继续生成唯一的 `0600` 操作 jar。文件来源的访问上下文使用带密钥摘要形成不透明版本；文件替换后旧任务不能静默使用新会话。只要有效负载与部署 HMAC 密钥不变，路径和机器变化不会改变版本。
+- 操作期间 Cookie 更新只写临时副本，不覆盖只读来源；此模式不会自动延长会话寿命，也不证明平台端未撤销授权。换机后平台要求重新验证与程序重启丢配置是不同事件。
+- 生产 Compose 为 YouTube、抖音、小红书、X、Instagram、Facebook、Reddit、Pinterest 提供按平台只读目录。目录级挂载允许部署方原子替换文件；不把全部平台 Cookie 挂到同一 Runner。
+- 两套业务 Compose 的受控 Runner 均按 profile 启用。生产示例默认不配置受控路由，个人只保存已配置的平台组合，避免未安装的会话来源阻止启动。
+- 视频号仍依赖元宝动态浏览器状态，保留可选 macOS 路径；文件模式明确拒绝，不通过虚构未来到期时间宣称它能独立运行。
 
-## 目标架构决策
+## 启动、更新与迁移
 
-### 独立的授权生命周期
+启动继续使用固定镜像和 lockfile，不在每次启动时修改解析器参数或升级依赖。平台变化通过现有构建与测试工作流发布更新。任务恢复复用 030 和既有 lease/Outbox，不在本次改变重试预算或跨主机执行机制。
 
-生产授权由服务端凭据管理能力负责；普通 API、下载 Worker、匿名 Runner 不读取凭据。复用现有 PostgreSQL 保存最小授权元数据与记录绑定的密文，使用独立的凭据加密密钥，不复用 AI Provider Key 的加密用途。密钥通过部署 Secret 注入，并纳入可恢复性验收。数据库角色限制在所需凭据表；具体 SQL、角色与服务装配在实现批次中提交。
+首次配置平台会话一次，后续普通 `restart`、`up --force-recreate` 使用持久配置。新电脑必须迁移私有会话、环境配置与需要保留的业务数据；只克隆 Git 仓库不会包含个人授权。HMAC 密钥、出口身份等上下文变化时旧任务应重新解析，不能取消既有身份隔离规则。详细操作见[个人部署与迁移](../operations/008-个人部署重启与换机手册.md)。
 
-授权记录至少绑定 Provider、账号主体、授权范围、凭据版本、来源类型、到期信息和撤销状态。不同账号或授权范围变更生成新版本；不得仅沿用当前固定 `browser` 标识，让旧任务静默切换身份。平台没有可信到期字段时记录为未知，由实际能力探针更新状态，不虚构长期有效期。
+## ToC 工具依据
 
-保留单 Provider Runner 与操作级 tmpfs。Runner 通过有界、认证且绑定请求的凭据租约取得所需最小集合；数据库和加密主密钥不进入 Runner。操作结束销毁明文。首次授权通过独立的管理通道配置，不加入 inspection/download 普通 JSON。具体管理协议与凭据来源必须随实现、测试一起落地，不提前宣称存在可用接口。
+2026-09-07 通过 GitHub 插件读取官方仓库：
 
-只有经平台核实支持续期的来源才实现自动刷新；刷新采用单凭据互斥、版本比较后原子写入、超时与有限重试。无续期协议的 Cookie 只能恢复仍有效的授权，不能通过“保活”保证其永不过期。授权撤销后停止刷新，错误不被无限重试掩盖。
+- [MeTube README](https://github.com/alexta69/metube/blob/master/README.md)：持久 STATE_DIR 保存队列与历史，提供 Cookie 导入和单独的 yt-dlp 更新途径。这支持把个人状态与软件更新分开管理，不需要每次启动重新适配。
+- [YTDLnis README](https://github.com/deniscerri/ytdlnis/blob/main/README.md)：提供 Cookie 支持和应用内更新入口。它不是无需维护的平台协议实现；这里只借鉴个人产品的配置与更新体验。
+- [yt-dlp FAQ](https://github.com/yt-dlp/yt-dlp/wiki/FAQ)：媒体请求可能绑定 Cookie、IP 和请求头。相同文件换机器不构成所有平台必然可用的证明，仍需实际验证。
 
-### 按能力迁移平台
-
-公开无凭据来源首先进行 Linux 实测。Chrome 来源的八个平台逐一核实可用授权来源、服务端出口绑定、恢复方式与有效期；通过门禁后才列为无人值守支持。视频号的元宝动态状态不能当成普通 Cookie Secret 迁移，必须单独验证可用服务端接口；未具备时准确显示能力限制，不把桌面助手包装成 Linux 原生服务。
-
-官方 OAuth 解决身份与 API scope，不自动提供原始媒体下载接口。官方 Connector 必须验证实际媒体导出能力、资产与账号绑定，不能仅凭登录成功宣告下载支持。已有内容授权与网络隔离规则继续适用。
-
-### 启动与执行恢复
-
-Linux 以系统级服务启动 Docker，业务镜像与依赖版本固定，启动不执行 `pip install -U`、拉取最新解析器或动态打补丁。生产入口使用现有 `docker-compose-prod.yml`；只有具备相应来源的 Provider 才启用，不创建另一套平行部署目录。
-
-所有持久状态须独立于容器可写层。临时 Cookie 与执行缓存允许丢失，任务从 PostgreSQL 恢复；过期媒体直链通过已有语义计划重新解析。基础设施短暂不可用采用有界重连与退避，业务失败和基础设施中断分别计量。重复投递必须收敛到唯一逻辑结果；可以重新执行下载，不能据此宣称字节级断点续传或严格 exactly-once 执行。
-
-启用 AI 分析时也检查其登录依赖：当前 Linux systemd user service 不等于已验证的开机无人登录启动。企业生产优先验证已接入的服务端 Key 来源；若选择用户级 CLI 授权，须另行证明启动与授权生命周期，不能只验收下载链路后宣称全系统通过。
-
-### 发布工作流与高并发
-
-沿用现有 GitHub Actions，依次执行契约与恢复测试、Linux 运行测试、候选镜像构建、持有最小凭据的目标环境 canary、灰度发布及失败回滚。真实平台凭据不进入 fork PR 或不可信候选代码；无凭据 CI 不把跳过的真实平台验收算作成功。此设计不创建定时任务或自动发布授权。
-
-先完成恢复闭环，再按平台设置并发额度、任务公平调度和失败隔离。持久执行归属与制品交付验证之前，不直接给当前有内存状态的 Runner 增加随机负载均衡。Kubernetes 或新的工作流引擎不是本阶段前提，也不能修复失效的平台会话。
-
-## 外部依据
-
-- [yt-dlp 官方支持列表](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)：通过 GitHub 插件核查，内置 extractor 不保证站点持续可用，需实际验证。
-- [yt-dlp FAQ](https://github.com/yt-dlp/yt-dlp/wiki/FAQ)：媒体请求可能绑定相同 IP、Cookie 和请求头，因此跨机器复制解析结果不足以证明可用。GitHub 插件不支持该 wiki URL，使用网页核查。
-- [Google 服务端 OAuth 文档](https://developers.google.com/identity/protocols/oauth2/web-server)：令牌需安全持久保存；refresh token 可续期 access token，但自身仍可能失效或撤销。
-- [YouTube API 政策](https://developers.google.com/youtube/terms/developer-policies)：OAuth 授权不能被推导为通用媒体下载授权，媒体获取需单独核实。
-- [Docker 自动启动文档](https://docs.docker.com/engine/containers/start-containers-automatically/)：重启策略负责容器生命周期；不能替代应用凭据与任务恢复。
-
-上述链接核查于 2026-09-07。架构与交付批次是本项目的设计建议，不是上游提供的现成功能。
+本批仅交付可重建的文件会话来源与部署拓扑。真实平台下载、视频号迁移、自动会话续期和宿主机断电恢复没有在本轮被宣称完成。
