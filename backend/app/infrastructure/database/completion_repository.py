@@ -8,10 +8,11 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import select
 
+from app.application.downloads.download_models import ArtifactSnapshot, JobSnapshot
 from app.domain.downloads import build_artifact_object_key
 
 from .base import as_utc
-from .contracts import ArtifactCreate, ArtifactSnapshot, JobSnapshot
+from .contracts import ArtifactCreate
 from .errors import LeaseConflict, RepositoryConflict, RepositoryNotFound
 from .mapping import artifact_snapshot, job_snapshot
 from .models import ArtifactRow, DownloadJobRow

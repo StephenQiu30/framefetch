@@ -4,7 +4,6 @@ from uuid import uuid4
 from app.api.schemas.downloads import DownloadResponse
 from app.application.downloads.views import download_view
 from app.infrastructure.database import DownloadJobRow, SqlAlchemyDownloadRepository
-from app.infrastructure.download_store import SqlAlchemyDownloadStore
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 
@@ -32,6 +31,6 @@ async def test_persisted_failure_message_reaches_download_response(
             )
         )
     repository = SqlAlchemyDownloadRepository(sessions)
-    store = SqlAlchemyDownloadStore(repository)
+    store = repository
     response = DownloadResponse.from_view(download_view(await store.get_job(job_id)))
     assert response.error_message == "内容访问受限"

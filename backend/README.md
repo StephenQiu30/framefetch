@@ -128,3 +128,7 @@ API 固定监听 `8111`，前端固定监听 `8101`。API `/health/live` 只证�
 uv sync --frozen --dev
 uv run pytest
 ```
+
+## 下载持久化与 API 生命周期
+
+下载 Repository 直接实现应用层端口并返回唯一的应用模型；不建立重复的数据库 DTO、Store 或字段复制层。下载仓库使用显式组合组织事务能力，Outbox 发布由独立的 `SqlAlchemyOutboxRepository` 负责。数据库会话仍由仓库事务管理。API 工厂只定义应用；外部运行时资源在 FastAPI lifespan 启动时创建，启动失败和停止时释放。测试可在不连接外部服务的情况下导入入口并生成 OpenAPI。

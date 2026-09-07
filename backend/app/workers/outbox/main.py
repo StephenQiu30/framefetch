@@ -11,7 +11,7 @@ from datetime import UTC, datetime, timedelta
 
 from app.core.config import get_settings_for_role
 from app.infrastructure.database import (
-    SqlAlchemyDownloadRepository,
+    SqlAlchemyOutboxRepository,
     create_engine,
     create_session_factory,
 )
@@ -28,7 +28,7 @@ def _publisher_id() -> str:
 async def run() -> None:
     settings = get_settings_for_role("outbox")
     engine = create_engine(settings.database_url)
-    repository = SqlAlchemyDownloadRepository(create_session_factory(engine))
+    repository = SqlAlchemyOutboxRepository(create_session_factory(engine))
     publisher = RabbitMqPublisher(
         settings.rabbitmq_url,
         RabbitMqTopology(

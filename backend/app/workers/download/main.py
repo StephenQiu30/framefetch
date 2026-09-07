@@ -22,7 +22,6 @@ from app.infrastructure.database import (
     create_engine,
     create_session_factory,
 )
-from app.infrastructure.download_store import SqlAlchemyDownloadStore
 from app.infrastructure.media_runner import MediaRunnerRouter
 from app.infrastructure.media_runner_factory import media_runner_router
 from app.infrastructure.messaging import RabbitMqTopology
@@ -68,7 +67,7 @@ def build_runtime(settings: Settings) -> DownloadWorkerRuntime:
     storage = MinioObjectStorage(settings)
     thumbnail_recovery = ArtifactThumbnailRecovery(
         PersistThumbnail(
-            SqlAlchemyDownloadStore(raw_repository),
+            raw_repository,
             MinioThumbnailStorage(
                 storage,
                 max_bytes=settings.download_thumbnail_max_bytes,

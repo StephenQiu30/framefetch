@@ -7,18 +7,20 @@ from uuid import UUID
 
 from sqlalchemy import func, or_, select
 
-from .base import as_utc, utc_now
-from .contracts import (
+from app.application.downloads.download_models import (
     ArtifactSnapshot,
-    DownloadHistoryPageSnapshot,
     DownloadPresentationSnapshot,
-    DownloadThumbnailCandidateSnapshot,
-    DownloadThumbnailSourceSnapshot,
     JobSnapshot,
-    JobSourceSnapshot,
-    ThumbnailSnapshot,
-    ThumbnailSourceSnapshot,
 )
+from app.application.downloads.history_models import DownloadHistoryPageSnapshot
+from app.application.downloads.thumbnail import (
+    DownloadThumbnailSource,
+    ThumbnailObject,
+    ThumbnailSource,
+)
+
+from .base import as_utc, utc_now
+from .contracts import DownloadThumbnailCandidateSnapshot, JobSourceSnapshot
 from .errors import LeaseConflict, RepositoryConflict, RepositoryNotFound
 from .mapping import (
     artifact_snapshot,
@@ -110,7 +112,7 @@ class AccessRepository(RepositoryBase):
 
     async def get_thumbnail_source(
         self, inspection_id: UUID, owner_hash: str
-    ) -> ThumbnailSourceSnapshot:
+    ) -> ThumbnailSource:
         async with self._sessions() as session:
             result = (
                 await session.execute(
@@ -129,13 +131,13 @@ class AccessRepository(RepositoryBase):
                 raise RepositoryNotFound("media thumbnail does not exist")
             inspection, thumbnail = result
             legacy = inspection.metadata_json.get("thumbnail_url")
-            return ThumbnailSourceSnapshot(
+            return ThumbnailSource(
                 inspection_id=inspection.id,
                 owner_hash=inspection.owner_hash,
                 object=(
                     None
                     if thumbnail is None
-                    else ThumbnailSnapshot(
+                    else ThumbnailObject(
                         bucket=thumbnail.bucket,
                         object_key=thumbnail.object_key,
                         content_type=thumbnail.content_type,
@@ -150,7 +152,7 @@ class AccessRepository(RepositoryBase):
         self,
         inspection_id: UUID,
         owner_hash: str,
-        thumbnail: ThumbnailSnapshot,
+        thumbnail: ThumbnailObject,
     ) -> None:
         async with self._sessions() as session, session.begin():
             inspection = await session.scalar(
@@ -180,7 +182,7 @@ class AccessRepository(RepositoryBase):
 
     async def get_download_thumbnail_source(
         self, job_id: UUID, owner_hash: str
-    ) -> DownloadThumbnailSourceSnapshot:
+    ) -> DownloadThumbnailSource:
         async with self._sessions() as session:
             result = (
                 await session.execute(
@@ -198,13 +200,13 @@ class AccessRepository(RepositoryBase):
             if result is None:
                 raise RepositoryNotFound("download thumbnail does not exist")
             job, thumbnail = result
-            return DownloadThumbnailSourceSnapshot(
+            return DownloadThumbnailSource(
                 job_id=job.id,
                 owner_hash=job.owner_hash,
                 object=(
                     None
                     if thumbnail is None
-                    else ThumbnailSnapshot(
+                    else ThumbnailObject(
                         bucket=thumbnail.bucket,
                         object_key=thumbnail.object_key,
                         content_type=thumbnail.content_type,
@@ -218,7 +220,7 @@ class AccessRepository(RepositoryBase):
         self,
         job_id: UUID,
         owner_hash: str,
-        thumbnail: ThumbnailSnapshot,
+        thumbnail: ThumbnailObject,
     ) -> None:
         async with self._sessions() as session, session.begin():
             job = await session.scalar(

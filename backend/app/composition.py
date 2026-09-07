@@ -87,7 +87,6 @@ from app.infrastructure.database import (
     create_engine,
     create_session_factory,
 )
-from app.infrastructure.download_store import SqlAlchemyDownloadStore
 from app.infrastructure.jwt_tokens import JwtTokenService
 from app.infrastructure.media_runner import MediaRunnerRouter
 from app.infrastructure.media_runner_factory import (
@@ -207,7 +206,7 @@ def build_api_runtime(settings: Settings) -> ApiRuntime:
     )
     provider_catalog_repository = SqlAlchemyProviderCatalogRepository(sessions)
     ai_provider_repository = SqlAlchemyAiProviderRepository(sessions)
-    store = SqlAlchemyDownloadStore(repository)
+    store = repository
     runner = media_runner_router(settings)
     storage = MinioObjectStorage(settings, enable_public_signing=True)
     import_storage = MinioObjectStorage.for_imports(settings)

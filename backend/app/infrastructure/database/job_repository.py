@@ -9,9 +9,13 @@ from sqlalchemy import Select, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.downloads.download_models import (
+    DownloadCreate,
+    JobSaveResult,
+    JobSnapshot,
+)
 from app.infrastructure.database.quota_admission import lock_admission, reserve
 
-from .contracts import DownloadCreate, JobCreateResult, JobSnapshot
 from .download_events import requested_event
 from .errors import (
     IdempotencyConflict,
@@ -32,7 +36,7 @@ _ACTIVE_JOB_STATUSES = ("queued", "running", "retry_wait")
 class JobRepository(RepositoryBase):
     async def create_job(
         self, command: DownloadCreate, *, now: datetime
-    ) -> JobCreateResult:
+    ) -> JobSaveResult:
         async with self._sessions() as session:
             try:
                 async with session.begin():
@@ -42,7 +46,7 @@ class JobRepository(RepositoryBase):
                         return self._idempotent_result(existing, command)
                     active = await session.scalar(self._active_request_query(command))
                     if active is not None:
-                        return JobCreateResult(job_snapshot(active), created=False)
+                        return JobSaveResult(job_snapshot(active), created=False)
                     await self._validate_source(session, command, now)
                     await reserve(
                         session,
@@ -68,7 +72,7 @@ class JobRepository(RepositoryBase):
                     session.add(row)
                     session.add(requested_event(row, now))
                     await session.flush()
-                    result = JobCreateResult(job_snapshot(row), created=True)
+                    result = JobSaveResult(job_snapshot(row), created=True)
                 return result
             except IntegrityError as exc:
                 await session.rollback()
@@ -80,7 +84,7 @@ class JobRepository(RepositoryBase):
                         raise conflict from exc
                 active = await session.scalar(self._active_request_query(command))
                 if active is not None:
-                    return JobCreateResult(job_snapshot(active), created=False)
+                    return JobSaveResult(job_snapshot(active), created=False)
                 raise
 
     @staticmethod
@@ -155,10 +159,10 @@ class JobRepository(RepositoryBase):
     @staticmethod
     def _idempotent_result(
         row: DownloadJobRow, command: DownloadCreate
-    ) -> JobCreateResult:
+    ) -> JobSaveResult:
         if row.request_fingerprint != command.request_fingerprint:
             raise IdempotencyConflict("download idempotency key already used")
-        return JobCreateResult(job_snapshot(row), created=False)
+        return JobSaveResult(job_snapshot(row), created=False)
 
     @staticmethod
     async def _validate_source(

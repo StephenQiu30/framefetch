@@ -6,7 +6,6 @@ from uuid import uuid4
 import pytest
 from app.application import downloads as application
 from app.infrastructure import database
-from app.infrastructure.download_store import SqlAlchemyDownloadStore
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
@@ -14,13 +13,13 @@ NOW = datetime(2026, 8, 6, tzinfo=UTC)
 
 
 @pytest.mark.asyncio
-async def test_download_store_maps_the_complete_application_lifecycle(
+async def test_download_repository_handles_the_complete_application_lifecycle(
     postgres_engine: AsyncEngine,
 ) -> None:
     repository = database.SqlAlchemyDownloadRepository(
         async_sessionmaker(postgres_engine, expire_on_commit=False)
     )
-    store = SqlAlchemyDownloadStore(repository)
+    store = repository
     inspection_id, format_id = uuid4(), uuid4()
     owner = "a" * 64
     expires = NOW + timedelta(hours=1)
@@ -179,7 +178,7 @@ async def test_history_includes_browser_imports_and_searches_filename(
 ) -> None:
     sessions = async_sessionmaker(postgres_engine, expire_on_commit=False)
     repository = database.SqlAlchemyDownloadRepository(sessions)
-    store = SqlAlchemyDownloadStore(repository)
+    store = repository
     job_id = uuid4()
     owner = "b" * 64
     async with sessions.begin() as session:
@@ -276,12 +275,12 @@ async def test_history_includes_browser_imports_and_searches_filename(
 
 
 @pytest.mark.asyncio
-async def test_download_store_prepares_and_finishes_owned_file_deletion(
+async def test_download_repository_prepares_and_finishes_owned_file_deletion(
     postgres_engine: AsyncEngine,
 ) -> None:
     sessions = async_sessionmaker(postgres_engine, expire_on_commit=False)
     repository = database.SqlAlchemyDownloadRepository(sessions)
-    store = SqlAlchemyDownloadStore(repository)
+    store = repository
     job_id = uuid4()
     owner = "d" * 64
     source_key = f"quarantine/video/{job_id}/1/source"
@@ -393,13 +392,13 @@ async def test_download_store_prepares_and_finishes_owned_file_deletion(
 
 
 @pytest.mark.asyncio
-async def test_download_store_maps_cancellation(
+async def test_download_repository_handles_cancellation(
     postgres_engine: AsyncEngine,
 ) -> None:
     repository = database.SqlAlchemyDownloadRepository(
         async_sessionmaker(postgres_engine, expire_on_commit=False)
     )
-    store = SqlAlchemyDownloadStore(repository)
+    store = repository
     inspection_id, format_id, job_id = uuid4(), uuid4(), uuid4()
     owner = "b" * 64
     expires = NOW + timedelta(hours=1)
@@ -455,7 +454,7 @@ async def test_get_inspection_filters_expired_formats(
     repository = database.SqlAlchemyDownloadRepository(
         async_sessionmaker(postgres_engine, expire_on_commit=False)
     )
-    store = SqlAlchemyDownloadStore(repository)
+    store = repository
     inspection_id, fresh_format_id, stale_format_id = uuid4(), uuid4(), uuid4()
     owner = "a" * 64
     fresh_expires = NOW + timedelta(hours=1)

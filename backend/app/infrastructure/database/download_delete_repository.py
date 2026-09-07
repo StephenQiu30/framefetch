@@ -7,7 +7,11 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from .contracts import DownloadCleanupRef, DownloadDeletionPlan
+from app.application.downloads.download_models import (
+    DownloadCleanupRef,
+    DownloadDeletionPlan,
+)
+
 from .errors import RepositoryConflict, RepositoryNotFound
 from .models import (
     AnalysisArtifactLockRow,

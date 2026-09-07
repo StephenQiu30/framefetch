@@ -1,37 +1,45 @@
 """PostgreSQL persistence adapter for inspections, jobs and the outbox."""
 
-from app.domain.downloads import build_artifact_object_key
-
-from .analytics_contracts import (
+from app.application.downloads.analytics_models import (
     DownloadAnalyticsDailySnapshot,
     DownloadAnalyticsSnapshot,
     DownloadAnalyticsSourceSnapshot,
     DownloadAnalyticsSummarySnapshot,
 )
-from .base import Base
-from .contracts import (
-    ArtifactCreate,
+from app.application.downloads.download_models import (
     ArtifactSnapshot,
     DownloadCleanupRef,
     DownloadCreate,
     DownloadDeletionPlan,
+    DownloadPresentationSnapshot,
+    JobSaveResult,
+    JobSnapshot,
+)
+from app.application.downloads.history_models import (
     DownloadHistoryItemSnapshot,
     DownloadHistoryPageSnapshot,
     DownloadHistorySummarySnapshot,
-    DownloadPresentationSnapshot,
-    DownloadThumbnailCandidateSnapshot,
-    DownloadThumbnailSourceSnapshot,
+)
+from app.application.downloads.inspection_models import (
     FormatCreate,
     FormatSnapshot,
     InspectionCreate,
-    InspectionCreateResult,
+    InspectionSaveResult,
     InspectionSnapshot,
-    JobCreateResult,
-    JobSnapshot,
+)
+from app.application.downloads.thumbnail import (
+    DownloadThumbnailSource,
+    ThumbnailObject,
+    ThumbnailSource,
+)
+from app.domain.downloads import build_artifact_object_key
+
+from .base import Base
+from .contracts import (
+    ArtifactCreate,
+    DownloadThumbnailCandidateSnapshot,
     JobSourceSnapshot,
     OutboxSnapshot,
-    ThumbnailSnapshot,
-    ThumbnailSourceSnapshot,
 )
 from .document_catalog_repository import SqlAlchemyDocumentCatalogRepository
 from .document_delete_repository import SqlAlchemyDocumentDeleteRepository
@@ -39,6 +47,7 @@ from .document_import_execution_repository import (
     SqlAlchemyDocumentImportExecutionRepository,
 )
 from .document_import_repository import SqlAlchemyDocumentImportRepository
+from .download_repository import SqlAlchemyDownloadRepository
 from .errors import (
     IdempotencyConflict,
     LeaseConflict,
@@ -72,7 +81,7 @@ from .models import (
     TaskEventRow,
     UserRow,
 )
-from .outbox_repository import SqlAlchemyDownloadRepository
+from .outbox_repository import SqlAlchemyOutboxRepository
 from .session import create_engine, create_session_factory
 from .source_discovery_repository import SqlAlchemySourceDiscoveryRepository
 
@@ -101,7 +110,7 @@ __all__ = [
     "DownloadPresentationSnapshot",
     "DownloadJobRow",
     "DownloadThumbnailRow",
-    "DownloadThumbnailSourceSnapshot",
+    "DownloadThumbnailSource",
     "DownloadThumbnailCandidateSnapshot",
     "DocumentArtifactRow",
     "DocumentImportAttemptRow",
@@ -110,9 +119,9 @@ __all__ = [
     "FormatSnapshot",
     "IdempotencyConflict",
     "InspectionCreate",
-    "InspectionCreateResult",
+    "InspectionSaveResult",
     "InspectionSnapshot",
-    "JobCreateResult",
+    "JobSaveResult",
     "JobSnapshot",
     "JobSourceSnapshot",
     "LeaseConflict",
@@ -129,9 +138,10 @@ __all__ = [
     "RepositoryConflict",
     "RepositoryError",
     "RepositoryNotFound",
-    "ThumbnailSnapshot",
-    "ThumbnailSourceSnapshot",
+    "ThumbnailObject",
+    "ThumbnailSource",
     "SqlAlchemyDownloadRepository",
+    "SqlAlchemyOutboxRepository",
     "SqlAlchemyDocumentImportRepository",
     "SqlAlchemyDocumentImportExecutionRepository",
     "SqlAlchemyDocumentCatalogRepository",

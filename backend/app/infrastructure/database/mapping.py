@@ -2,17 +2,19 @@
 
 from datetime import datetime
 
-from .base import as_utc
-from .contracts import (
-    ArtifactSnapshot,
+from app.application.downloads.download_models import ArtifactSnapshot, JobSnapshot
+from app.application.downloads.history_models import (
     DownloadHistoryItemSnapshot,
     DownloadHistoryPageSnapshot,
     DownloadHistorySummarySnapshot,
+)
+from app.application.downloads.inspection_models import (
     FormatSnapshot,
     InspectionSnapshot,
-    JobSnapshot,
-    OutboxSnapshot,
 )
+
+from .base import as_utc
+from .contracts import OutboxSnapshot
 from .models import (
     ArtifactRow,
     DownloadJobRow,

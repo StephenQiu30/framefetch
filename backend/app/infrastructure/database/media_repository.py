@@ -9,7 +9,12 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .contracts import InspectionCreate, InspectionCreateResult, InspectionSnapshot
+from app.application.downloads.inspection_models import (
+    InspectionCreate,
+    InspectionSaveResult,
+    InspectionSnapshot,
+)
+
 from .errors import IdempotencyConflict, RepositoryNotFound
 from .mapping import inspection_snapshot
 from .models import MediaFormatRow, MediaInspectionRow, MediaThumbnailRow
@@ -17,9 +22,7 @@ from .repository_base import RepositoryBase
 
 
 class MediaRepository(RepositoryBase):
-    async def save_inspection(
-        self, command: InspectionCreate
-    ) -> InspectionCreateResult:
+    async def save_inspection(self, command: InspectionCreate) -> InspectionSaveResult:
         """Persist encrypted URL metadata and all semantic formats together."""
         async with self._sessions() as session:
             try:
@@ -36,7 +39,7 @@ class MediaRepository(RepositoryBase):
                             raise IdempotencyConflict(
                                 "inspection idempotency key already used"
                             )
-                        return InspectionCreateResult(
+                        return InspectionSaveResult(
                             await self._snapshot(session, existing), created=False
                         )
                     row = MediaInspectionRow(
@@ -70,7 +73,7 @@ class MediaRepository(RepositoryBase):
                     )
                     session.add_all(format_rows)
                     await session.flush()
-                    result = InspectionCreateResult(
+                    result = InspectionSaveResult(
                         inspection_snapshot(row, format_rows), created=True
                     )
                 return result
@@ -88,7 +91,7 @@ class MediaRepository(RepositoryBase):
                     raise IdempotencyConflict(
                         "inspection idempotency key already used"
                     ) from exc
-                return InspectionCreateResult(
+                return InspectionSaveResult(
                     await self._snapshot(session, existing), created=False
                 )
 

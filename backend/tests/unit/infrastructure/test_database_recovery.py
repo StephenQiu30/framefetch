@@ -9,6 +9,7 @@ from app.infrastructure.database import (
     FormatCreate,
     InspectionCreate,
     SqlAlchemyDownloadRepository,
+    SqlAlchemyOutboxRepository,
 )
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
@@ -17,6 +18,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 async def repository(postgres_engine: AsyncEngine) -> SqlAlchemyDownloadRepository:
     factory = async_sessionmaker(postgres_engine, expire_on_commit=False)
     yield SqlAlchemyDownloadRepository(factory)
+
+
+@pytest.fixture
+def outbox(postgres_engine: AsyncEngine) -> SqlAlchemyOutboxRepository:
+    return SqlAlchemyOutboxRepository(
+        async_sessionmaker(postgres_engine, expire_on_commit=False)
+    )
 
 
 async def _queued_job(repository, *, max_attempts: int = 3):
@@ -68,17 +76,18 @@ async def _queued_job(repository, *, max_attempts: int = 3):
 @pytest.mark.asyncio
 async def test_stale_queued_job_is_republished_without_changing_identity(
     repository,
+    outbox,
 ) -> None:
     job_id, now = await _queued_job(repository)
-    initial = await repository.claim_outbox(
+    initial = await outbox.claim_outbox(
         "publisher", now, timedelta(seconds=30), limit=10
     )
-    assert await repository.mark_outbox_published(initial[0].id, "publisher", now)
+    assert await outbox.mark_outbox_published(initial[0].id, "publisher", now)
 
     assert await repository.recover_stale_queued(
         now + timedelta(seconds=59), now, limit=10
     ) == (job_id,)
-    recovered = await repository.claim_outbox(
+    recovered = await outbox.claim_outbox(
         "publisher",
         now + timedelta(seconds=59),
         timedelta(seconds=30),
@@ -91,13 +100,15 @@ async def test_stale_queued_job_is_republished_without_changing_identity(
 
 
 @pytest.mark.asyncio
-async def test_stale_lease_is_requeued_with_a_new_outbox_event(repository) -> None:
+async def test_stale_lease_is_requeued_with_a_new_outbox_event(
+    repository, outbox
+) -> None:
     job_id, now = await _queued_job(repository)
-    initial = await repository.claim_outbox(
+    initial = await outbox.claim_outbox(
         "publisher", now, timedelta(seconds=30), limit=10
     )
     assert len(initial) == 1
-    assert await repository.mark_outbox_published(initial[0].id, "publisher", now)
+    assert await outbox.mark_outbox_published(initial[0].id, "publisher", now)
     await repository.claim_job(job_id, "dead-worker", now, timedelta(seconds=30))
 
     reclaimed = await repository.reclaim_stale(now + timedelta(seconds=31), limit=10)
@@ -108,7 +119,7 @@ async def test_stale_lease_is_requeued_with_a_new_outbox_event(repository) -> No
     ) == (job_id,)
     assert (await repository.get_job(job_id)).status == "queued"
 
-    events = await repository.claim_outbox(
+    events = await outbox.claim_outbox(
         "publisher", now + timedelta(seconds=31), timedelta(seconds=30), limit=10
     )
     assert len(events) == 1
@@ -116,19 +127,19 @@ async def test_stale_lease_is_requeued_with_a_new_outbox_event(repository) -> No
 
     first = events[0]
     assert first.publish_attempts == 1
-    assert await repository.mark_outbox_failed(
+    assert await outbox.mark_outbox_failed(
         first.id,
         "publisher",
         now + timedelta(seconds=32),
         "broker unavailable",
         now + timedelta(seconds=40),
     )
-    retried = await repository.claim_outbox(
+    retried = await outbox.claim_outbox(
         "publisher", now + timedelta(seconds=41), timedelta(seconds=30), limit=10
     )
     failed_event = next(item for item in retried if item.id == first.id)
     assert failed_event.publish_attempts == 2
-    assert await repository.mark_outbox_published(
+    assert await outbox.mark_outbox_published(
         failed_event.id, "publisher", now + timedelta(seconds=42)
     )
 

@@ -11,18 +11,18 @@ from sqlalchemy.engine import Row
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
+from app.application.downloads.analytics_models import (
+    DownloadAnalyticsDailySnapshot,
+    DownloadAnalyticsSnapshot,
+    DownloadAnalyticsSourceSnapshot,
+    DownloadAnalyticsSummarySnapshot,
+)
 from app.application.downloads.source_catalog import (
     BROWSER_IMPORT_DOWNLOAD_SOURCE,
     DOWNLOAD_SOURCES,
     OTHER_DOWNLOAD_SOURCE,
 )
 
-from .analytics_contracts import (
-    DownloadAnalyticsDailySnapshot,
-    DownloadAnalyticsSnapshot,
-    DownloadAnalyticsSourceSnapshot,
-    DownloadAnalyticsSummarySnapshot,
-)
 from .models import ArtifactRow, DownloadJobRow, MediaInspectionRow
 from .repository_base import RepositoryBase
 

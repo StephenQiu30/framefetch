@@ -23,7 +23,6 @@ from app.infrastructure.database import (
     create_engine,
     create_session_factory,
 )
-from app.infrastructure.download_store import SqlAlchemyDownloadStore
 from app.infrastructure.messaging import RabbitMqTopology
 from app.infrastructure.object_storage import MinioObjectStorage
 from app.infrastructure.thumbnail_storage import MinioThumbnailStorage
@@ -69,7 +68,7 @@ def build_runtime(settings: Settings) -> ImportWorkerRuntime:
     workspace = PrivateImportWorkspace(settings.import_workspace_root)
     thumbnail_recovery = ArtifactThumbnailRecovery(
         PersistDownloadThumbnail(
-            SqlAlchemyDownloadStore(download_repository),
+            download_repository,
             MinioThumbnailStorage(
                 storage,
                 max_bytes=settings.download_thumbnail_max_bytes,
