@@ -4,13 +4,9 @@
     "ignoreUnknown": true,
     "includes": [
       "**/*",
-      "!**/dist",
       "!**/coverage",
       "!**/node_modules",
       "!.next",
-      "!out",
-      "!src/.umi",
-      "!src/.umi-production",
       "!src/services/video",
       "!next-env.d.ts",
       "!biome.json",

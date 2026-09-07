@@ -15,7 +15,7 @@ export default defineConfig({
       'src/**/*.{test,spec}.{ts,tsx}',
       'tests/**/*.{test,spec}.{ts,tsx}',
     ],
-    exclude: ['node_modules', '.next', 'out'],
+    exclude: ['node_modules', '.next'],
     testTimeout: 15000,
   },
 });

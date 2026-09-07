@@ -3,7 +3,6 @@
 **/.venv
 **/node_modules
 **/.next
-**/.umi*
 **/dist
 **/out
 **/coverage

@@ -128,4 +128,4 @@ npm run openapi
 | `npm run lint` | 运行 Biome lint 与 TypeScript 检查 |
 | `npm run format:check` | 检查代码格式 |
 | `npm test` | 运行 Vitest 测试 |
-| `npm run build` | 静态构建到 `out/` |
+| `npm run build` | 生成 Next.js standalone 生产构建 |

@@ -32,12 +32,29 @@ def test_swagger_ui_and_openapi_contract_are_available(tmp_path: Path) -> None:
     }
     assert all(not path.startswith("/api/v1") for path in schema["paths"])
 
-    operations = {
-        operation["operationId"]: operation
+    http_methods = {
+        "delete",
+        "get",
+        "head",
+        "options",
+        "patch",
+        "post",
+        "put",
+        "trace",
+    }
+    operation_list = [
+        operation
         for path_item in schema["paths"].values()
         for method, operation in path_item.items()
-        if method in {"get", "post", "put", "patch", "delete"}
-    }
+        if method in http_methods
+    ]
+    operation_ids = [operation.get("operationId") for operation in operation_list]
+    assert all(
+        isinstance(operation_id, str) and operation_id
+        for operation_id in operation_ids
+    )
+    assert len(operation_ids) == len(set(operation_ids))
+    operations = dict(zip(operation_ids, operation_list, strict=True))
     assert set(operations) == {
         "getLiveness",
         "getReadiness",
@@ -86,6 +103,7 @@ def test_swagger_ui_and_openapi_contract_are_available(tmp_path: Path) -> None:
         "cancelDocumentImport",
         "deleteDocument",
         "getDownload",
+        "inspectDownloadFile",
         "downloadFile",
         "getDownloadHistory",
         "getDownloadThumbnail",
