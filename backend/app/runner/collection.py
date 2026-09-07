@@ -45,6 +45,7 @@ async def download_video_collection_zip(
     output_dir = workspace.path / "collection-output"
     output_dir.mkdir(mode=0o700)
     files: list[tuple[Path, str]] = []
+    completed = False
     try:
         try:
             await download(
@@ -61,7 +62,7 @@ async def download_video_collection_zip(
                 or len(fallback_assets) != expected_count
             ):
                 raise
-            return await download_gallery_zip(
+            count = await download_gallery_zip(
                 fallback_assets,
                 output,
                 workspace,
@@ -71,6 +72,8 @@ async def download_video_collection_zip(
                 max_asset_bytes=max_video_bytes,
                 max_assets=max_assets,
             )
+            completed = True
+            return count
         workspace.validate_usage()
         downloaded = _files(output_dir)
         if len(downloaded) != expected_count:
@@ -100,8 +103,12 @@ async def download_video_collection_zip(
             )
             for path, name in files:
                 archive.write(path, name)
+        workspace.validate_usage()
+        completed = True
         return len(files)
     finally:
+        if not completed:
+            output.unlink(missing_ok=True)
         shutil.rmtree(output_dir, ignore_errors=True)
 
 

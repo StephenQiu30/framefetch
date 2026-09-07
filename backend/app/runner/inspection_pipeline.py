@@ -16,6 +16,7 @@ from app.runner.metadata import (
     build_download_options,
     enrich_direct_metadata,
     enrich_format_metadata,
+    normalize_media_payload,
     normalize_selected_format_metadata,
 )
 from app.runner.provider_registry import ProviderRequest
@@ -41,6 +42,9 @@ class RunnerInspectionPipeline:
         cookie_jar: Path | None,
     ) -> MediaInspection:
         payload = await self._inspect_with_retry(source, workspace, cookie_jar)
+        payload = normalize_media_payload(
+            payload, max_assets=self._settings.runner_max_gallery_assets
+        )
         enforce_media_rights(
             payload,
             provider_key=context.provider_key,

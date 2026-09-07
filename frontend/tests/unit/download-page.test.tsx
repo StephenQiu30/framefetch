@@ -39,7 +39,7 @@ describe('DownloadWorkspace', () => {
     expect(screen.queryByText('02 / 选择画质')).not.toBeInTheDocument();
     expect(screen.queryByText('03 / 创建任务')).not.toBeInTheDocument();
     const input = screen.getByLabelText('公开视频地址');
-    expect(input).toHaveAttribute('placeholder', '粘贴视频链接或平台分享文案');
+    expect(input).toHaveAttribute('placeholder', '粘贴媒体链接或平台分享文案');
     expect(input).toHaveClass(
       'block',
       'field-sizing-fixed',

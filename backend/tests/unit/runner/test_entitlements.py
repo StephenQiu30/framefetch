@@ -73,3 +73,20 @@ def test_anonymous_access_rejects_restricted_metadata(
         )
 
     assert caught.value.code in {"content_private", "content_not_entitled"}
+
+
+@pytest.mark.parametrize(
+    "restriction,code",
+    [
+        ({"is_private": True}, "content_private"),
+        ({"has_drm": True}, "drm_protected"),
+    ],
+)
+def test_collection_checks_each_member(restriction: dict, code: str) -> None:
+    with pytest.raises(RunnerFailure) as caught:
+        enforce_media_rights(
+            {"availability": "public", "entries": [{"id": "first"}, restriction]},
+            provider_key="instagram",
+            access_mode=ProviderAccessMode.ANONYMOUS,
+        )
+    assert caught.value.code == code

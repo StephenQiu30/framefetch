@@ -59,7 +59,7 @@ export function LinkDownloadForm({
             disabled={disabled}
             maxLength={4096}
             onChange={(event) => onUrlChange(event.target.value)}
-            placeholder="粘贴视频链接或平台分享文案"
+            placeholder="粘贴媒体链接或平台分享文案"
             rows={1}
             sizing="fixed"
             value={url}

@@ -108,3 +108,20 @@ async def test_gallery_urls_still_pass_through_source_validation(
     with pytest.raises(RunnerFailure) as caught:
         normalize_for_settings(payload, settings(tmp_path))
     assert caught.value.code == "invalid_inspection_response"
+
+
+async def test_single_photo_metadata_survives_no_video_warning(tmp_path: Path) -> None:
+    payload = {
+        "id": "123",
+        "title": "Photo",
+        "extractor_key": "Instagram",
+        "media_type": "image",
+        "formats": [],
+        "thumbnails": [{"url": "https://cdn.example.com/full.jpg", "width": 1080}],
+    }
+    parsed = await commands(
+        tmp_path, payload, b"There is no video in this post"
+    ).inspect("https://www.instagram.com/p/example/", tmp_path)
+    inspection = normalize_for_settings(parsed, settings(tmp_path))
+    assert inspection.media_kind is MediaKind.IMAGE_GALLERY
+    assert inspection.asset_count == 1

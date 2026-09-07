@@ -34,7 +34,7 @@ export default function FormatPicker({
       <Empty className="min-h-48 border-0">
         <EmptyHeader>
           <EmptyTitle>没有可用格式</EmptyTitle>
-          <EmptyDescription>当前视频没有可用的下载版本。</EmptyDescription>
+          <EmptyDescription>当前媒体没有可用的下载版本。</EmptyDescription>
         </EmptyHeader>
       </Empty>
     );

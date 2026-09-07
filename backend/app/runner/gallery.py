@@ -30,9 +30,12 @@ async def download_gallery_zip(
         raise RunnerFailure("runner_dependency_unavailable", status=503)
 
     files: list[tuple[Path, str]] = []
+    sources: list[Path] = []
+    completed = False
     try:
         for index, asset in enumerate(assets, start=1):
             source = workspace.path / f"gallery-{index:04d}.source"
+            sources.append(source)
             await download(
                 asset.url,
                 source,
@@ -61,9 +64,13 @@ async def download_gallery_zip(
             )
             for source, name in files:
                 archive.write(source, name)
+        workspace.validate_usage()
+        completed = True
         return len(files)
     finally:
-        for source, _ in files:
+        if not completed:
+            output.unlink(missing_ok=True)
+        for source in sources:
             source.unlink(missing_ok=True)
 
 

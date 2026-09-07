@@ -53,6 +53,13 @@ def enforce_media_rights(
         )
     ):
         raise RunnerFailure("content_not_entitled", status=403)
+    entries = payload.get("entries")
+    if isinstance(entries, list):
+        for entry in entries:
+            if isinstance(entry, Mapping):
+                enforce_media_rights(
+                    entry, provider_key=provider_key, access_mode=access_mode
+                )
     if access_mode is not ProviderAccessMode.OPERATOR_MANAGED:
         return
     browser_session_policy(provider_key)

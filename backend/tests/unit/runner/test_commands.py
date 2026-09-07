@@ -1249,3 +1249,16 @@ async def test_facebook_parse_failure_is_classified_as_extractor_regression(
 
     assert caught.value.code == "extractor_regression"
     assert caught.value.status == 502
+
+
+def test_inspection_bounds_playlist_with_overflow_sentinel(tmp_path: Path) -> None:
+    configured = settings(tmp_path)
+    command = (
+        YtDlpCommandBuilder(configured, tmp_path)
+        .inspect("https://www.instagram.com/p/example/", cookie_jar=None)
+        .argv
+    )
+    assert "--no-playlist" not in command
+    assert command[command.index("--playlist-end") + 1] == str(
+        configured.runner_max_gallery_assets + 1
+    )

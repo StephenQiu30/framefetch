@@ -22,6 +22,7 @@ __all__ = [
     "enrich_format_metadata",
     "normalize_metadata",
     "normalize_selected_format_metadata",
+    "normalize_media_payload",
 ]
 
 _PROVIDER_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}")
@@ -96,6 +97,98 @@ def normalize_selected_format_metadata(payload: dict[str, Any]) -> dict[str, Any
     normalized = dict(payload)
     normalized["formats"] = [selected]
     return normalized
+
+
+def normalize_media_payload(
+    payload: dict[str, Any], *, max_assets: int
+) -> dict[str, Any]:
+    """Classify actual assets before attempting video-only probes.
+
+    URL extensions describe direct representations, never arbitrary posters.
+    Image-only thumbnails require explicit image metadata. Collections retain
+    every member in source order; missing members and oversized lists fail closed.
+    """
+    if payload.get("media_kind") == MediaKind.IMAGE_GALLERY.value:
+        return payload
+    if _is_video_collection_payload(payload):
+        entries = payload.get("entries")
+        if not isinstance(entries, list) or not entries:
+            raise RunnerFailure("unsupported_source")
+        if len(entries) > max_assets:
+            raise RunnerFailure("format_limit_exceeded", status=413)
+        if any(not isinstance(entry, dict) for entry in entries):
+            raise RunnerFailure("invalid_inspection_response", status=502)
+        # Nested playlists need an explicit member plan, not a misleading count.
+        if any(_is_video_collection_payload(entry) for entry in entries):
+            raise RunnerFailure("unsupported_source")
+        return payload
+    asset = _image_asset(payload)
+    if asset is None:
+        return payload
+    return {
+        **payload,
+        "media_kind": MediaKind.IMAGE_GALLERY.value,
+        "assets": [
+            {
+                "url": asset.url,
+                "extension": asset.extension,
+                "width": asset.width,
+                "height": asset.height,
+            }
+        ],
+    }
+
+
+def _image_asset(entry: dict[str, Any]) -> GalleryAsset | None:
+    if _entry_declares_video(entry):
+        return None
+    candidates = [entry]
+    formats = entry.get("formats")
+    if isinstance(formats, list):
+        candidates.extend(value for value in formats if isinstance(value, dict))
+    images: list[dict[str, Any]] = []
+    for candidate in candidates:
+        url = candidate.get("url")
+        if not isinstance(url, str) or not url.strip():
+            continue
+        extension = str(
+            candidate.get("ext") or urlsplit(url).path.rsplit(".", 1)[-1]
+        ).lower()
+        if extension in {"jpg", "jpeg", "png", "webp"}:
+            images.append({**candidate, "extension": extension})
+        elif candidate is not entry or _entry_has_downloadable_format(entry):
+            # A playable representation takes priority over any poster format.
+            return None
+    if images:
+        selected = max(
+            images,
+            key=lambda item: (
+                (_positive_int(item.get("width")) or 0)
+                * (_positive_int(item.get("height")) or 0)
+            ),
+        )
+        url = selected["url"]
+        extension = selected["extension"]
+    else:
+        if _entry_has_downloadable_format(entry):
+            return None
+        url = _entry_thumbnail_url(entry)
+        if url is None or not _entry_declares_image(entry, url):
+            return None
+        selected = entry
+        extension = urlsplit(url).path.rsplit(".", 1)[-1].lower()
+        if extension not in {"jpg", "jpeg", "png", "webp"}:
+            extension = "jpg"
+    try:
+        url = validate_media_url(url).value
+    except UrlPolicyError as exc:
+        raise RunnerFailure("invalid_inspection_response", status=502) from exc
+    return GalleryAsset(
+        url=url,
+        extension="jpg" if extension == "jpeg" else extension,
+        width=_positive_int(selected.get("width")),
+        height=_positive_int(selected.get("height")),
+    )
 
 
 def enrich_direct_metadata(
@@ -201,6 +294,7 @@ def normalize_metadata(
     max_candidate_streams: int,
     max_gallery_assets: int = 1000,
 ) -> MediaInspection:
+    payload = normalize_media_payload(payload, max_assets=max_gallery_assets)
     if payload.get("media_kind") == MediaKind.IMAGE_GALLERY.value:
         return normalize_gallery_metadata(
             payload,
@@ -376,42 +470,18 @@ def normalize_video_collection_metadata(
 def collection_fallback_assets(
     payload: dict[str, Any],
 ) -> tuple[GalleryAsset, ...]:
-    """Extract safe image assets for metadata-only image carousels.
-
-    Instagram can expose an image carousel through its playlist shape while
-    returning no video formats. In that case the high-resolution image
-    thumbnails are the actual downloadable assets. Do not use this fallback
-    for entries that identify themselves as video media: a poster image must
-    never be presented as a downloaded video.
-    """
-    raw_entries = payload.get("entries")
-    if (
-        not isinstance(raw_entries, list)
-        or not raw_entries
-        or any(not isinstance(entry, dict) for entry in raw_entries)
-        or any(_entry_has_downloadable_format(entry) for entry in raw_entries)
-        or any(_entry_declares_video(entry) for entry in raw_entries)
-    ):
+    """Resolve every member as an image, without substituting video posters."""
+    entries = payload.get("entries")
+    if not isinstance(entries, list) or not entries:
         return ()
-
     assets: list[GalleryAsset] = []
-    for entry in raw_entries:
-        thumbnail = _entry_thumbnail_url(entry)
-        if thumbnail is None or not _entry_declares_image(entry, thumbnail):
+    for entry in entries:
+        if not isinstance(entry, dict):
             return ()
-        try:
-            url = validate_media_url(thumbnail).value
-        except UrlPolicyError:
+        asset = _image_asset(entry)
+        if asset is None:
             return ()
-        extension = urlsplit(url).path.rsplit(".", maxsplit=1)[-1].casefold()
-        if extension not in {"jpg", "jpeg", "png", "webp"}:
-            extension = "jpg"
-        assets.append(
-            GalleryAsset(
-                url=url,
-                extension="jpg" if extension == "jpeg" else extension,
-            )
-        )
+        assets.append(asset)
     return tuple(assets)
 
 
@@ -436,6 +506,13 @@ def _entry_has_downloadable_format(entry: dict[str, Any]) -> bool:
 
 
 def _entry_declares_video(entry: dict[str, Any]) -> bool:
+    if (
+        str(entry.get("media_type") or entry.get("media_kind") or "").casefold()
+        == "video"
+    ):
+        return True
+    if _positive_number(entry.get("duration")) is not None:
+        return True
     if entry.get("is_video") is True:
         return True
     if str(entry.get("__typename") or "").casefold() == "graphvideo":
@@ -452,6 +529,11 @@ def _entry_declares_video(entry: dict[str, Any]) -> bool:
 
 
 def _entry_declares_image(entry: dict[str, Any], thumbnail: str) -> bool:
+    if str(entry.get("media_type") or entry.get("media_kind") or "").casefold() in {
+        "image",
+        "photo",
+    }:
+        return True
     if entry.get("is_video") is False:
         return True
     if str(entry.get("__typename") or "").casefold() == "graphimage":

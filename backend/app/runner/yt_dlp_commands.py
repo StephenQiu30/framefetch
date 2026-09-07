@@ -46,6 +46,8 @@ class YtDlpCommandBuilder:
                 "--dump-single-json",
                 "--skip-download",
                 "--ignore-no-formats-error",
+                "--playlist-end",
+                str(self._settings.runner_max_gallery_assets + 1),
             ),
             cookie_jar=cookie_jar,
             include_playlist=True,

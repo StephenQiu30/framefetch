@@ -565,3 +565,85 @@ def test_rejects_unsafe_media_identity(field: str, value: str) -> None:
         )
 
     assert caught.value.code == "invalid_inspection_response"
+
+
+@pytest.mark.parametrize(
+    "representation",
+    [
+        {"url": "https://cdn.example.com/original.png"},
+        {"media_type": "image", "thumbnail": "https://cdn.example.com/asset?id=1"},
+        {
+            "formats": [
+                {
+                    "url": "https://cdn.example.com/asset",
+                    "ext": "webp",
+                    "format_id": "original",
+                }
+            ]
+        },
+    ],
+)
+def test_single_image_uses_archive_without_video_fields(representation: dict) -> None:
+    payload = {
+        "id": "photo",
+        "title": "Photo",
+        "extractor_key": "Generic",
+        **representation,
+    }
+    inspection = normalize_metadata(
+        payload, max_duration_seconds=7200, max_candidate_streams=200
+    )
+    assert inspection.media_kind is MediaKind.IMAGE_GALLERY
+    assert inspection.asset_count == 1
+    assert not inspection.streams
+
+
+def test_image_formats_in_playlist_are_not_video_formats() -> None:
+    payload = {
+        "id": "photos",
+        "title": "Photos",
+        "extractor_key": "Generic",
+        "_type": "playlist",
+        "entries": [
+            {"url": "https://cdn.example.com/one.jpg", "format_id": "original"},
+            {
+                "formats": [
+                    {
+                        "url": "https://cdn.example.com/two.png",
+                        "format_id": "original",
+                        "ext": "png",
+                    }
+                ]
+            },
+        ],
+    }
+    inspection = normalize_metadata(
+        payload, max_duration_seconds=7200, max_candidate_streams=200
+    )
+    assert inspection.media_kind is MediaKind.IMAGE_GALLERY
+    assert inspection.asset_count == 2
+
+
+@pytest.mark.parametrize(
+    "declaration", [{"duration": 30}, {"media_type": "video"}, {"is_video": True}]
+)
+def test_video_poster_is_never_an_image_download(declaration: dict) -> None:
+    payload = {
+        "entries": [
+            {
+                "thumbnail": "https://cdn.example.com/cover.jpg",
+                "is_video": False,
+                **declaration,
+            }
+        ]
+    }
+    assert collection_fallback_assets(payload) == ()
+
+
+def test_collection_never_drops_missing_members() -> None:
+    with pytest.raises(RunnerFailure, match="invalid inspection response"):
+        normalize_metadata(
+            {"_type": "playlist", "entries": [{"id": "first"}, None]},
+            max_duration_seconds=7200,
+            max_candidate_streams=200,
+        )

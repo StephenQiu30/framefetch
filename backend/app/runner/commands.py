@@ -13,6 +13,7 @@ from app.domain.downloads.content_restrictions import ContentRestriction
 from app.domain.providers import ProviderKey
 from app.runner.command_support import child_environment, json_object
 from app.runner.errors import RunnerFailure
+from app.runner.metadata import collection_fallback_assets, normalize_media_payload
 from app.runner.process import ProcessResult, ProcessTimeoutError
 from app.runner.provider_errors import ProviderFailureContext, classify_provider_failure
 from app.runner.provider_registry import ProviderRequest, provider_request
@@ -78,7 +79,10 @@ class MediaCommands:
             failure_context=command.failure_context,
         )
         restriction = classify_provider_failure(command.failure_context, result.stderr)
-        payload = json_object(result.stdout, "invalid_inspection_response")
+        payload = normalize_media_payload(
+            json_object(result.stdout, "invalid_inspection_response"),
+            max_assets=self._settings.runner_max_gallery_assets,
+        )
         if restriction is not None and (
             restriction[0] in ContentRestriction
             or not _inspection_payload_has_media(payload)
@@ -458,6 +462,8 @@ def _inspection_payload_has_media(payload: Mapping[str, Any]) -> bool:
         and bool(item["url"].strip())
         for item in formats
     ):
+        return True
+    if collection_fallback_assets(dict(payload)):
         return True
     entries = payload.get("entries")
     return isinstance(entries, list) and any(

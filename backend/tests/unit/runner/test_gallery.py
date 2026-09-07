@@ -65,3 +65,36 @@ async def test_download_gallery_zip_packages_bounded_original_assets(
         assert not list(workspace.path.glob("gallery-*.source"))
     finally:
         workspace.cleanup()
+
+
+@pytest.mark.asyncio
+async def test_gallery_failure_cleans_partial_member_and_archive(
+    tmp_path: Path,
+) -> None:
+    from app.runner.errors import RunnerFailure
+
+    class PartialCommands:
+        async def download_public_asset(self, _url, output, _cwd, **_kwargs):
+            output.write_bytes(b"partial image")
+            raise RunnerFailure("download_timeout", status=504)
+
+    workspace = WorkspaceManager(tmp_path / "runner").create("partial")
+    output = workspace.path / "artifact.zip"
+    output.write_bytes(b"partial archive")
+    try:
+        with pytest.raises(RunnerFailure) as caught:
+            await download_gallery_zip(
+                (GalleryAsset("https://cdn.test/photo", "jpg"),),
+                output,
+                workspace,
+                title="Photo",
+                referer="https://cdn.test/",
+                commands=PartialCommands(),
+                max_asset_bytes=1024,
+                max_assets=10,
+            )
+        assert caught.value.code == "download_timeout"
+        assert not output.exists()
+        assert not list(workspace.path.glob("gallery-*.source"))
+    finally:
+        workspace.cleanup()
