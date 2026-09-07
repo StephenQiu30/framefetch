@@ -36,11 +36,7 @@ describe('FormatPicker', () => {
     };
 
     render(
-      <FormatPicker
-        formats={[format]}
-        onChange={onChange}
-        selectedId=""
-      />,
+      <FormatPicker formats={[format]} onChange={onChange} selectedId="" />,
     );
 
     const radio = screen.getByRole('radio');

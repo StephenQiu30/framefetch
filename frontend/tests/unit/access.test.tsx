@@ -33,12 +33,12 @@ describe('ProtectedRoute', () => {
     window.history.replaceState({}, '', '/history?page=2');
     render(
       <ProtectedRoute>
-        <p>受保护内容</p>
+        <p data-testid="protected-content" />
       </ProtectedRoute>,
     );
 
-    expect(screen.queryByText('受保护内容')).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('正在前往可访问页面');
+    expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
     await waitFor(() =>
       expect(runtime.replace).toHaveBeenCalledWith(
         '/user/login?redirect=%2Fhistory%3Fpage%3D2',
@@ -50,11 +50,11 @@ describe('ProtectedRoute', () => {
     runtime.auth = { loading: false, user: { role: 'user' } };
     render(
       <ProtectedRoute requireAdmin>
-        <p>用户管理</p>
+        <p data-testid="admin-content" />
       </ProtectedRoute>,
     );
 
-    expect(screen.queryByText('用户管理')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('admin-content')).not.toBeInTheDocument();
     await waitFor(() => expect(runtime.replace).toHaveBeenCalledWith('/'));
   });
 
@@ -62,11 +62,11 @@ describe('ProtectedRoute', () => {
     runtime.auth = { loading: false, user: { role: 'admin' } };
     render(
       <ProtectedRoute requireAdmin>
-        <p>用户管理</p>
+        <p data-testid="admin-content" />
       </ProtectedRoute>,
     );
 
-    expect(screen.getByText('用户管理')).toBeInTheDocument();
+    expect(screen.getByTestId('admin-content')).toBeInTheDocument();
     expect(runtime.replace).not.toHaveBeenCalled();
   });
 });

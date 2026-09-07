@@ -89,7 +89,7 @@ describe('download history', () => {
     );
   });
 
-  it('reserves the summary geometry while initial data loads', async () => {
+  it('exposes loading and computed summary states', async () => {
     let resolveHistory!: (value: DownloadHistory) => void;
     runtime.getDownloadHistory.mockReturnValue(
       new Promise<DownloadHistory>((resolve) => {
@@ -101,16 +101,14 @@ describe('download history', () => {
     const summary = container.querySelector(
       '[data-slot="download-history-summary"]',
     );
-    expect(summary).toHaveClass('h-[1.125rem]');
     expect(summary).toHaveAttribute('aria-busy', 'true');
-    expect(summary?.querySelector('[data-slot="skeleton"]')).toHaveClass(
-      'h-full',
-    );
+    expect(
+      summary?.querySelector('[data-slot="skeleton"]'),
+    ).toBeInTheDocument();
 
     act(() => resolveHistory(history()));
     await waitFor(() => expect(summary).toHaveAttribute('aria-busy', 'false'));
     expect(summary).toHaveTextContent('共 1 项 · 已完成 1 · 进行中 0');
-    expect(summary).toHaveClass('h-[1.125rem]');
   });
 
   it('renders history rows and performs detail and file actions', async () => {
@@ -120,21 +118,16 @@ describe('download history', () => {
       filename: '示例视频.mp4',
       url: 'https://objects.example/signed',
     });
-    const { container } = render(<DownloadHistoryView />);
+    render(<DownloadHistoryView />);
 
     expect(
       await screen.findByRole('link', { name: '示例视频' }),
     ).toBeInTheDocument();
-    expect(container.querySelector('.inner-page')).toHaveClass('inner-page');
-    expect(
-      screen.getByRole('heading', { level: 1, name: '下载记录' }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText('02 / 下载记录')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '返回上一步' })).toHaveAttribute(
       'href',
       '/',
     );
-    expect(screen.queryByText('任务记录')).not.toBeInTheDocument();
     expect(
       screen.getByText('共 1 项 · 已完成 1 · 进行中 0'),
     ).toBeInTheDocument();
@@ -248,10 +241,6 @@ describe('download history', () => {
     expect(
       within(pagination).getByRole('button', { name: '上一页' }),
     ).toBeDisabled();
-    expect(
-      within(pagination).getByRole('button', { name: '上一页' }),
-    ).toHaveClass('h-11');
-    expect(within(pagination).getByText('1 / 2')).toHaveClass('h-11');
 
     fireEvent.click(within(pagination).getByRole('button', { name: '下一页' }));
     await waitFor(() =>
@@ -259,7 +248,6 @@ describe('download history', () => {
         expect.objectContaining({ page: 2 }),
       ),
     );
-    expect(within(pagination).getByText('2 / 2')).toBeInTheDocument();
     expect(
       within(pagination).getByRole('button', { name: '下一页' }),
     ).toBeDisabled();

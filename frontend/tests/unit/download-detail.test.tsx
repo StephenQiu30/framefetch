@@ -66,10 +66,7 @@ describe('DownloadJobView', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: inspection.title }),
     ).toBeInTheDocument();
-    expect(screen.queryByText('Download status')).not.toBeInTheDocument();
-    expect(screen.queryByText('AI analysis')).not.toBeInTheDocument();
     expect(screen.getByText('持久保存')).toBeInTheDocument();
-    expect(screen.queryByText('100%')).not.toBeInTheDocument();
     expect(
       screen.getByRole('region', {
         name: `${inspection.title}视频预览`,

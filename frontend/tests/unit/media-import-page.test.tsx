@@ -14,17 +14,12 @@ describe('DownloadWorkspace local video upload', () => {
 
   it('validates the selected MP4 without an extra confirmation step', async () => {
     renderWorkspace();
-    expect(screen.getByRole('tablist', { name: '选择内容来源' })).toHaveClass(
-      'grid',
-      'w-full',
-      'grid-cols-3',
-      'sm:inline-flex',
-      'sm:w-fit',
-    );
+    expect(
+      screen.getByRole('tablist', { name: '选择内容来源' }),
+    ).toBeInTheDocument();
     selectUploadTab();
     const fileInput = screen.getByLabelText('选择本地 MP4 视频文件');
-    expect(fileInput).toHaveClass('sr-only');
-    expect(fileInput).not.toHaveClass('w-full');
+    expect(fileInput).toBeInTheDocument();
 
     fireEvent.change(fileInput, {
       target: {

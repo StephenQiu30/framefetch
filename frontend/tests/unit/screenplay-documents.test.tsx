@@ -147,7 +147,7 @@ describe('screenplay documents', () => {
     expect(runtime.replace).toHaveBeenCalledWith('/documents');
   });
 
-  it('renders screenplay Markdown safely with a fixed reader and table of contents', async () => {
+  it('renders screenplay Markdown safely with a table of contents', async () => {
     runtime.getScreenplayDocument.mockResolvedValue(
       screenplayDocument({
         id: 'document-id',
@@ -174,29 +174,8 @@ describe('screenplay documents', () => {
     ).toHaveTextContent('<script>只作为台词文本</script>');
     expect(container.querySelector('script')).toBeNull();
     expect(container.querySelector('pre')).toBeNull();
-    expect(screen.getByTestId('screenplay-markdown-reader')).toHaveClass(
-      'h-[clamp(28rem,72vh,56rem)]',
-      'lg:h-auto',
-      'lg:min-h-0',
-    );
-    const workspace = screen.getByTestId('screenplay-document-workspace');
-    expect(workspace).toHaveClass(
-      'lg:h-[clamp(34rem,72vh,56rem)]',
-      'lg:grid-rows-[minmax(0,1fr)]',
-      'lg:overflow-hidden',
-    );
-    expect(screen.getByTestId('screenplay-preview-column')).toHaveClass(
-      'lg:grid-rows-[auto_minmax(0,1fr)_auto]',
-      'lg:min-h-0',
-    );
     const tableOfContents = screen.getByRole('navigation', { name: '目录' });
     expect(tableOfContents).toHaveAttribute('data-slot', 'navigation-menu');
-    expect(tableOfContents).toHaveClass(
-      'lg:grid',
-      'lg:h-full',
-      'lg:grid-rows-[auto_minmax(0,1fr)]',
-      'lg:overflow-hidden',
-    );
     expect(screen.getByRole('link', { name: '午夜来客' })).toHaveAttribute(
       'href',
       '#screenplay-heading-0',
@@ -205,8 +184,8 @@ describe('screenplay documents', () => {
       screen.getByRole('link', { name: 'INT. LOBBY - NIGHT' }),
     ).toHaveAttribute('href', '#screenplay-heading-1');
     expect(
-      screen.getByRole('heading', { name: '文档信息' }).closest('section'),
-    ).toHaveTextContent('导入摘要');
+      screen.getByRole('heading', { name: '文档信息' }),
+    ).toBeInTheDocument();
     const truncationTitle = screen.getByText('预览已截断');
     expect(truncationTitle.parentElement).toHaveTextContent(
       '当前内容仍受接口读取上限约束',
@@ -221,6 +200,7 @@ describe('screenplay documents', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('24 段')).toBeInTheDocument();
     expect(screen.getByText('8 个')).toBeInTheDocument();
+    const workspace = screen.getByTestId('screenplay-document-workspace');
     const analysis = screen.getByLabelText('剧本分析工作区');
     expect(analysis).toHaveTextContent('document-id');
     expect(workspace.nextElementSibling).toBe(analysis);

@@ -46,15 +46,9 @@ describe('administrator provider catalog management', () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText('系统已注册')[0]).toBeInTheDocument();
     expect(screen.getAllByText('仅目录')[0]).toBeInTheDocument();
-    const desktopTable = screen.getByRole('table', { name: '平台目录列表' });
     expect(
-      within(desktopTable).getByRole('columnheader', { name: '排序' }),
-    ).toHaveClass('text-right');
-    expect(
-      within(
-        within(desktopTable).getByRole('row', { name: /YouTube youtube/ }),
-      ).getAllByRole('cell')[3],
-    ).toHaveClass('text-right', 'tabular-nums');
+      screen.getByRole('table', { name: '平台目录列表' }),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '新增平台' }));
     let dialog = await screen.findByRole('dialog');

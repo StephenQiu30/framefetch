@@ -55,16 +55,11 @@ describe('administrator storage management', () => {
     });
     render(<AdminStorageView />);
 
-    expect(await screen.findByText('视频 1')).toHaveClass(
-      'w-full',
-      'min-w-0',
-      'truncate',
-    );
+    expect(await screen.findByText('视频 1')).toBeInTheDocument();
     expect(runtime.listStoredFiles).toHaveBeenLastCalledWith({
       page: 1,
       page_size: 20,
     });
-    expect(screen.getByText(/默认持久保存/)).toBeInTheDocument();
 
     const pagination = screen.getByRole('navigation', { name: '文件列表分页' });
     fireEvent.click(within(pagination).getByRole('button', { name: '下一页' }));

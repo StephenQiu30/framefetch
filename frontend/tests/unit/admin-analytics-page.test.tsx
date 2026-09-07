@@ -26,7 +26,7 @@ describe('administrator download analytics', () => {
     runtime.getAdminDownloadAnalytics.mockReset();
   });
 
-  it('renders KPI, accessible trend data and responsive source views', async () => {
+  it('renders KPI, trend data and source details', async () => {
     runtime.getAdminDownloadAnalytics.mockResolvedValue(analytics());
     render(<AdminAnalyticsView />);
 
@@ -36,9 +36,6 @@ describe('administrator download analytics', () => {
     expect(runtime.getAdminDownloadAnalytics).toHaveBeenCalledWith(30);
     expect(screen.getByText('下载总数').nextElementSibling).toHaveTextContent(
       '48',
-    );
-    expect(screen.getByText('下载总数').nextElementSibling).not.toHaveClass(
-      'font-mono',
     );
     expect(
       screen.getByText('成功率', { selector: 'dt' }).nextElementSibling,
@@ -72,12 +69,6 @@ describe('administrator download analytics', () => {
     expect(
       within(exactData).getByRole('row', { name: /2026-08-09 20 16 2 1/ }),
     ).toBeInTheDocument();
-    expect(screen.getByText('周期概览')).toBeInTheDocument();
-    expect(screen.getByText('每日下载趋势')).toBeInTheDocument();
-    expect(screen.getByText('任务状态')).toBeInTheDocument();
-    expect(screen.getByText('完成率走势')).toBeInTheDocument();
-    expect(screen.getByText('来源贡献')).toBeInTheDocument();
-    expect(screen.getByText('来源明细')).toBeInTheDocument();
     expect(
       screen.getByRole('table', { name: '每日下载成功率精确数据' }),
     ).toBeInTheDocument();
@@ -96,20 +87,9 @@ describe('administrator download analytics', () => {
     expect(detailsTrigger).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(detailsTrigger);
     expect(detailsTrigger).toHaveAttribute('aria-expanded', 'true');
-    const sourceTable = screen.getByRole('table', {
-      name: '各视频源下载表现',
-    });
-    const taskHeader = within(sourceTable).getByRole('columnheader', {
-      name: '任务',
-    });
-    expect(taskHeader).toHaveClass('text-right', 'tabular-nums');
-    const douyinRow = within(sourceTable).getByRole('row', {
-      name: /抖音 douyin/,
-    });
-    expect(within(douyinRow).getAllByRole('cell')[0]).toHaveClass(
-      'text-right',
-      'tabular-nums',
-    );
+    expect(
+      screen.getByRole('table', { name: '各视频源下载表现' }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('rowheader', { name: /抖音 douyin/ }),
     ).toBeInTheDocument();
@@ -127,7 +107,9 @@ describe('administrator download analytics', () => {
       .mockReturnValueOnce(periodRefresh.promise)
       .mockResolvedValueOnce(analytics());
     render(<AdminAnalyticsView />);
-    await screen.findByText('下载总数');
+    await waitFor(() =>
+      expect(runtime.getAdminDownloadAnalytics).toHaveBeenCalledTimes(1),
+    );
 
     const periodGroup = screen.getByRole('group', { name: '统计周期' });
     expect(

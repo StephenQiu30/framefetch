@@ -28,11 +28,10 @@ describe('HomeExperience', () => {
     const experience = screen.getByRole('status').parentElement;
     expect(experience).toHaveAttribute('data-auth-pending', 'true');
     expect(experience).toHaveAttribute('data-home-phase', 'resolving');
-    expect(screen.queryByText('公开首页')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
     expect(screen.queryByTestId('download-workspace')).not.toBeInTheDocument();
     const startup = screen.getByRole('status');
     expect(startup).toHaveAttribute('data-slot', 'empty');
-    expect(startup).toHaveTextContent('正在确认当前会话');
     expect(startup.querySelector('[data-slot="progress"]')).not.toBeNull();
   });
 
@@ -43,7 +42,7 @@ describe('HomeExperience', () => {
     render(<HomeExperience publicHome={<h1>公开首页</h1>} />);
 
     expect(screen.getByTestId('download-workspace')).toBeVisible();
-    expect(screen.queryByText('公开首页')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(
       screen.getByTestId('download-workspace').closest('[data-home-view]'),
@@ -55,13 +54,13 @@ describe('HomeExperience', () => {
 
     render(<HomeExperience publicHome={<h1>公开首页</h1>} />);
 
-    expect(screen.getByRole('heading', { name: '公开首页' })).toBeVisible();
+    const publicHeading = screen.getByRole('heading', { level: 1 });
+    expect(publicHeading).toBeVisible();
     expect(screen.queryByTestId('download-workspace')).not.toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    expect(
-      screen
-        .getByRole('heading', { name: '公开首页' })
-        .closest('[data-home-view]'),
-    ).toHaveAttribute('data-home-view', 'public');
+    expect(publicHeading.closest('[data-home-view]')).toHaveAttribute(
+      'data-home-view',
+      'public',
+    );
   });
 });

@@ -44,9 +44,18 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    expect(screen.getByRole('status')).toHaveTextContent('loading');
-    expect(await screen.findByText('video_user')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('ready');
+    expect(screen.getByRole('status')).toHaveAttribute(
+      'data-auth-state',
+      'loading',
+    );
+    expect(await screen.findByTestId('auth-user')).toHaveAttribute(
+      'data-user',
+      'video_user',
+    );
+    expect(screen.getByRole('status')).toHaveAttribute(
+      'data-auth-state',
+      'ready',
+    );
     expect(runtime.getCurrentUser).toHaveBeenCalledOnce();
   });
 
@@ -59,8 +68,14 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    expect(await screen.findByText('设计预览')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('ready');
+    expect(await screen.findByTestId('auth-user')).toHaveAttribute(
+      'data-user',
+      '设计预览',
+    );
+    expect(screen.getByRole('status')).toHaveAttribute(
+      'data-auth-state',
+      'ready',
+    );
     expect(runtime.getCurrentUser).not.toHaveBeenCalled();
   });
 
@@ -72,11 +87,16 @@ describe('AuthProvider', () => {
         <AuthProbe />
       </AuthProvider>,
     );
-    await screen.findByText('video_user');
+    await screen.findByTestId('auth-user');
 
     fireEvent.click(screen.getByRole('button', { name: '退出' }));
 
-    await waitFor(() => expect(screen.getByText('guest')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('auth-user')).toHaveAttribute(
+        'data-user',
+        'guest',
+      ),
+    );
     expect(runtime.logout).toHaveBeenCalledOnce();
     expect(runtime.resetSocket).toHaveBeenCalled();
   });
@@ -86,8 +106,8 @@ function AuthProbe() {
   const { loading, signOut, user } = useAuth();
   return (
     <div>
-      <p role="status">{loading ? 'loading' : 'ready'}</p>
-      <p>{user?.username ?? 'guest'}</p>
+      <p data-auth-state={loading ? 'loading' : 'ready'} role="status" />
+      <p data-testid="auth-user" data-user={user?.username ?? 'guest'} />
       <button onClick={() => void signOut()} type="button">
         退出
       </button>

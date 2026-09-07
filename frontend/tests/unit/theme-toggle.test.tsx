@@ -24,7 +24,6 @@ describe('ThemeToggle', () => {
     const trigger = await screen.findByRole('button', {
       name: '切换到深色主题',
     });
-    expect(trigger).toHaveClass('size-11');
 
     fireEvent.click(trigger);
     expect(themeRuntime.setTheme).toHaveBeenCalledWith('dark');

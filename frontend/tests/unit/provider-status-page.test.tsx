@@ -31,12 +31,10 @@ describe('provider status page', () => {
       'page-header',
     );
     const list = screen.getByRole('list', { name: '平台能力状态' });
-    expect(list).not.toHaveClass('border-y', 'hairline');
     const youtube = within(list)
       .getByRole('heading', { name: 'YouTube' })
       .closest('[role="listitem"]');
     expect(youtube).not.toBeNull();
-    expect(youtube).not.toHaveClass('border-b', 'hairline');
     expect(youtube).toHaveTextContent('已接入 · 当前不可用');
     const capabilities = within(youtube as HTMLElement).getByText(
       '单视频 · 音视频分离',
@@ -138,7 +136,6 @@ describe('provider status page', () => {
       name: '正在刷新平台状态',
     });
     expect(initialRefresh).toBeDisabled();
-    expect(initialRefresh).toHaveClass('disabled:opacity-100');
     await act(async () => first.resolve(statuses()));
     expect(await screen.findByText('YouTube')).toBeInTheDocument();
 

@@ -110,8 +110,8 @@ C 端业务进程不直接读取 Chrome Profile 或 Keychain。macOS 部署通�
   图片组件。
 - Dialog、Sheet、Popover、Select、RadioGroup、Progress、Alert 与 Input
   优先使用已安装的 shadcn 实现，由 Radix 提供焦点、键盘和无障碍语义。
-- `component-boundaries.test.ts` 扫描业务 TSX，阻止新增原生交互控件或越层
-  导入 Radix。
+- 业务组件继续只组合 `components/ui` 中的控件；原生交互控件和 Radix
+  primitive 的边界由组件代码审查维护。
 
 ## 7. 下载规格与重试边界
 

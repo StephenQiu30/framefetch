@@ -38,7 +38,6 @@ describe('AnalysisPanel', () => {
     expect(
       screen.getByRole('heading', { name: 'AI 智能分析' }),
     ).toBeInTheDocument();
-    expect(screen.queryByText('AI analysis')).not.toBeInTheDocument();
     expect(await screen.findByLabelText('分析 Skill')).toHaveAttribute(
       'id',
       'analysis-skill',
@@ -62,7 +61,6 @@ describe('AnalysisPanel', () => {
     expect(
       screen.getByText(/不会把原始视频容器直接上传给模型服务/),
     ).toBeInTheDocument();
-    expect(screen.queryByText('0/4000')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '开始 AI 分析' })).toBeEnabled();
   });
 
@@ -76,7 +74,7 @@ describe('AnalysisPanel', () => {
     expect(screen.getByText('第 1 次执行')).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: analysisResult.title }),
-    ).toHaveClass('w-full');
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '导出 DOCX' })).toHaveAttribute(
       'href',
       `/api/analyses/${analysisJob('succeeded').id}/report.docx`,

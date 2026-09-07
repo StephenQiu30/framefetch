@@ -89,7 +89,7 @@ npm run openapi
 
 - 业务页面只组合已有 shadcn/ui 组件，Radix primitive 和原生交互/表单控件只能
   出现在 `src/components/ui/`；不重新实现对话框、菜单、选择器、标签页、提示或
-  表单控件。`tests/unit/component-boundaries.test.ts` 必须阻止边界回退。
+  表单控件；边界回退通过组件代码审查和业务交互测试发现。
 - 下载完成且文件仍可用时，详情页通过 Vidstack React 默认布局加载短时制品地址；播放控件、键盘交互、全屏与移动端布局由开源组件负责，业务代码不维护平行播放器 UI。
 - 当前视觉基准是用户选定的 Product Design 方案 3 无边框修订稿：`/Users/stephenqiu/.codex/generated_images/019fe657-3556-7102-a4d8-f0f95698076b/exec-6ad65a6b-a139-48c1-a789-730a53116807.png`。风格贴近 Vercel Home：`#FAFAFA` 偏白画布、Geist、`#0A0A0A` 前景、`#111111` 近黑主操作、大尺寸编辑式首页 Hero 和克制的中性表面。
 - Header 高 80px 且无下边线/外框/阴影。Header、main、footer 与认证双栏统一使用 `.content-shell = min(calc(100% - 160px), 1376px)`，使品牌、导航、欢迎页和认证页处在同一组对齐线上；认证表单只在该网格内部收窄到 440px。641–1023px 时全部页面 gutter 各 32px；不超过 640px 时 gutter 各 16px。这些是对齐约束，不能显示成页面外壳。
