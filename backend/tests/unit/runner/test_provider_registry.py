@@ -386,6 +386,16 @@ def test_tumblr_uses_bounded_rate_limit_backoff() -> None:
     assert provider_inspection_retry_delay(url) == 4
 
 
+def test_slow_public_extractors_use_bounded_retry_backoff() -> None:
+    telegram = "https://t.me/europa_press/613"
+    kick = "https://kick.com/spreen/clips/clip_01J8RGZRKHXHXXKJEHGRM932A5"
+
+    assert provider_inspection_attempts(telegram) == 4
+    assert provider_inspection_retry_delay(telegram) == 4
+    assert provider_inspection_attempts(kick) == 8
+    assert provider_inspection_retry_delay(kick) == 4
+
+
 def test_normalizes_legacy_tumblr_blog_posts_to_the_current_public_page() -> None:
     url = (
         "https://maskofthedragon.tumblr.com/post/"

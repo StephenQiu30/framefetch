@@ -89,6 +89,8 @@ PUBLIC_PROVIDER_PROFILES: tuple[ProviderProfile, ...] = (
         capabilities=SINGLE_VIDEO,
         status=ProviderSupportStatus.VERIFIED,
         canary_suite="telegram-public-channel-single-video",
+        inspection_attempts=4,
+        inspection_retry_delay=4,
     ),
     standard_provider(
         ProviderKey.KICK,
@@ -101,6 +103,8 @@ PUBLIC_PROVIDER_PROFILES: tuple[ProviderProfile, ...] = (
         ),
         status=ProviderSupportStatus.VERIFIED,
         canary_suite="kick-public-clip",
+        inspection_attempts=8,
+        inspection_retry_delay=4,
     ),
     standard_provider(
         ProviderKey.TUMBLR,
