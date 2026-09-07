@@ -8,7 +8,8 @@ from typing import Any, Protocol
 
 import httpx
 
-from app.domain.downloads import Container
+from app.domain.downloads import Container, MediaKind
+from app.domain.downloads.content_restrictions import ContentRestriction
 from app.domain.providers import ProviderKey
 from app.runner.command_support import child_environment, json_object
 from app.runner.errors import RunnerFailure
@@ -76,7 +77,14 @@ class MediaCommands:
             egress_proxy=command.egress_proxy,
             failure_context=command.failure_context,
         )
-        return json_object(result.stdout, "invalid_inspection_response")
+        restriction = classify_provider_failure(command.failure_context, result.stderr)
+        payload = json_object(result.stdout, "invalid_inspection_response")
+        if restriction is not None and (
+            restriction[0] in ContentRestriction
+            or not _inspection_payload_has_media(payload)
+        ):
+            raise RunnerFailure(restriction[0], status=restriction[1])
+        return payload
 
     async def probe_remote(
         self,
@@ -425,6 +433,37 @@ class MediaCommands:
 
     def _egress_proxy(self, url: str) -> str:
         return self._settings.egress_proxy_for(provider_request(url).profile.key)
+
+
+def _inspection_payload_has_media(payload: Mapping[str, Any]) -> bool:
+    # Presence only: gallery normalization still validates every asset and URL.
+    assets = payload.get("assets")
+    if (
+        payload.get("media_kind") == MediaKind.IMAGE_GALLERY.value
+        and isinstance(assets, list)
+        and any(
+            isinstance(item, dict)
+            and isinstance(item.get("url"), str)
+            and bool(item["url"].strip())
+            for item in assets
+        )
+    ):
+        return True
+    if isinstance(payload.get("url"), str) and bool(payload["url"].strip()):
+        return True
+    formats = payload.get("formats")
+    if isinstance(formats, list) and any(
+        isinstance(item, dict)
+        and isinstance(item.get("url"), str)
+        and bool(item["url"].strip())
+        for item in formats
+    ):
+        return True
+    entries = payload.get("entries")
+    return isinstance(entries, list) and any(
+        isinstance(entry, dict) and _inspection_payload_has_media(entry)
+        for entry in entries
+    )
 
 
 async def _pot_provider_ready(base_url: str, expected_version: str) -> bool:

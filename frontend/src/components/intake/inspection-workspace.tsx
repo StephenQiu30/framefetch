@@ -26,8 +26,10 @@ export default function InspectionWorkspace({
   onUseUpload,
   selectedId,
 }: InspectionWorkspaceProps) {
-  const selected = inspection.formats.find((item) => item.id === selectedId);
   const downloadable = inspection.access_decision === 'downloadable';
+  const selected = downloadable
+    ? inspection.formats.find((item) => item.id === selectedId)
+    : undefined;
   const gallery = inspection.media_kind === 'image_gallery';
   const collection = inspection.media_kind === 'video_collection';
 
@@ -86,7 +88,7 @@ export default function InspectionWorkspace({
             ? gallery || collection
               ? '下载内容'
               : '画质预设'
-            : decisionTitle(inspection.access_decision)}
+            : decisionTitle(inspection)}
         </h2>
         {downloadable ? (
           <FormatPicker
@@ -161,7 +163,17 @@ export default function InspectionWorkspace({
   );
 }
 
-function decisionTitle(decision: Inspection['access_decision']) {
+function decisionTitle(inspection: Inspection) {
+  const titles: Record<string, string> = {
+    content_preview_only: '仅提供试看内容',
+    content_supporter_only: '充电专属内容',
+    content_paid_only: '付费内容暂不支持下载',
+    content_export_required: '尚未提供文件导出授权',
+    content_access_metadata_invalid: '内容权益信息无法确认',
+  };
+  const title = titles[inspection.restriction_reason ?? ''];
+  if (title) return title;
+  const decision = inspection.access_decision;
   if (decision === 'playback_only') return '仅支持官方播放';
   if (decision === 'export_required') return '需要导入自有文件';
   if (decision === 'blocked') return '当前不可下载';

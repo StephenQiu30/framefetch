@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.domain.downloads import DownloadErrorCode
+from app.domain.downloads.content_restrictions import ContentRestriction
 
 
 class ExecutionPersistenceUnavailable(RuntimeError):
@@ -28,6 +29,10 @@ class ArtifactValidationError(RuntimeError):
 
 
 _RUNNER_CODES = {
+    **{
+        reason.value: DownloadErrorCode.PROVIDER_CONTENT_RESTRICTED
+        for reason in ContentRestriction
+    },
     "download_timeout": DownloadErrorCode.DOWNLOAD_TIMEOUT,
     "inspection_timeout": DownloadErrorCode.INSPECTION_TIMEOUT,
     "inspection_failed": DownloadErrorCode.PROVIDER_TEMPORARILY_UNAVAILABLE,

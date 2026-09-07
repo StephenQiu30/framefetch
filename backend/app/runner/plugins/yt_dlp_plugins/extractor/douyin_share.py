@@ -11,6 +11,9 @@ from yt_dlp.networking.exceptions import (  # type: ignore[import-untyped]
 )
 from yt_dlp.utils import ExtractorError, int_or_none  # type: ignore[import-untyped]
 
+from ._content_access import (
+    enforce_douyin_access,
+)
 from .douyin_note import DouyinNoteIE
 
 _SHARE_PAGE = "https://www.iesdouyin.com/share/video/{video_id}/"
@@ -125,6 +128,7 @@ class _DouyinSharePageIE(DouyinIE, plugin_name="share_page"):  # type: ignore[mi
     def _parse_aweme_video_app(self, aweme_detail: dict[str, Any]) -> dict[str, Any]:
         """Correct download_addr dimensions that Douyin currently under-reports."""
 
+        enforce_douyin_access(aweme_detail)
         return _correct_download_addr_dimensions(
             cast(dict[str, Any], super()._parse_aweme_video_app(aweme_detail)),
             aweme_detail,
@@ -149,6 +153,7 @@ class _DouyinSharePageIE(DouyinIE, plugin_name="share_page"):  # type: ignore[mi
             )
             item = _router_item(router_data, video_id)
             if item is not None:
+                enforce_douyin_access(item)
                 try:
                     info = self._parse_aweme_video_app(item)
                 except (AttributeError, KeyError, TypeError, ValueError):
@@ -256,6 +261,7 @@ def _router_item(payload: object, expected_id: str) -> dict[str, Any] | None:
             continue
         for item in items:
             if isinstance(item, dict) and str(item.get("aweme_id")) == expected_id:
+                enforce_douyin_access(item)
                 video = item.get("video")
                 if not isinstance(video, dict):
                     continue

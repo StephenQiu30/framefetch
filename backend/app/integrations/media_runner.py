@@ -15,6 +15,7 @@ import httpx
 from pydantic import BaseModel, ValidationError
 
 from app.domain.downloads import DownloadPlan, MediaKind
+from app.domain.downloads.content_restrictions import ContentRestriction
 from app.domain.providers import ProviderAccessContextRef, ProviderAccessMode
 from app.integrations.media_inspection_pipeline import MediaInspectionPipeline
 from app.integrations.media_runner_models import (
@@ -53,6 +54,7 @@ from app.services.downloads.errors import (
     MediaInspectionGeoRestricted,
     MediaInspectionLinkUnavailable,
     MediaInspectionMediaUnsupported,
+    MediaInspectionPaidContentRestricted,
     MediaInspectionRateLimited,
     MediaInspectionSessionExpired,
     MediaInspectionTemporarilyUnavailable,
@@ -168,6 +170,10 @@ class MediaRunnerHttpClient:
                 timeout_code="inspection_timeout",
             )
         except MediaRunnerClientError as exc:
+            if exc.code in ContentRestriction:
+                raise MediaInspectionPaidContentRestricted(
+                    ContentRestriction(exc.code)
+                ) from exc
             if exc.code == "duration_limit_exceeded":
                 raise MediaInspectionDurationLimitExceeded from exc
             if exc.code in {"credential_required", "provider_session_not_allowed"}:

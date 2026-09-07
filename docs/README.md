@@ -35,3 +35,4 @@
 | 026 | Flutter 原生认证契约 | [Design](design/026-Flutter原生认证契约设计.md) | [PRD](prd/026-Flutter原生认证契约需求.md) | [Plan](plans/026-Flutter原生认证契约计划.md) | [Acceptance](acceptance/026-Flutter原生认证契约验收.md) |
 | 027 | 开场钩子审查 Skill | [Design](design/archive/027-开场钩子审查Skill设计.md) | [PRD](prd/archive/027-开场钩子审查Skill需求.md) | [Plan](plans/archive/027-开场钩子审查Skill计划.md) | [Acceptance](acceptance/archive/027-开场钩子审查Skill验收.md) |
 | 028 | AI 分析 Skill 与文档基础解析增强 | [Design](design/028-AI分析Skill与文档基础解析增强设计.md) | [PRD](prd/028-AI分析Skill与文档基础解析增强需求.md) | [Plan](plans/028-AI分析Skill与文档基础解析增强计划.md) | [Acceptance](acceptance/028-AI分析Skill与文档基础解析增强验收.md) |
+| 029 | 付费内容识别与授权获取 | [Design](design/029-付费内容识别与授权获取设计.md) | [PRD](prd/029-付费内容识别与授权获取需求.md) | [Plan](plans/029-付费内容识别与授权获取计划.md) | [Acceptance](acceptance/029-付费内容识别与授权获取验收.md) |

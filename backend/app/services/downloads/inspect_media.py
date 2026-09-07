@@ -17,6 +17,7 @@ from app.services.downloads.errors import (
     MediaInspectionGeoRestricted,
     MediaInspectionLinkUnavailable,
     MediaInspectionMediaUnsupported,
+    MediaInspectionPaidContentRestricted,
     MediaInspectionRateLimited,
     MediaInspectionSessionExpired,
     MediaInspectionTemporarilyUnavailable,
@@ -32,6 +33,7 @@ from app.services.downloads.inspection_models import (
     RunnerFormat,
     RunnerInspection,
 )
+from app.services.downloads.paid_content_admission import paid_content_admission
 from app.services.downloads.plans import plan_fingerprint, plan_to_documents
 from app.services.downloads.ports import (
     DownloadRepository,
@@ -121,6 +123,13 @@ class InspectMedia:
             raise ApplicationError(
                 ApplicationErrorCode.PROVIDER_GEO_RESTRICTED
             ) from exc
+        except MediaInspectionPaidContentRestricted as exc:
+            return await self._save_restricted(
+                validated_url,
+                owner_hash,
+                idempotency_key,
+                paid_content_admission(validated_url, exc.reason),
+            )
         except MediaInspectionContentRestricted as exc:
             raise ApplicationError(
                 ApplicationErrorCode.PROVIDER_CONTENT_RESTRICTED

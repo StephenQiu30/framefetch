@@ -49,6 +49,23 @@ class RecordingSupervisor:
         return ProcessResult(0, b"{}", b"", False, False)
 
 
+class SuccessfulWarningSupervisor:
+    def __init__(self, stdout: bytes, stderr: bytes) -> None:
+        self.stdout = stdout
+        self.stderr = stderr
+
+    async def run(
+        self,
+        _argv: Sequence[str],
+        *,
+        cwd: Path,
+        timeout_seconds: float,
+        env: Mapping[str, str] | None = None,
+    ) -> ProcessResult:
+        del cwd, timeout_seconds, env
+        return ProcessResult(0, self.stdout, self.stderr, False, False)
+
+
 @pytest.mark.asyncio
 async def test_mp4_remux_moves_metadata_before_media_for_streaming(
     tmp_path: Path,
@@ -269,6 +286,47 @@ async def test_inspection_classifies_youtube_bot_confirmation_requirement(
 
     assert caught.value.code == "egress_challenged"
     assert caught.value.status == 422
+
+
+@pytest.mark.asyncio
+async def test_successful_youtube_process_with_bot_warning_and_no_formats_is_challenged(
+    tmp_path: Path,
+) -> None:
+    commands = MediaCommands(
+        settings(tmp_path),
+        SuccessfulWarningSupervisor(
+            b'{"id":"owned","formats":[]}',
+            b"WARNING: Sign in to confirm you're not a bot. "
+            b"Use --cookies for authentication",
+        ),
+    )
+
+    with pytest.raises(RunnerFailure) as caught:
+        await commands.inspect("https://www.youtube.com/watch?v=owned", tmp_path)
+
+    assert caught.value.code == "egress_challenged"
+    assert caught.value.status == 422
+
+
+@pytest.mark.asyncio
+async def test_successful_youtube_process_keeps_usable_media_despite_warning(
+    tmp_path: Path,
+) -> None:
+    commands = MediaCommands(
+        settings(tmp_path),
+        SuccessfulWarningSupervisor(
+            b'{"id":"owned","formats":[{"url":"https://media.example/video"}]}',
+            b"WARNING: Sign in to confirm you're not a bot. "
+            b"Use --cookies for authentication",
+        ),
+    )
+
+    payload = await commands.inspect(
+        "https://www.youtube.com/watch?v=owned",
+        tmp_path,
+    )
+
+    assert payload["id"] == "owned"
 
 
 @pytest.mark.asyncio

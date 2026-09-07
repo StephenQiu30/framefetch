@@ -3,6 +3,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Self
 
+from app.domain.downloads.content_restrictions import ContentRestriction
 from app.domain.providers import ProviderAccessMode
 
 
@@ -96,6 +97,14 @@ class MediaInspectionGeoRestricted(MediaInspectionFailure):
 
 class MediaInspectionContentRestricted(MediaInspectionFailure):
     """The content is private or requires an entitlement."""
+
+
+class MediaInspectionPaidContentRestricted(MediaInspectionContentRestricted):
+    """Original platform metadata identified a paid or incomplete source."""
+
+    def __init__(self, reason: ContentRestriction) -> None:
+        self.reason = reason
+        super().__init__(reason.value)
 
 
 class MediaInspectionDrmProtected(MediaInspectionFailure):

@@ -10,6 +10,10 @@ from urllib.parse import parse_qsl, urlsplit
 from yt_dlp.extractor.tiktok import DouyinIE  # type: ignore[import-untyped]
 from yt_dlp.utils import ExtractorError  # type: ignore[import-untyped]
 
+from ._content_access import (
+    enforce_douyin_access,
+)
+
 _NOTE_URL = r"https?://(?:www\.)?(?:douyin|iesdouyin)\.com/(?:share/)?note/(?P<id>\d+)/?(?:[?#].*)?$"
 _SLIDES_INFO = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
 _ITEM_INFO = "https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/"
@@ -45,6 +49,7 @@ class DouyinNoteIE(DouyinIE):  # type: ignore[misc]
         if item is None:
             raise ExtractorError(_NOTE_UNAVAILABLE, video_id=note_id, expected=True)
 
+        enforce_douyin_access(item)
         assets = _image_assets(item)
         if assets:
             title = " ".join(str(item.get("desc") or item.get("title") or "").split())
@@ -146,6 +151,8 @@ class DouyinNoteIE(DouyinIE):  # type: ignore[misc]
 def _find_item(payload: object, expected_id: str) -> dict[str, Any] | None:
     """Find a note item across the public API's changing response wrappers."""
     if isinstance(payload, dict):
+        if str(payload.get("aweme_id")) == expected_id:
+            enforce_douyin_access(payload)
         if str(payload.get("aweme_id")) == expected_id and (
             _image_assets(payload) or _has_video(payload)
         ):
