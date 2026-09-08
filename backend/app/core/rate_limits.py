@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 RateLimitOperation = Literal[
     "login",
     "register",
+    "registration_code",
     "inspect",
     "download",
     "download_retry",
@@ -28,6 +29,7 @@ class RateLimitPolicy(BaseModel):
 def default_rate_limits() -> dict[RateLimitOperation, RateLimitPolicy]:
     return {
         "login": RateLimitPolicy(limit=10, window_seconds=60),
+        "registration_code": RateLimitPolicy(limit=5, window_seconds=3600),
         "register": RateLimitPolicy(limit=5, window_seconds=3600),
         "inspect": RateLimitPolicy(limit=20, window_seconds=60),
         "download": RateLimitPolicy(limit=10, window_seconds=60),

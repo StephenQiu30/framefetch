@@ -11,7 +11,13 @@ from app.api.dependencies import get_runtime_settings
 from app.api.errors import auth_application_error
 from app.api.openapi import ERROR_RESPONSES
 from app.core.config import Settings
-from app.schemas.auth import EmailPasswordRequest, RegisterRequest, UserResponse
+from app.schemas.auth import (
+    EmailPasswordRequest,
+    RegisterRequest,
+    RegistrationCodeRequest,
+    RegistrationCodeResponse,
+    UserResponse,
+)
 from app.schemas.native_auth import (
     NativeLogoutRequest,
     NativeRefreshRequest,
@@ -27,6 +33,28 @@ router = APIRouter(
 Auth = Annotated[AuthService, Depends(get_auth_service)]
 SettingsDependency = Annotated[Settings, Depends(get_runtime_settings)]
 User = Annotated[CurrentUser, Depends(get_current_user)]
+
+
+@router.post(
+    "/registration-code",
+    operation_id="sendNativeRegistrationCode",
+    response_model=RegistrationCodeResponse,
+    summary="发送注册邮箱验证码",
+)
+async def send_registration_code(
+    body: RegistrationCodeRequest,
+    request: Request,
+    auth: Auth,
+    settings: SettingsDependency,
+) -> RegistrationCodeResponse:
+    await enforce_rate_limit(
+        request, "registration_code", _email_hash(str(body.email)), settings
+    )
+    try:
+        await auth.send_registration_code(str(body.email))
+    except AuthError as exc:
+        raise auth_application_error(exc) from exc
+    return RegistrationCodeResponse()
 
 
 @router.post(
@@ -47,7 +75,12 @@ async def register_native_user(
         request, "register", _email_hash(str(body.email)), settings
     )
     try:
-        grant = await auth.register(body.username, str(body.email), body.password)
+        grant = await auth.register(
+            body.username,
+            str(body.email),
+            body.password,
+            verification_code=body.verification_code,
+        )
     except AuthError as exc:
         raise auth_application_error(exc) from exc
     response.headers["Location"] = "/api/app/v1/auth/me"

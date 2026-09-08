@@ -119,6 +119,30 @@ class Settings(BaseSettings):
     auth_refresh_token_ttl_seconds: int = Field(
         default=2_592_000, ge=3600, le=31_536_000
     )
+    smtp_enabled: bool = False
+    smtp_host: str = ""
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_tls_mode: Literal["starttls", "tls", "none"] = "starttls"
+    smtp_username: str = ""
+    smtp_password: SecretStr = SecretStr("")
+    smtp_from_email: EmailStr | None = None
+    smtp_from_name: str = Field(default="帧取", max_length=100, pattern=r"^[^\r\n]*$")
+
+    @model_validator(mode="after")
+    def validate_smtp(self) -> Settings:
+        if self.smtp_enabled:
+            if not self.smtp_host.strip() or self.smtp_from_email is None:
+                raise ValueError("SMTP_HOST and SMTP_FROM_EMAIL are required")
+            if bool(self.smtp_username) != bool(self.smtp_password.get_secret_value()):
+                raise ValueError("SMTP credentials must be configured together")
+            if self.smtp_tls_mode == "none" and (
+                self.app_env == "production" or self.smtp_username
+            ):
+                raise ValueError(
+                    "SMTP TLS is required for production or authentication"
+                )
+        return self
+
     auth_bootstrap_admin_email: EmailStr | None = None
     auth_bootstrap_admin_secret: SecretStr = SecretStr(
         "development-admin-bootstrap-secret-change-me"
@@ -303,7 +327,7 @@ class Settings(BaseSettings):
     def absolute_import_workspace(cls, value: Path) -> Path:
         return value.expanduser().absolute()
 
-    @field_validator("auth_bootstrap_admin_email", mode="before")
+    @field_validator("auth_bootstrap_admin_email", "smtp_from_email", mode="before")
     @classmethod
     def empty_bootstrap_admin_email_to_none(cls, value: object) -> object | None:
         if isinstance(value, str) and not value.strip():

@@ -320,6 +320,26 @@ _AUTH_ERRORS: dict[AuthErrorCode, tuple[int, str, str]] = {
         "Self administration conflict",
         "Administrators cannot demote or disable their own account.",
     ),
+    AuthErrorCode.INVALID_VERIFICATION_CODE: (
+        400,
+        "Invalid verification code",
+        "Request a new code or check the email and code.",
+    ),
+    AuthErrorCode.VERIFICATION_RATE_LIMITED: (
+        429,
+        "Please wait",
+        "Wait 60 seconds before requesting another code.",
+    ),
+    AuthErrorCode.EMAIL_UNAVAILABLE: (
+        503,
+        "Email unavailable",
+        "Registration email is not configured.",
+    ),
+    AuthErrorCode.EMAIL_SEND_FAILED: (
+        503,
+        "Email send failed",
+        "Email could not be confirmed. Please request a new code later.",
+    ),
     AuthErrorCode.UNAUTHENTICATED: (
         401,
         "Authentication required",

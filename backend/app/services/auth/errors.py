@@ -2,6 +2,10 @@ from enum import StrEnum
 
 
 class AuthErrorCode(StrEnum):
+    INVALID_VERIFICATION_CODE = "invalid_verification_code"
+    VERIFICATION_RATE_LIMITED = "verification_rate_limited"
+    EMAIL_UNAVAILABLE = "email_unavailable"
+    EMAIL_SEND_FAILED = "email_send_failed"
     ADMIN_BOOTSTRAP_REQUIRED = "admin_bootstrap_required"
     EMAIL_ALREADY_REGISTERED = "email_already_registered"
     USERNAME_ALREADY_REGISTERED = "username_already_registered"

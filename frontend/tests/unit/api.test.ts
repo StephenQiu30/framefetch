@@ -67,6 +67,7 @@ describe('typed API client', () => {
     mockHttpResponses(user, user, user, user, undefined);
 
     await register({
+      verification_code: '123456',
       username: user.username,
       email: user.email,
       password: 'strong-pass-123',

@@ -22,6 +22,7 @@ from app.integrations.provider_status import configured_provider_statuses
 from app.integrations.rate_limiter import ValkeyRateLimiter
 from app.integrations.readiness import build_runtime_readiness
 from app.integrations.realtime import RabbitMqRealtimeConsumer, RealtimeHub
+from app.integrations.registration_mail import SmtpRegistrationMailer
 from app.integrations.thumbnail_storage import MinioThumbnailStorage
 from app.integrations.url_security import FernetUrlEnvelope, MediaUrlValidator
 from app.repositories.ai_provider_repository import SqlAlchemyAiProviderRepository
@@ -41,6 +42,7 @@ from app.repositories.document_import_repository import (
     SqlAlchemyDocumentImportRepository,
 )
 from app.repositories.download_repository import SqlAlchemyDownloadRepository
+from app.repositories.email_verification_repository import SqlAlchemyVerificationStore
 from app.repositories.media_import_repository import SqlAlchemyMediaImportRepository
 from app.repositories.operational_metrics import OperationalMetrics
 from app.repositories.provider_canary_repository import (
@@ -88,6 +90,7 @@ from app.services.analysis import (
     RetryAnalysis,
 )
 from app.services.auth import AuthService, UserService
+from app.services.auth.email_verification import EmailVerification
 from app.services.documents import DeleteDocument, GetDocument, ListDocuments
 from app.services.downloads import (
     CancelDownload,
@@ -189,6 +192,12 @@ def build_api_runtime(settings: Settings) -> ApiRuntime:
     clock = _utc_now
     auth_service = AuthService(
         repository=auth_repository,
+        verification=EmailVerification(
+            SqlAlchemyVerificationStore(sessions),
+            SmtpRegistrationMailer(settings),
+            settings.auth_jwt_secret.get_secret_value().encode(),
+            clock,
+        ),
         passwords=Argon2PasswordHasher(),
         tokens=JwtTokenService(
             secret=settings.auth_jwt_secret.get_secret_value().encode(),

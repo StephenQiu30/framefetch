@@ -4,11 +4,18 @@ import {
   logoutUser as logoutUserRequest,
   refreshUserSession as refreshUserSessionRequest,
   registerUser as registerUserRequest,
+  sendRegistrationCode,
 } from '@/services/video/auth';
 
 export type AuthUser = API.UserResponse;
 export type EmailCredentials = API.EmailPasswordRequest;
 export type RegisterCredentials = API.RegisterRequest;
+
+export function requestRegistrationCode(
+  email: string,
+): Promise<API.RegistrationCodeResponse> {
+  return sendRegistrationCode({ email });
+}
 
 export function login(credentials: EmailCredentials): Promise<AuthUser> {
   return loginUserRequest(credentials);

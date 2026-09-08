@@ -69,3 +69,21 @@ export async function registerNativeUser(
     ...(options || {}),
   });
 }
+
+/** 发送注册邮箱验证码 POST /api/app/v1/auth/registration-code */
+export async function sendNativeRegistrationCode(
+  body: API.RegistrationCodeRequest,
+  options?: RequestOptions
+) {
+  return request<API.RegistrationCodeResponse>(
+    "/api/app/v1/auth/registration-code",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: body,
+      ...(options || {}),
+    }
+  );
+}

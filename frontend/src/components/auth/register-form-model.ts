@@ -1,6 +1,11 @@
 import { validateUsername } from '@/lib/username';
 
-export type FieldName = 'username' | 'email' | 'password' | 'confirmPassword';
+export type FieldName =
+  | 'username'
+  | 'email'
+  | 'password'
+  | 'confirmPassword'
+  | 'verificationCode';
 
 export type FieldErrors = Partial<Record<FieldName, string>>;
 
@@ -26,6 +31,8 @@ export function validateRegistration(
   if (!values.confirmPassword) errors.confirmPassword = '请再次输入密码';
   else if (values.confirmPassword !== values.password)
     errors.confirmPassword = '两次输入的密码不一致';
+  if (!/^[0-9]{6}$/.test(values.verificationCode))
+    errors.verificationCode = '请输入邮件中的 6 位验证码';
   return errors;
 }
 

@@ -42,6 +42,11 @@ const localizedErrorMessages: Record<string, string> = {
   inspection_failed: '暂时无法读取视频信息，请检查链接后重试。',
   inspection_timeout: '读取视频信息超时，请稍后重试。',
   internal_error: '服务处理失败，请稍后重试。',
+  invalid_verification_code:
+    '验证码错误、已过期或已使用，请检查邮箱和验证码，或重新获取。',
+  verification_rate_limited: '请等待 60 秒后再获取验证码。',
+  email_unavailable: '注册邮件暂不可用，请稍后重试或联系支持。',
+  email_send_failed: '邮件发送未能确认，请稍后重新获取验证码。',
   invalid_credentials: '邮箱或密码错误，请重新输入。',
   invalid_model_output: 'AI 返回结果未通过校验，请重新分析。',
   invalid_provider_catalog_entry: '平台配置内容不符合要求，请检查后重试。',

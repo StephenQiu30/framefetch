@@ -16,6 +16,7 @@ def test_auth_openapi_exposes_email_session_contract(tmp_path: Path) -> None:
         "/api/auth/refresh",
         "/api/auth/logout",
         "/api/app/v1/auth/register",
+        "/api/app/v1/auth/registration-code",
         "/api/app/v1/auth/login",
         "/api/app/v1/auth/me",
         "/api/app/v1/auth/refresh",
@@ -36,7 +37,12 @@ def test_auth_openapi_exposes_email_session_contract(tmp_path: Path) -> None:
     assert paths["/api/auth/refresh"]["post"]["operationId"] == ("refreshUserSession")
     request_schema = schema["components"]["schemas"]["RegisterRequest"]
     assert request_schema["additionalProperties"] is False
-    assert request_schema["required"] == ["email", "password", "username"]
+    assert request_schema["required"] == [
+        "email",
+        "password",
+        "verification_code",
+        "username",
+    ]
     assert paths["/api/admin/users"]["get"]["operationId"] == "listUsers"
     assert paths["/api/admin/providers"]["get"]["operationId"] == (
         "listProviderCatalogEntries"
@@ -72,6 +78,7 @@ def test_native_openapi_excludes_browser_and_admin_contracts() -> None:
 
     assert set(schema["paths"]) == {
         "/api/app/v1/auth/register",
+        "/api/app/v1/auth/registration-code",
         "/api/app/v1/auth/login",
         "/api/app/v1/auth/me",
         "/api/app/v1/auth/refresh",

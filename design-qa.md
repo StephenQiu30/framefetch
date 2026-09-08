@@ -626,3 +626,12 @@ final result: passed
 - engineering gates：`npm run format:check`、`npm run lint`、55 个测试文件/207 项测试和 Next.js 20 个静态页面 production build 全部通过；业务源码扫描只剩官方 `src/components/ui/pagination.tsx` 内的原生 `nav`。
 
 final result: passed
+
+## 2026-09-08 邮箱验证码注册
+
+- 复用现有无边框 AuthPageFrame，邮箱后增加验证码输入、发送按钮与文字反馈；不改视觉 token、导航或其他页面。
+- 浏览器 production build 在隔离 API＋本地 SMTP 下完成发送、错误验证码、正确注册、退出和邮箱密码再次登录。390×844 与 1280×1000 的浅/深主题目视检查通过，scrollWidth 等于 viewport width。
+- axe WCAG 2 A/AA：0 violations、0 incomplete；真实 label、数字键盘提示、one-time-code、状态播报、可见焦点和滚动后的提交入口均可用。
+- 本轮临时截图仅用于本地检查，不写入产品素材目录；无剩余 P0/P1/P2 视觉差异。
+
+final result: passed

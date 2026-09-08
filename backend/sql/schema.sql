@@ -1342,4 +1342,17 @@ CREATE TABLE IF NOT EXISTS resource_admissions (
 CREATE INDEX IF NOT EXISTS ix_admissions_owner_created
     ON resource_admissions (owner_hash, created_at);
 
+CREATE TABLE IF NOT EXISTS email_registration_challenges (
+    email varchar(320) PRIMARY KEY,
+    generation uuid NOT NULL,
+    code_digest varchar(64) NOT NULL,
+    requested_at timestamptz NOT NULL,
+    expires_at timestamptz NOT NULL,
+    attempts integer NOT NULL DEFAULT 0,
+    sent boolean NOT NULL DEFAULT false,
+    consumed boolean NOT NULL DEFAULT false
+);
+
+CREATE INDEX IF NOT EXISTS ix_email_registration_expires ON email_registration_challenges (expires_at);
+
 COMMIT;

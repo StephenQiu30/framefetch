@@ -18,6 +18,7 @@ from app.models.document import (
 )
 from app.models.document_import import DocumentImportAttemptRow
 from app.models.download import ArtifactRow, DownloadJobRow
+from app.models.email_verification import EmailVerificationRow
 from app.models.media import (
     DownloadThumbnailRow,
     MediaFormatRow,
@@ -34,6 +35,7 @@ from app.models.source_discovery import SourceDiscoveryItemRow, SourceDiscoveryR
 from app.models.task_event import TaskEventRow
 
 __all__ = [
+    "EmailVerificationRow",
     "ResourceAdmissionRow",
     "ArtifactRow",
     "AnalysisDocumentLockRow",

@@ -50,8 +50,7 @@ def test_swagger_ui_and_openapi_contract_are_available(tmp_path: Path) -> None:
     ]
     operation_ids = [operation.get("operationId") for operation in operation_list]
     assert all(
-        isinstance(operation_id, str) and operation_id
-        for operation_id in operation_ids
+        isinstance(operation_id, str) and operation_id for operation_id in operation_ids
     )
     assert len(operation_ids) == len(set(operation_ids))
     operations = dict(zip(operation_ids, operation_list, strict=True))
@@ -59,6 +58,8 @@ def test_swagger_ui_and_openapi_contract_are_available(tmp_path: Path) -> None:
         "getLiveness",
         "getReadiness",
         "registerNativeUser",
+        "sendNativeRegistrationCode",
+        "sendRegistrationCode",
         "loginNativeUser",
         "getNativeCurrentUser",
         "refreshNativeSession",

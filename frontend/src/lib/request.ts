@@ -67,6 +67,7 @@ function shouldRefresh(
   return ![
     '/api/auth/login',
     '/api/auth/register',
+    '/api/auth/registration-code',
     '/api/auth/refresh',
   ].includes(config.url ?? '');
 }

@@ -5,6 +5,7 @@ from collections.abc import Callable
 from datetime import datetime
 from uuid import UUID
 
+from app.services.auth.email_verification import EmailVerification
 from app.services.auth.errors import (
     AuthError,
     AuthErrorCode,
@@ -21,6 +22,7 @@ class AuthService:
         self,
         *,
         repository: AuthRepository,
+        verification: EmailVerification,
         passwords: PasswordHasher,
         tokens: AuthTokens,
         now: Callable[[], datetime],
@@ -28,6 +30,7 @@ class AuthService:
         bootstrap_admin_email: str | None = None,
         bootstrap_admin_secret: str | None = None,
     ) -> None:
+        self._verification = verification
         self._repository = repository
         self._passwords = passwords
         self._tokens = tokens
@@ -42,12 +45,18 @@ class AuthService:
             bootstrap_admin_secret.encode() if bootstrap_admin_secret else None
         )
 
+    async def send_registration_code(self, email: str) -> None:
+        if await self._repository.find_account_by_email(_normalize_email(email)):
+            raise AuthError(AuthErrorCode.EMAIL_ALREADY_REGISTERED)
+        await self._verification.send(email)
+
     async def register(
         self,
         username: str,
         email: str,
         password: str,
         *,
+        verification_code: str,
         bootstrap_secret: str | None = None,
     ) -> SessionGrant:
         normalized = _normalize_email(email)
@@ -56,9 +65,12 @@ class AuthService:
         except ValueError as exc:
             raise AuthError(AuthErrorCode.INVALID_USERNAME) from exc
         _validate_password(password)
-        password_hash = await self._passwords.hash(password)
         now = self._now()
         role = self._registration_role(normalized, bootstrap_secret)
+        if await self._repository.find_account_by_email(normalized):
+            raise AuthError(AuthErrorCode.EMAIL_ALREADY_REGISTERED)
+        await self._verification.consume(normalized, verification_code)
+        password_hash = await self._passwords.hash(password)
         try:
             account = await self._repository.create_account(
                 account_id=self._new_id(),

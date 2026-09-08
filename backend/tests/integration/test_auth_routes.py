@@ -12,10 +12,36 @@ from app.integrations.jwt_tokens import JwtTokenService
 from app.integrations.passwords import Argon2PasswordHasher
 from app.main import create_app
 from app.repositories.auth_repository import SqlAlchemyAuthRepository
+from app.repositories.email_verification_repository import SqlAlchemyVerificationStore
 from app.repositories.user_repository import SqlAlchemyUserRepository
 from app.services.auth import AuthService, UserService
-from httpx import ASGITransport, AsyncClient
+from app.services.auth.email_verification import EmailVerification
+from httpx import ASGITransport, AsyncClient, Response
 from sqlalchemy.ext.asyncio import AsyncEngine
+
+
+class CapturingMailer:
+    def __init__(self) -> None:
+        self.codes: dict[str, str] = {}
+
+    async def send_code(self, email: str, code: str) -> None:
+        self.codes[email] = code
+
+
+class AuthTestClient(AsyncClient):
+    mailer: CapturingMailer
+
+    async def register(
+        self, url: str, *, json: dict[str, str], headers: dict[str, str] | None = None
+    ) -> Response:
+        await self.post(
+            url.removesuffix("register") + "registration-code",
+            json={"email": json["email"]},
+        )
+        code = self.mailer.codes.get(json["email"].strip().casefold(), "000000")
+        return await self.post(
+            url, json={**json, "verification_code": code}, headers=headers
+        )
 
 
 @asynccontextmanager
@@ -24,9 +50,16 @@ async def auth_client(
     engine: AsyncEngine,
     bootstrap_admin_email: str | None = None,
     bootstrap_admin_secret: str | None = None,
-) -> AsyncIterator[AsyncClient]:
+) -> AsyncIterator[AuthTestClient]:
     sessions = create_session_factory(engine)
+    mailer = CapturingMailer()
     service = AuthService(
+        verification=EmailVerification(
+            SqlAlchemyVerificationStore(sessions),
+            mailer,
+            b"s" * 48,
+            lambda: datetime.now(UTC),
+        ),
         repository=SqlAlchemyAuthRepository(sessions),
         passwords=Argon2PasswordHasher(),
         tokens=JwtTokenService(
@@ -56,9 +89,10 @@ async def auth_client(
     )
     app.state.services.auth_service = service
     app.state.services.user_service = user_service
-    async with AsyncClient(
+    async with AuthTestClient(
         transport=ASGITransport(app=app), base_url="http://testserver"
     ) as client:
+        client.mailer = mailer
         yield client
 
 
@@ -67,7 +101,7 @@ async def test_register_creates_http_only_session_and_logout_revokes_it(
     postgres_engine: AsyncEngine,
 ) -> None:
     async with auth_client(tmp_path, postgres_engine) as client:
-        registered = await client.post(
+        registered = await client.register(
             "/api/auth/register",
             json={
                 "username": "VideoUser",
@@ -118,12 +152,14 @@ async def test_login_uses_generic_errors_and_duplicate_email_is_rejected(
         "password": "strong-pass-123",
     }
     async with auth_client(tmp_path, postgres_engine) as client:
-        assert (await client.post("/api/auth/register", json=credentials)).is_success
-        duplicate = await client.post(
+        assert (
+            await client.register("/api/auth/register", json=credentials)
+        ).is_success
+        duplicate = await client.register(
             "/api/auth/register",
             json={**credentials, "username": "another_user"},
         )
-        duplicate_username = await client.post(
+        duplicate_username = await client.register(
             "/api/auth/register",
             json={**credentials, "email": "another@example.com"},
         )
@@ -157,7 +193,7 @@ async def test_auth_contract_validates_input_and_protects_business_routes(
     postgres_engine: AsyncEngine,
 ) -> None:
     async with auth_client(tmp_path, postgres_engine) as client:
-        invalid_email = await client.post(
+        invalid_email = await client.register(
             "/api/auth/register",
             json={
                 "username": "valid_user",
@@ -165,7 +201,7 @@ async def test_auth_contract_validates_input_and_protects_business_routes(
                 "password": "strong-pass-123",
             },
         )
-        short_password = await client.post(
+        short_password = await client.register(
             "/api/auth/register",
             json={
                 "username": "valid_user",
@@ -201,13 +237,13 @@ async def test_profile_and_admin_user_management_are_role_protected(
         admin_credentials["email"],
         bootstrap_secret,
     ) as client:
-        admin = await client.post(
+        admin = await client.register(
             "/api/auth/register",
             json=admin_credentials,
             headers={"X-Admin-Bootstrap-Secret": bootstrap_secret},
         )
         await client.post("/api/auth/logout")
-        user = await client.post("/api/auth/register", json=user_credentials)
+        user = await client.register("/api/auth/register", json=user_credentials)
         updated_profile = await client.patch(
             "/api/users/me", json={"username": "renamed_user"}
         )
@@ -263,7 +299,7 @@ async def test_configured_bootstrap_email_requires_the_bootstrap_secret(
     async with auth_client(
         tmp_path, postgres_engine, "admin@example.com", bootstrap_secret
     ) as client:
-        member = await client.post(
+        member = await client.register(
             "/api/auth/register",
             json={
                 "username": "first_member",
@@ -272,7 +308,7 @@ async def test_configured_bootstrap_email_requires_the_bootstrap_secret(
             },
         )
         await client.post("/api/auth/logout")
-        missing_secret = await client.post(
+        missing_secret = await client.register(
             "/api/auth/register",
             json={
                 "username": "configured_admin",
@@ -280,7 +316,7 @@ async def test_configured_bootstrap_email_requires_the_bootstrap_secret(
                 "password": "strong-pass-456",
             },
         )
-        wrong_secret = await client.post(
+        wrong_secret = await client.register(
             "/api/auth/register",
             json={
                 "username": "configured_admin",
@@ -289,7 +325,7 @@ async def test_configured_bootstrap_email_requires_the_bootstrap_secret(
             },
             headers={"X-Admin-Bootstrap-Secret": "incorrect-secret"},
         )
-        admin = await client.post(
+        admin = await client.register(
             "/api/auth/register",
             json={
                 "username": "configured_admin",
@@ -316,7 +352,9 @@ async def test_native_session_rotates_refresh_and_logout_revokes_it(
         "password": "strong-pass-123",
     }
     async with auth_client(tmp_path, postgres_engine) as client:
-        registered = await client.post("/api/app/v1/auth/register", json=credentials)
+        registered = await client.register(
+            "/api/app/v1/auth/register", json=credentials
+        )
         first_session = registered.json()
         current = await client.get(
             "/api/app/v1/auth/me",
@@ -362,7 +400,7 @@ async def test_invalid_bearer_does_not_fall_back_to_browser_cookie(
     postgres_engine: AsyncEngine,
 ) -> None:
     async with auth_client(tmp_path, postgres_engine) as client:
-        registered = await client.post(
+        registered = await client.register(
             "/api/auth/register",
             json={
                 "username": "browser_member",

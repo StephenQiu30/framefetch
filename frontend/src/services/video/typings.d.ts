@@ -1133,8 +1133,24 @@ declare namespace API {
     email: string;
     /** Password */
     password: string;
+    /** Verification Code */
+    verification_code: string;
     /** Username 唯一用户名，支持字母、数字、中文以及 _-. 字符。 */
     username: string;
+  };
+
+  type RegistrationCodeRequest = {
+    /** Email */
+    email: string;
+  };
+
+  type RegistrationCodeResponse = {
+    /** Email Sent */
+    email_sent?: boolean;
+    /** Expires In Seconds */
+    expires_in_seconds?: number;
+    /** Retry After Seconds */
+    retry_after_seconds?: number;
   };
 
   type retryAnalysisParams = {

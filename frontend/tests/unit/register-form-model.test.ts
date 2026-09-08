@@ -4,6 +4,7 @@ import { validateRegistration } from '@/components/auth/register-form-model';
 import { normalizeUsername, usernameLength } from '@/lib/username';
 
 const validValues = {
+  verificationCode: '123456',
   confirmPassword: 'strong-password',
   email: 'user@example.com',
   password: 'strong-password',

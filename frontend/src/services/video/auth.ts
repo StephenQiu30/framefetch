@@ -55,3 +55,18 @@ export async function registerUser(
     ...(options || {}),
   });
 }
+
+/** 发送注册邮箱验证码 POST /api/auth/registration-code */
+export async function sendRegistrationCode(
+  body: API.RegistrationCodeRequest,
+  options?: RequestOptions
+) {
+  return request<API.RegistrationCodeResponse>("/api/auth/registration-code", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
+}

@@ -10,6 +10,7 @@ import {
   type FieldErrors,
   validateRegistration,
 } from '@/components/auth/register-form-model';
+import { RegistrationCodeField } from '@/components/auth/registration-code-field';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
@@ -21,6 +22,9 @@ import { authRedirect } from '@/utils/authRedirect';
 
 export function RegisterView() {
   const { user, loading, setUser } = useAuth();
+  const [email, setEmail] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [sendingCode, setSendingCode] = useState(false);
   const [redirect, setRedirect] = useState('/');
   const [search, setSearch] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -48,6 +52,7 @@ export function RegisterView() {
       email: String(data.get('email') ?? '').trim(),
       password: String(data.get('password') ?? ''),
       confirmPassword: String(data.get('confirmPassword') ?? ''),
+      verificationCode,
     };
     const nextErrors = validateRegistration(values);
     setErrors(nextErrors);
@@ -60,6 +65,7 @@ export function RegisterView() {
         username: values.username,
         email: values.email,
         password: values.password,
+        verification_code: values.verificationCode,
       });
       setUser(currentUser);
       router.replace(redirect);
@@ -122,11 +128,26 @@ export function RegisterView() {
               autoComplete="email"
               className="h-full"
               id="register-email"
+              value={email}
+              disabled={submitting || sendingCode}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setVerificationCode('');
+              }}
               name="email"
               placeholder="name@example.com"
               type="email"
             />
           </AuthField>
+          <RegistrationCodeField
+            key={email.trim().toLowerCase()}
+            email={email}
+            code={verificationCode}
+            onCodeChange={setVerificationCode}
+            onSendingChange={setSendingCode}
+            disabled={submitting}
+            error={errors.verificationCode}
+          />
           <AuthField
             error={errors.password}
             idPrefix="register"
@@ -168,7 +189,7 @@ export function RegisterView() {
         </FieldGroup>
         <Button
           className="h-12 w-full text-[15px]"
-          disabled={loading || submitting}
+          disabled={loading || submitting || sendingCode}
           size="lg"
           type="submit"
         >

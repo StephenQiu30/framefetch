@@ -7,6 +7,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[3]
 SECRETS = {
+    "SMTP_PASSWORD",
     "AUTH_JWT_SECRET",
     "AUTH_BOOTSTRAP_ADMIN_SECRET",
     "REQUEST_FINGERPRINT_SECRET",
@@ -21,6 +22,7 @@ STORAGE = {"MINIO_ACCESS_KEY", "MINIO_SECRET_KEY"}
 ALLOWED = {
     "api": STORAGE
     | {
+        "SMTP_PASSWORD",
         "AUTH_JWT_SECRET",
         "AUTH_BOOTSTRAP_ADMIN_SECRET",
         "REQUEST_FINGERPRINT_SECRET",
@@ -45,7 +47,9 @@ def test_business_roles_use_explicit_scoped_secret_allowlists(filename):
         assert "env_file" not in service
         environment = service["environment"]
         assert SECRETS & environment.keys() == allowed
-        assert not any(key.endswith(("_PASS", "_PASSWORD")) for key in environment)
+        assert {key for key in environment if key.endswith(("_PASS", "_PASSWORD"))} == (
+            {"SMTP_PASSWORD"} if name == "api" else set()
+        )
         assert "DATABASE_URL" in environment
         assert "APP_ENV" in environment
     assert "VALKEY_URL" not in services["worker-download"]["environment"]

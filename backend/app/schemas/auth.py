@@ -16,7 +16,19 @@ class EmailPasswordRequest(BaseModel):
     password: str = Field(min_length=8, max_length=128)
 
 
+class RegistrationCodeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    email: EmailStr = Field(max_length=320)
+
+
+class RegistrationCodeResponse(BaseModel):
+    email_sent: bool = True
+    expires_in_seconds: int = 600
+    retry_after_seconds: int = 60
+
+
 class RegisterRequest(EmailPasswordRequest):
+    verification_code: str = Field(pattern=r"^[0-9]{6}$", min_length=6, max_length=6)
     username: str = Field(
         min_length=2,
         max_length=32,
