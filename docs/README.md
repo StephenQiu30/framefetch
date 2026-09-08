@@ -43,3 +43,5 @@
 | 030 | 运行故障隔离与恢复 | [Design](design/030-运行故障隔离与恢复设计.md) | [PRD](prd/030-运行故障隔离与恢复需求.md) | [Plan](plans/030-运行故障隔离与恢复计划.md) | [Acceptance](acceptance/030-运行故障隔离与恢复验收.md) |
 | 031 | 个人部署重启与换机；文件来源已实现，实机待验收 | [Design](design/031-Linux无人值守运行设计.md) | [PRD](prd/031-Linux无人值守运行需求.md) | [Plan](plans/031-Linux无人值守运行计划.md) | [Acceptance](acceptance/031-Linux无人值守运行验收.md) |
 | 032 | 腾讯与优酷个人下载；代码已接入，VIP 实测待完成 | [Design](design/032-腾讯视频与优酷个人下载设计.md) | [PRD](prd/032-腾讯视频与优酷个人下载需求.md) | [Plan](plans/032-腾讯视频与优酷个人下载计划.md) | [Acceptance](acceptance/032-腾讯视频与优酷个人下载验收.md) |
+
+本次全业务一致性：[034 设计](design/034-App与Web业务一致性设计.md) · [需求](prd/034-App与Web业务一致性需求.md) · [计划](plans/034-App与Web业务一致性计划.md) · [验收](acceptance/034-App与Web业务一致性验收.md)。

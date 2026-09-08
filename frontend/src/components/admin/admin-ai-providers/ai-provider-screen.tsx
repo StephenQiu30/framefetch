@@ -48,7 +48,7 @@ export function AiProviderScreen({
           action={
             <Button onClick={onCreate}>
               <Plus aria-hidden />
-              新增 Provider
+              新增 AI 服务
             </Button>
           }
           description="默认使用服务端本机 Codex；可在这里新增并启用第三方 API。切换后从下一次分析任务生效，无需修改环境文件。"

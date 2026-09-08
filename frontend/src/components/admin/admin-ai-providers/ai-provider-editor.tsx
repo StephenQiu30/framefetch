@@ -34,7 +34,7 @@ export function AiProviderEditor({ editor, onChange, onClose, onSave }: Props) {
         <DialogHeader>
           <p className="mb-4 text-sm font-medium text-primary">AI 分析路由</p>
           <DialogTitle className="text-xl font-medium tracking-[-0.025em]">
-            {creating ? '新增 Provider' : `编辑 ${editor.displayName}`}
+            {creating ? '新增 AI 服务' : `编辑 ${editor.displayName}`}
           </DialogTitle>
           <DialogDescription className="max-w-lg leading-6">
             本机登录模式复用当前用户的 Codex 或 Claude 登录；API Key

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { AuthField, AuthPageFrame } from '@/components/auth/auth-page-frame';
 import { useAuth } from '@/components/auth/auth-provider';
+import { PasswordInput } from '@/components/auth/password-input';
 import {
   type FieldErrors,
   validateRegistration,
@@ -46,6 +47,7 @@ export function RegisterView() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (loading || submitting || sendingCode) return;
     const data = new FormData(event.currentTarget);
     const values = {
       username: normalizeUsername(String(data.get('username') ?? '')),
@@ -78,8 +80,8 @@ export function RegisterView() {
 
   return (
     <AuthPageFrame
-      description="保存下载进度，并在受信任设备上保持登录状态。"
-      title="创建账户，保存进度。"
+      description="验证邮箱后创建账户，保存和管理你的下载、文档与分析。"
+      title="创建你的帧取账户"
       titleId="register-title"
     >
       <form
@@ -154,13 +156,12 @@ export function RegisterView() {
             label="密码"
             name="password"
           >
-            <InputGroupInput
+            <PasswordInput
               aria-describedby={errors.password ? 'password-error' : undefined}
               aria-invalid={Boolean(errors.password)}
               autoComplete="new-password"
               className="h-full"
               id="register-password"
-              maxLength={128}
               minLength={8}
               name="password"
               placeholder="至少 8 个字符"
@@ -173,7 +174,7 @@ export function RegisterView() {
             label="确认密码"
             name="confirmPassword"
           >
-            <InputGroupInput
+            <PasswordInput
               aria-describedby={
                 errors.confirmPassword ? 'confirmPassword-error' : undefined
               }
@@ -207,7 +208,7 @@ export function RegisterView() {
         </Button>
       </form>
       <p className="mt-7 text-sm text-muted-foreground">
-        已有账号？{' '}
+        已有账户？{' '}
         <Link
           className="focus-ring rounded-sm font-medium text-foreground underline underline-offset-4 decoration-foreground/25 hover:decoration-foreground"
           href={`/user/login${search}`}

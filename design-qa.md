@@ -635,3 +635,7 @@ final result: passed
 - 本轮临时截图仅用于本地检查，不写入产品素材目录；无剩余 P0/P1/P2 视觉差异。
 
 final result: passed
+
+## 2026-09-08 App/Web 一致性
+
+认证标题、说明和字段规则跨端同步，Web 密码显示操作复用 InputGroup，44px 触控区域不改变布局。真实隔离 API 验证注册和账户保存；390px 注册浅/深主题、1440px 登录深主题以及账户页截图已检查，5 次 axe 检查 0 violations、0 incomplete。对应业务覆盖和未执行范围见 034 验收及 App 020 验收。

@@ -24,9 +24,9 @@ export function validateRegistration(
   if (!values.email) errors.email = '请输入邮箱地址';
   else if (!isValidEmail(values.email)) errors.email = '请输入有效的邮箱地址';
   if (!values.password) errors.password = '请设置密码';
-  else if (values.password.length < 8)
+  else if (Array.from(values.password).length < 8)
     errors.password = '密码至少需要 8 个字符';
-  else if (values.password.length > 128)
+  else if (Array.from(values.password).length > 128)
     errors.password = '密码不能超过 128 个字符';
   if (!values.confirmPassword) errors.confirmPassword = '请再次输入密码';
   else if (values.confirmPassword !== values.password)
@@ -36,7 +36,7 @@ export function validateRegistration(
   return errors;
 }
 
-function isValidEmail(value: string): boolean {
+export function isValidEmail(value: string): boolean {
   const parts = value.split('@');
   if (parts.length !== 2) return false;
   const [local, domain] = parts;

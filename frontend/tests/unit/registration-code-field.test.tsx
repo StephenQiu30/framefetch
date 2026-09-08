@@ -50,9 +50,7 @@ describe('registration email proof', () => {
     vi.mocked(requestRegistrationCode).mockClear();
     field('bad-email');
     fireEvent.click(screen.getByRole('button', { name: '获取验证码' }));
-    expect(screen.getByRole('status')).toHaveTextContent(
-      '请先输入有效的邮箱地址',
-    );
+    expect(screen.getByRole('button', { name: '获取验证码' })).toBeDisabled();
     expect(requestRegistrationCode).not.toHaveBeenCalled();
   });
 });

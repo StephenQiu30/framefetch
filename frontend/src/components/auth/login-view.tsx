@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { AuthField, AuthPageFrame } from '@/components/auth/auth-page-frame';
 import { useAuth } from '@/components/auth/auth-provider';
+import { PasswordInput } from '@/components/auth/password-input';
+import { isValidEmail } from '@/components/auth/register-form-model';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
@@ -40,6 +42,7 @@ export function LoginView() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (loading || submitting) return;
     const data = new FormData(event.currentTarget);
     const email = String(data.get('email') ?? '').trim();
     const password = String(data.get('password') ?? '');
@@ -62,8 +65,8 @@ export function LoginView() {
 
   return (
     <AuthPageFrame
-      description="回到你的下载记录，继续处理有权使用的公开视频。"
-      title="登录，继续下载。"
+      description="使用你的帧取账户继续管理下载、文档与分析。"
+      title="欢迎回来"
       titleId="login-title"
     >
       <form
@@ -102,7 +105,7 @@ export function LoginView() {
             label="密码"
             name="password"
           >
-            <InputGroupInput
+            <PasswordInput
               aria-describedby={errors.password ? 'password-error' : undefined}
               aria-invalid={Boolean(errors.password)}
               autoComplete="current-password"
@@ -135,12 +138,12 @@ export function LoginView() {
         </Button>
       </form>
       <p className="mt-7 text-sm text-muted-foreground">
-        还没有账号？{' '}
+        还没有账户？{' '}
         <Link
           className="focus-ring rounded-sm font-medium text-foreground underline underline-offset-4 decoration-foreground/25 hover:decoration-foreground"
           href={`/user/register${search}`}
         >
-          创建账号
+          创建账户
         </Link>
       </p>
     </AuthPageFrame>
@@ -150,10 +153,12 @@ export function LoginView() {
 function validateLogin(email: string, password: string): FieldErrors {
   const errors: FieldErrors = {};
   if (!email) errors.email = '请输入邮箱地址';
-  else if (!/^\S+@\S+\.\S+$/u.test(email))
-    errors.email = '请输入有效的邮箱地址';
+  else if (!isValidEmail(email)) errors.email = '请输入有效的邮箱地址';
   if (!password) errors.password = '请输入密码';
-  else if (password.length < 8) errors.password = '密码至少需要 8 个字符';
+  else if (Array.from(password).length < 8)
+    errors.password = '密码至少需要 8 个字符';
+  else if (Array.from(password).length > 128)
+    errors.password = '密码不能超过 128 个字符';
   return errors;
 }
 

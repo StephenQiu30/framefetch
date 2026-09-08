@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AuthField } from '@/components/auth/auth-page-frame';
+import { isValidEmail } from '@/components/auth/register-form-model';
 import { Button } from '@/components/ui/button';
 import { InputGroupInput } from '@/components/ui/input-group';
 import { displayError, requestRegistrationCode } from '@/services/auth';
@@ -44,7 +45,7 @@ export function RegistrationCodeField({
 
   async function send() {
     if (busy.current || until > Date.now()) return;
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) {
+    if (!isValidEmail(email.trim())) {
       setMessage('请先输入有效的邮箱地址。');
       return;
     }
@@ -56,7 +57,7 @@ export function RegistrationCodeField({
       const result = await requestRegistrationCode(email.trim());
       if (!mounted.current) return;
       if (!result.email_sent) {
-        setMessage('邮件发送未能确认，请稍后重试。');
+        setMessage('邮件发送未能确认，请稍后重新获取验证码。');
         return;
       }
       onCodeChange('');
@@ -102,7 +103,9 @@ export function RegistrationCodeField({
         type="button"
         variant="secondary"
         className="min-h-11"
-        disabled={disabled || sending || remaining > 0}
+        disabled={
+          disabled || sending || remaining > 0 || !isValidEmail(email.trim())
+        }
         onClick={() => void send()}
       >
         {sending
