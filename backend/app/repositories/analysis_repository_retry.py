@@ -61,6 +61,7 @@ class AnalysisRetryRepository(AnalysisRepositoryBase):
                         kind="analysis",
                         analysis_attempts=command.max_attempts,
                         now=now,
+                        is_admin=command.is_admin,
                     )
                     run = new_analysis_run(
                         run_id=command.run_id,

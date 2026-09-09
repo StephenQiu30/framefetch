@@ -104,6 +104,7 @@ class CreateImportResource:
         declared_sha256: str,
         rights_accepted: bool,
         declared_origin: DeclaredOrigin = DeclaredOrigin.USER_FILE,
+        is_admin: bool = False,
     ) -> ImportView:
         owner_hash = _validate_owner_hash(owner_hash)
         idempotency_key = _validate_idempotency_key(idempotency_key)
@@ -148,6 +149,7 @@ class CreateImportResource:
             declared_sha256=declared_sha256,
             rights_statement_version=self._rights_statement_version,
             declared_origin=declared_origin,
+            is_admin=is_admin,
         )
         try:
             result = await self._repository.create_resource(command, now=now)

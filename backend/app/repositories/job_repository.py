@@ -50,6 +50,7 @@ class JobRepository(RepositoryBase):
                         resource_id=command.id,
                         kind="download",
                         now=now,
+                        is_admin=command.is_admin,
                     )
                     row = DownloadJobRow(
                         id=command.id,

@@ -46,6 +46,7 @@ class AnalysisCreationRepository(AnalysisRepositoryBase):
                         kind="analysis",
                         analysis_attempts=command.max_attempts,
                         now=now,
+                        is_admin=command.is_admin,
                     )
                     row = self._new_row(command, now)
                     session.add(row)

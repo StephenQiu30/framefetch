@@ -45,6 +45,7 @@ class AnalysisCreate:
     result_contract: AnalysisResultContract = (
         AnalysisResultContract.VIDEO_VISUAL_ANALYSIS
     )
+    is_admin: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -137,6 +138,7 @@ class AnalysisRetry:
     max_runs_per_job: int = 10
     min_interval_seconds: int = 0
     retries_per_day: int = 20
+    is_admin: bool = False
 
 
 @dataclass(frozen=True, slots=True)

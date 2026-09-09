@@ -58,6 +58,10 @@ class CurrentUser:
     def owner_hash(self) -> str:
         return hashlib.sha256(str(self.id).encode()).hexdigest()
 
+    @property
+    def is_admin(self) -> bool:
+        return self.role is UserRole.ADMIN
+
 
 @dataclass(frozen=True, slots=True)
 class ManagedUser:

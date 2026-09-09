@@ -153,6 +153,38 @@ async def test_download_requires_budget_before_job_and_outbox_creation(sessions)
         assert await session.get(ResourceAdmissionRow, command.id) is None
 
 
+async def test_admin_download_bypasses_account_quotas(sessions):
+    source = await seed_artifact(sessions, NOW)
+    async with sessions() as session:
+        job = await session.get(DownloadJobRow, source.download_id)
+    command = DownloadCreate(
+        id=uuid4(),
+        inspection_id=job.inspection_id,
+        format_id=job.format_id,
+        owner_hash=job.owner_hash,
+        idempotency_key="admin-download",
+        request_fingerprint="y" * 64,
+        semantic_plan=job.semantic_plan,
+        is_admin=True,
+    )
+    repo = SqlAlchemyDownloadRepository(
+        sessions,
+        quota_policy=QuotaPolicy(
+            max_active_per_owner=1,
+            daily_tasks=1,
+            daily_bytes=1,
+            storage_bytes=1,
+            daily_analysis_attempts=1,
+        ),
+    )
+
+    saved = await repo.create_job(command, now=NOW)
+
+    assert saved.created
+    async with sessions() as session:
+        assert await session.get(ResourceAdmissionRow, command.id) is None
+
+
 async def test_download_tombstone_remains_charged_until_physical_cleanup(sessions):
     source = await seed_artifact(sessions, NOW)
     command = media()

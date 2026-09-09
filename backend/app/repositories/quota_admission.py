@@ -32,8 +32,13 @@ async def reserve(
     now: datetime,
     size_bytes: int | None = None,
     analysis_attempts: int = 0,
+    is_admin: bool = False,
 ) -> None:
-    """Call after replay and source validation, while holding admission locks."""
+    """Reserve a user budget after replay and source validation.
+
+    Administrators bypass account-scoped budgets. The shared global active-task
+    capacity is still enforced for every account.
+    """
     reserved = {
         "download": policy.download_bytes + policy.thumbnail_bytes,
         "media_import": (size_bytes or 0) + policy.thumbnail_bytes,
@@ -50,6 +55,8 @@ async def reserve(
     active = (await session.execute(ACTIVE_USAGE, parameters)).one()
     if active.global_active >= policy.max_active_global:
         raise QuotaExceeded("service_capacity_exceeded")
+    if is_admin:
+        return
     if active.owner_active >= policy.max_active_per_owner:
         raise QuotaExceeded("active_task_quota_exceeded")
     daily = (

@@ -46,6 +46,8 @@ class CreateDownload:
         format_id: UUID,
         owner_hash: str,
         idempotency_key: str,
+        *,
+        is_admin: bool = False,
     ) -> DownloadView:
         owner_hash = validate_owner_hash(owner_hash)
         idempotency_key = validate_idempotency_key(idempotency_key)
@@ -96,6 +98,7 @@ class CreateDownload:
             ),
             semantic_plan=semantic,
             max_attempts=self._max_attempts,
+            is_admin=is_admin,
         )
         try:
             saved = await self._repository.create_job(command, now=now)

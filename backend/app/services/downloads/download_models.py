@@ -29,6 +29,7 @@ class DownloadCreate:
     # re-inspects the provider source before selecting streams or writing an
     # artifact, so this only changes admission-time expiry handling.
     allow_expired_source: bool = False
+    is_admin: bool = False
 
 
 @dataclass(frozen=True, slots=True)

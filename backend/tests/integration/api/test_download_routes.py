@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -212,6 +213,24 @@ def test_download_routes_delegate_with_session_owner(tmp_path: Path) -> None:
     assert stubs["retry"].calls[0][0][-1] == "retry-1"
 
 
+def test_admin_download_route_forwards_admin_admission_context(tmp_path: Path) -> None:
+    test_client, stubs = client(tmp_path)
+    test_client.app.dependency_overrides[get_current_user] = lambda: replace(
+        TEST_USER, role=UserRole.ADMIN
+    )
+    body = {"inspection_id": str(INSPECTION_ID), "format_id": str(FORMAT_ID)}
+
+    with test_client:
+        response = test_client.post(
+            "/api/downloads",
+            headers={"Idempotency-Key": "admin-download-1"},
+            json=body,
+        )
+
+    assert response.status_code == 201
+    assert stubs["create"].calls[0][1]["is_admin"] is True
+
+
 def test_download_file_route_streams_an_owned_range(tmp_path: Path) -> None:
     test_client, stubs = client(tmp_path)
     stubs["get"].result = download_view(title="Owned video")
@@ -326,8 +345,7 @@ def test_provider_status_distinguishes_registered_verified_and_unsupported(
     assert items["xiaohongshu"]["status"] == "degraded"
     assert items["reddit"]["status"] == "access_required"
     assert {
-        items[key]["status"]
-        for key in ("facebook", "twitch", "pinterest", "weibo")
+        items[key]["status"] for key in ("facebook", "twitch", "pinterest", "weibo")
     } == {"verified"}
     assert items["qqvideo"]["status"] == "unknown"
     assert items["qqvideo"]["access_modes"] == ["anonymous"]

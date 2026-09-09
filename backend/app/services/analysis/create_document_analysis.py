@@ -61,6 +61,8 @@ class CreateDocumentAnalysis:
         skill_id: str,
         output_language: str,
         custom_prompt: str | None = None,
+        *,
+        is_admin: bool = False,
     ) -> AnalysisJobView:
         now = validate_now(self._now())
         # Admission is durable: a temporarily unavailable consumer must not
@@ -125,6 +127,7 @@ class CreateDocumentAnalysis:
             outbox_event_type="analysis.requested",
             input_kind=input_kind,
             result_contract=contract,
+            is_admin=is_admin,
         )
         try:
             saved = await self._repository.create_job_and_enqueue(command, now=now)

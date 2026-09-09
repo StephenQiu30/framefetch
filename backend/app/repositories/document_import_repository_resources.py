@@ -53,6 +53,7 @@ async def create_resource(
                     kind="document_import",
                     size_bytes=command.declared_size_bytes,
                     now=now,
+                    is_admin=command.is_admin,
                 )
                 row = DocumentRow(
                     id=command.id,

@@ -48,6 +48,8 @@ class RetryDownload:
         job_id: UUID,
         owner_hash: str,
         idempotency_key: str,
+        *,
+        is_admin: bool = False,
     ) -> DownloadView:
         owner_hash = validate_owner_hash(owner_hash)
         idempotency_key = validate_idempotency_key(idempotency_key)
@@ -85,6 +87,7 @@ class RetryDownload:
             semantic_plan=dict(original.semantic_plan),
             max_attempts=self._max_attempts,
             allow_expired_source=True,
+            is_admin=is_admin,
         )
         try:
             saved = await self._repository.create_job(

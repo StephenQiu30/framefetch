@@ -72,6 +72,7 @@ class SqlAlchemyMediaImportRepository(RepositoryBase):
                         kind="media_import",
                         size_bytes=command.declared_size_bytes,
                         now=now,
+                        is_admin=command.is_admin,
                     )
                     job = DownloadJobRow(
                         id=command.id,

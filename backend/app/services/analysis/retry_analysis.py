@@ -42,7 +42,12 @@ class RetryAnalysis:
         self._retries_per_day = retries_per_day
 
     async def __call__(
-        self, job_id: UUID, owner_hash: str, idempotency_key: str
+        self,
+        job_id: UUID,
+        owner_hash: str,
+        idempotency_key: str,
+        *,
+        is_admin: bool = False,
     ) -> AnalysisJobView:
         owner_hash = validate_owner_hash(owner_hash)
         idempotency_key = validate_idempotency_key(idempotency_key)
@@ -63,6 +68,7 @@ class RetryAnalysis:
             max_runs_per_job=self._max_runs_per_job,
             min_interval_seconds=self._min_interval_seconds,
             retries_per_day=self._retries_per_day,
+            is_admin=is_admin,
         )
         try:
             saved = await self._repository.retry_job_and_enqueue(command, now=now)

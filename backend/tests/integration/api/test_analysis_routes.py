@@ -110,7 +110,7 @@ class StubUseCase:
         self.error: AnalysisApplicationError | None = None
         self.calls: list[tuple[object, ...]] = []
 
-    async def __call__(self, *args: object) -> object:
+    async def __call__(self, *args: object, **_kwargs: object) -> object:
         self.calls.append(args)
         if self.error is not None:
             raise self.error

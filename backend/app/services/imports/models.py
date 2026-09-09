@@ -65,6 +65,7 @@ class ImportResourceCreate:
     declared_sha256: str = field(repr=False)
     rights_statement_version: str
     declared_origin: DeclaredOrigin = DeclaredOrigin.USER_FILE
+    is_admin: bool = False
 
 
 @dataclass(frozen=True, slots=True)

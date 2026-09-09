@@ -57,6 +57,7 @@ async def create_download(
             body.format_id,
             user.owner_hash,
             idempotency_key,
+            is_admin=user.is_admin,
         )
     except ApplicationError as exc:
         raise application_error(exc) from exc
@@ -327,6 +328,7 @@ async def retry_download(
             job_id,
             user.owner_hash,
             idempotency_key,
+            is_admin=user.is_admin,
         )
     except ApplicationError as exc:
         raise application_error(exc) from exc
