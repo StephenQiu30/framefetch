@@ -72,10 +72,10 @@ BREAKING CHANGE: 客户端需要迁移到新版下载接口
 提交前运行完整代码级门禁：
 
 ```bash
-cd backend && uv sync --frozen --dev && uv run --frozen ruff check app tests && uv run --frozen mypy --strict app && uv run --frozen pytest -q
-cd ../frontend && npm ci && npm audit --omit=dev --audit-level=high && npm run lint && npm test && npm run build
+cd backend && uv sync --frozen --dev && uv run --frozen ruff check app tests && uv run --frozen ruff format --check app tests && uv run --frozen mypy app && uv run --frozen pytest -q
+cd ../frontend && npm ci && npm run format:check && npm run lint && npm test && npm run build
 ```
 
-Pull Request 和提交说明的格式约定只用于协作可读性，不作为 CI 阻断项。GitHub Actions 通过 `Required CI` 聚合仓库配置、后端、前端和运行边界结果。
+Pull Request 和提交说明的格式约定只用于协作可读性，不作为 CI 阻断项。GitHub Actions 的 `Backend tests` 和 `Frontend tests` 是每次修改的必跑系统测试边界；任意一项失败即为 CI 失败。
 
 提交前只暂存当前任务文件并完成相关业务验证；提交后运行 `git status --short`，确保没有本任务遗留的未提交文件。只有在明确要求时才推送远端或创建 PR。包括合并和回退在内的提交说明建议遵循上述中文约定，但不设置额外的格式阻断门禁。

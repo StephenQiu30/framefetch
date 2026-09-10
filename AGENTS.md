@@ -119,12 +119,13 @@ server/
 - 修改前先阅读相邻代码、对应 README 和测试，优先复用现有模型、端口、组件与工具函数。
 - 删除失效文件、引用、依赖和文档，不保留“以后可能使用”的空目录、转发层或重复实现。
 - 根据改动范围执行最小充分验证；修复缺陷时补充能稳定复现问题的测试。
-- GitHub Actions 工作流直接执行仓库、后端、前端和 Compose 运行边界门禁；下列命令是各模块的本地检查入口。
+- GitHub Actions 只执行确定性的后端与前端系统测试边界；完整 Compose 启停、真实 Provider、依赖公告扫描和发布演练按变更范围在本地或发布验收中执行。下列命令是各模块的本地检查入口。
 - 后端命令从 `backend/` 执行：
 
 ```bash
 uv sync --frozen --dev
 uv run ruff check app tests
+uv run ruff format --check app tests
 uv run mypy app
 uv run pytest
 ```
@@ -133,6 +134,7 @@ uv run pytest
 
 ```bash
 npm ci
+npm run format:check
 npm run lint
 npm test
 npm run build

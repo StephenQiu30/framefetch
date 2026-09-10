@@ -33,7 +33,9 @@ describe('registration email proof', () => {
       expect(screen.getByRole('status')).toHaveTextContent('验证码已发送'),
     );
     expect(requestRegistrationCode).toHaveBeenCalledWith('member@example.com');
-    expect(screen.getByRole('button', { name: /秒后可重发/ })).toBeDisabled();
+    expect(
+      await screen.findByRole('button', { name: /秒后可重发/ }),
+    ).toBeDisabled();
   });
   it('shows a send failure without claiming success', async () => {
     vi.mocked(requestRegistrationCode).mockRejectedValue(

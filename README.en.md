@@ -3,7 +3,7 @@
   <h1>FrameFetch</h1>
   <p><strong>Open-source, self-hosted public-media download, screenplay processing and AI analysis workflow</strong></p>
   <p>
-    <a href="https://github.com/StephenQiu30/video-server/actions/workflows/ci.yml"><img src="https://github.com/StephenQiu30/video-server/actions/workflows/ci.yml/badge.svg" alt="Required CI status" /></a>
+    <a href="https://github.com/StephenQiu30/video-server/actions/workflows/ci.yml"><img src="https://github.com/StephenQiu30/video-server/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-111111.svg" alt="MIT License" /></a>
     <img src="https://img.shields.io/badge/Python-3.12-3776AB.svg" alt="Python 3.12" />
     <img src="https://img.shields.io/badge/Next.js-16-000000.svg" alt="Next.js 16" />

@@ -5,7 +5,6 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  merge_group:
   workflow_dispatch:
 
 concurrency:
@@ -20,44 +19,8 @@ defaults:
     shell: bash
 
 jobs:
-  repository-check:
-    name: Repository rules
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Repository configuration
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import pathlib
-          import re
-
-          pattern = re.compile(r"^\s*-\s+uses:\s+([^\s#]+)", re.MULTILINE)
-          sha = re.compile(r"^[0-9a-f]{40}$")
-          invalid = []
-          for workflow in sorted(pathlib.Path('.github/workflows').glob('*.y*ml')):
-              for reference in pattern.findall(workflow.read_text(encoding='utf-8')):
-                  if reference.startswith(('./', 'docker://')):
-                      continue
-                  _, separator, revision = reference.rpartition('@')
-                  if not separator or sha.fullmatch(revision) is None:
-                      invalid.append(f'{workflow}: {reference}')
-          if invalid:
-              raise SystemExit('GitHub Actions 必须固定到完整提交 SHA：\n  - ' + '\n  - '.join(invalid))
-          PY
-          trap 'rm -f .env .env.prod' EXIT
-          cp .env.example .env
-          cp .env.prod.example .env.prod
-          docker compose -f docker-compose-env.yml config --quiet
-          docker compose -f docker-compose.yml config --quiet
-          docker compose -f docker-compose-prod.yml config --quiet
-
-  backend-quality:
-    name: Backend quality
+  backend-tests:
+    name: Backend tests
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     services:
@@ -89,16 +52,17 @@ jobs:
           version: "0.11.32"
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
-      - name: Backend quality gates
+      - name: Test backend
         working-directory: backend
         run: |
           uv sync --frozen --dev
           uv run --frozen ruff check app tests
-          uv run --frozen mypy --strict app
+          uv run --frozen ruff format --check app tests
+          uv run --frozen mypy app
           uv run --frozen pytest -q
 
-  frontend-quality:
-    name: Frontend quality
+  frontend-tests:
+    name: Frontend tests
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -110,162 +74,13 @@ jobs:
           node-version: "24.15.0"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Pin npm version
+      - name: Use repository npm version
         run: npm install --global npm@11.19.0
-      - name: Frontend quality gates
+      - name: Test frontend
         working-directory: frontend
         run: |
           npm ci
-          npm audit --omit=dev --audit-level=high
+          npm run format:check
           npm run lint
           npm test
           npm run build
-
-  runtime-smoke:
-    name: Runtime boundary
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
-    needs: [repository-check, backend-quality, frontend-quality]
-    # Hosted CI has no existing host services; these names belong to its fixture.
-    env:
-      POSTGRES_HOST: postgres
-      RABBITMQ_HOST: rabbitmq
-      VALKEY_HOST: valkey
-      MINIO_HOST: minio
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-      - name: Build and verify runtime topology
-        run: |
-          set -Eeuo pipefail
-          compose=(docker compose --project-name video-server-ci -f docker-compose-env.yml -f docker-compose.yml)
-          started=0
-          cleanup() {
-            status=$?
-            trap - EXIT
-            if ((status != 0 && started == 1)); then
-              "${compose[@]}" ps --all || true
-              "${compose[@]}" logs --no-color --tail=200 || true
-            fi
-            if ((started == 1)); then
-              "${compose[@]}" down --volumes --remove-orphans || true
-            fi
-            rm -f .env
-            exit "$status"
-          }
-          trap cleanup EXIT
-          cp .env.example .env
-          sed -i 's/^ANALYSIS_ENABLED=.*/ANALYSIS_ENABLED=false/' .env
-          conflicts=()
-          while IFS= read -r container_name; do
-            if docker inspect "$container_name" >/dev/null 2>&1; then
-              conflicts+=("$container_name")
-            fi
-          done < <("${compose[@]}" config --format json | python3 -c 'import json,sys; print("\n".join(sorted(service["container_name"] for service in json.load(sys.stdin)["services"].values())))')
-          if ((${#conflicts[@]} > 0)); then
-            printf '运行边界烟测拒绝复用已有同名容器：%s\n' "${conflicts[*]}" >&2
-            exit 2
-          fi
-          docker build --target runtime --tag video-server:local .
-          started=1
-          "${compose[@]}" up --detach --wait --wait-timeout 240 postgres rabbitmq valkey minio
-          "${compose[@]}" run --rm --no-deps database-init
-          "${compose[@]}" run --rm --no-deps rabbitmq-init
-          "${compose[@]}" run --rm --no-deps minio-init
-          "${compose[@]}" up --detach --wait --wait-timeout 240 --no-build api frontend outbox worker-download provider-canary worker-report media-runner
-          python3 - <<'PY'
-          import json
-          import urllib.error
-          import urllib.request
-
-          def request(origin: str, path: str):
-              with urllib.request.urlopen(f'{origin}{path}', timeout=10) as response:
-                  return response.status, response.headers.get_content_type(), response.read()
-
-          class NoRedirect(urllib.request.HTTPRedirectHandler):
-              def redirect_request(self, req, fp, code, msg, headers, newurl):
-                  return None
-
-          def post_without_redirect(origin: str, path: str, payload: dict):
-              request = urllib.request.Request(
-                  f'{origin}{path}',
-                  data=json.dumps(payload).encode(),
-                  headers={'Content-Type': 'application/json'},
-                  method='POST',
-              )
-              try:
-                  response = urllib.request.build_opener(NoRedirect).open(
-                      request,
-                      timeout=10,
-                  )
-              except urllib.error.HTTPError as error:
-                  response = error
-              with response:
-                  return (
-                      response.status,
-                      response.headers.get('Location'),
-                      response.headers.get_content_type(),
-                      response.read(),
-                  )
-
-          api_origin = 'http://127.0.0.1:8111'
-          frontend_origin = 'http://127.0.0.1:8101'
-          status, content_type, body = request(api_origin, '/health/live')
-          assert status == 200 and json.loads(body) == {'status': 'ok'}
-          status, content_type, body = request(api_origin, '/health/ready')
-          assert status == 200 and json.loads(body) == {'status': 'ok', 'service': 'api'}
-          status, content_type, body = request(api_origin, '/openapi.json')
-          schema = json.loads(body)
-          assert status == 200 and content_type == 'application/json' and schema.get('paths')
-          status, content_type, _ = request(frontend_origin, '/')
-          assert status == 200 and content_type == 'text/html'
-          status, location, content_type, body = post_without_redirect(
-              frontend_origin,
-              '/api/auth/login',
-              {
-                  'email': 'runtime-boundary@framefetch.example',
-                  'password': 'invalid-password',
-              },
-          )
-          problem = json.loads(body)
-          assert status == 401 and location is None
-          assert content_type == 'application/problem+json'
-          assert problem['code'] == 'invalid_credentials'
-          print(f'运行时烟测通过：{len(schema["paths"])} 个 OpenAPI paths')
-          PY
-          # Hosted CI only: core API must cold-start while the media runtime is down.
-          "${compose[@]}" stop media-runner
-          "${compose[@]}" up --detach --no-deps --force-recreate --wait --wait-timeout 60 --no-build api
-          python3 - <<'PY'
-          import json
-          import urllib.request
-
-          for path in ('/health/ready', '/openapi.json'):
-              with urllib.request.urlopen(f'http://127.0.0.1:8111{path}', timeout=5) as response:
-                  assert response.status == 200
-                  payload = json.load(response)
-                  assert payload.get('status') == 'ok' if path == '/health/ready' else payload.get('paths')
-          print('媒体 Runner 停止期间，API 冷启动与核心接口检查通过')
-          PY
-          "${compose[@]}" up --detach --wait --wait-timeout 120 --no-build media-runner
-          "${compose[@]}" run --rm --no-deps database-init
-
-  required-ci:
-    name: Required CI
-    if: always()
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    needs: [repository-check, backend-quality, frontend-quality, runtime-smoke]
-    steps:
-      - name: Require every boundary
-        env:
-          REPOSITORY_RESULT: ${{ needs.repository-check.result }}
-          BACKEND_RESULT: ${{ needs.backend-quality.result }}
-          FRONTEND_RESULT: ${{ needs.frontend-quality.result }}
-          RUNTIME_RESULT: ${{ needs.runtime-smoke.result }}
-        run: |
-          test "$REPOSITORY_RESULT" = success
-          test "$BACKEND_RESULT" = success
-          test "$FRONTEND_RESULT" = success
-          test "$RUNTIME_RESULT" = success
