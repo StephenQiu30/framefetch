@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { PUT, resolveTarget } from '@/app/storage-upload/route';
+import {
+  internalStorageTarget,
+  PUT,
+  resolveTarget,
+} from '@/app/storage-upload/route';
 
 const signedTarget =
   'https://storage.example/video-artifacts/file?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=signature';
@@ -52,6 +56,18 @@ describe('same-origin storage upload route', () => {
     expect(upstreamFetch).toHaveBeenCalledWith(
       expect.objectContaining({ href: signedTarget }),
       expect.objectContaining({ method: 'PUT', redirect: 'error' }),
+    );
+  });
+
+  it('rewrites a validated public URL to the configured internal endpoint', () => {
+    vi.stubEnv('MINIO_ENDPOINT', 'minio.internal:9000');
+    vi.stubEnv('MINIO_INTERNAL_SECURE', 'false');
+
+    expect(internalStorageTarget(new URL(signedTarget)).toString()).toBe(
+      signedTarget.replace(
+        'https://storage.example',
+        'http://minio.internal:9000',
+      ),
     );
   });
 });

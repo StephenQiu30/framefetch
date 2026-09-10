@@ -63,10 +63,12 @@ def test_environment_templates_do_not_override_duplicate_assignments() -> None:
         assert _env_value(path, "REQUEST_TIMEOUT_SECONDS") == "180"
 
 
-def test_frontend_compose_receives_only_public_runtime_configuration() -> None:
+def test_frontend_compose_receives_only_required_runtime_configuration() -> None:
     expected = {
         "BACKEND_ORIGIN",
         "HOSTNAME",
+        "MINIO_ENDPOINT",
+        "MINIO_INTERNAL_SECURE",
         "MINIO_PUBLIC_ENDPOINT",
         "MINIO_PUBLIC_SECURE",
         "NODE_ENV",

@@ -142,13 +142,19 @@ export function UserEditor({
               />
               <QuotaInput
                 id="edit-quota-daily-gib"
+                inputMode="decimal"
                 label="24 小时处理量（GiB）"
+                min="0.000000001"
+                step="any"
                 value={editor.quota.dailyGiB}
                 onChange={(value) => onQuotaChange('dailyGiB', value)}
               />
               <QuotaInput
                 id="edit-quota-storage-gib"
+                inputMode="decimal"
                 label="保留存储（GiB）"
+                min="0.000000001"
+                step="any"
                 value={editor.quota.storageGiB}
                 onChange={(value) => onQuotaChange('storageGiB', value)}
               />
@@ -191,12 +197,18 @@ export function UserEditor({
 
 function QuotaInput({
   id,
+  inputMode = 'numeric',
   label,
+  min = '1',
+  step = '1',
   value,
   onChange,
 }: {
   id: string;
+  inputMode?: 'decimal' | 'numeric';
   label: string;
+  min?: string;
+  step?: string;
   value: string;
   onChange: (value: string) => void;
 }) {
@@ -205,9 +217,10 @@ function QuotaInput({
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Input
         id={id}
-        inputMode="numeric"
-        min="1"
+        inputMode={inputMode}
+        min={min}
         placeholder="使用系统默认"
+        step={step}
         type="number"
         value={value}
         onChange={(event) => onChange(event.target.value)}

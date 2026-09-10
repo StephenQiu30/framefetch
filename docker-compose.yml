@@ -205,6 +205,8 @@ services:
     environment:
       BACKEND_ORIGIN: http://api:8111
       HOSTNAME: 0.0.0.0
+      MINIO_ENDPOINT: "${MINIO_HOST:-host.docker.internal}:${MINIO_PORT:-19190}"
+      MINIO_INTERNAL_SECURE: "${MINIO_INTERNAL_SECURE:-false}"
       MINIO_PUBLIC_ENDPOINT: "${MINIO_PUBLIC_ENDPOINT:-127.0.0.1:19190}"
       MINIO_PUBLIC_SECURE: "${MINIO_PUBLIC_SECURE:-false}"
       MINIO_LOCAL_BROWSER_ENDPOINT: "${MINIO_LOCAL_BROWSER_ENDPOINT:-}"
@@ -212,6 +214,8 @@ services:
       NODE_ENV: production
       PORT: 8101
       SITE_URL: "${SITE_URL:-http://127.0.0.1:8101}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       app_net:
         ipv4_address: "${FRONTEND_IPV4_ADDRESS:-10.251.0.10}"

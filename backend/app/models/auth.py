@@ -6,6 +6,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     CheckConstraint,
     DateTime,
@@ -37,8 +38,8 @@ class UserRow(Base):
     quota_exempt: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     quota_max_active_tasks: Mapped[int | None] = mapped_column(nullable=True)
     quota_daily_tasks: Mapped[int | None] = mapped_column(nullable=True)
-    quota_daily_bytes: Mapped[int | None] = mapped_column(nullable=True)
-    quota_storage_bytes: Mapped[int | None] = mapped_column(nullable=True)
+    quota_daily_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    quota_storage_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     quota_daily_analysis_attempts: Mapped[int | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now

@@ -86,6 +86,12 @@ describe('administrator user management', () => {
       within(dialog).getByRole('spinbutton', { name: '24 小时任务数' }),
       { target: { value: '75' } },
     );
+    fireEvent.change(
+      within(dialog).getByRole('spinbutton', {
+        name: '24 小时处理量（GiB）',
+      }),
+      { target: { value: '0.5' } },
+    );
     fireEvent.click(within(dialog).getByRole('button', { name: '保存更改' }));
     await waitFor(() =>
       expect(runtime.updateUserAccess).toHaveBeenCalledWith('editor-id', {
@@ -93,7 +99,7 @@ describe('administrator user management', () => {
         role: 'user',
         quota: {
           daily_analysis_attempts: null,
-          daily_bytes: null,
+          daily_bytes: 536870912,
           daily_tasks: 75,
           exempt: false,
           max_active_per_owner: null,

@@ -295,8 +295,8 @@ async def test_profile_and_admin_user_management_are_role_protected(
                     "exempt": False,
                     "max_active_per_owner": 9,
                     "daily_tasks": 120,
-                    "daily_bytes": None,
-                    "storage_bytes": None,
+                    "daily_bytes": 512 * 1024**2,
+                    "storage_bytes": 2 * 1024**3,
                     "daily_analysis_attempts": 80,
                 },
             },
@@ -325,8 +325,8 @@ async def test_profile_and_admin_user_management_are_role_protected(
         "exempt": False,
         "max_active_per_owner": 9,
         "daily_tasks": 120,
-        "daily_bytes": None,
-        "storage_bytes": None,
+        "daily_bytes": 512 * 1024**2,
+        "storage_bytes": 2 * 1024**3,
         "daily_analysis_attempts": 80,
     }
     assert disabled.json()["is_active"] is False
