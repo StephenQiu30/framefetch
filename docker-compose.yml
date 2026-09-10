@@ -139,7 +139,7 @@ services:
       MINIO_SECRET_KEY: '${MINIO_SECRET_KEY:-video-secret-change-me}'
       PEERTUBE_ALLOWED_INSTANCES: '${PEERTUBE_ALLOWED_INSTANCES:-[]}'
       PROVIDER_VERIFIED_KEYS: '${PROVIDER_VERIFIED_KEYS:-[]}'
-      QUOTA_LIMITS: '${QUOTA_LIMITS:-{"max_active_per_owner":5,"max_active_global":200,"daily_tasks":50,"daily_bytes":107374182400,"storage_bytes":107374182400,"daily_analysis_attempts":60}}'
+      QUOTA_LIMITS: '${QUOTA_LIMITS:-{"max_active_per_owner":5,"daily_tasks":50,"daily_bytes":107374182400,"storage_bytes":107374182400,"daily_analysis_attempts":60}}'
       RABBITMQ_CONNECTION_TIMEOUT_SECONDS: '${RABBITMQ_CONNECTION_TIMEOUT_SECONDS:-10}'
       RABBITMQ_EXCHANGE: '${RABBITMQ_EXCHANGE:-video.events}'
       RABBITMQ_HEARTBEAT_SECONDS: '${RABBITMQ_HEARTBEAT_SECONDS:-60}'
@@ -167,7 +167,7 @@ services:
       TRUSTED_FRONTEND_PROXY_IP: '${FRONTEND_IPV4_ADDRESS:-10.251.0.10}'
       DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-video}:${POSTGRES_PASSWORD:-video}@${POSTGRES_HOST:-host.docker.internal}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-video}"
       RABBITMQ_URL: "amqp://${RABBITMQ_API_USER:-video-api}:${RABBITMQ_API_PASS:-video-api-secret}@${RABBITMQ_HOST:-host.docker.internal}:${RABBITMQ_PORT:-5672}/${RABBITMQ_VHOST:-video}"
-      VALKEY_URL: "redis://${VALKEY_HOST:-host.docker.internal}:${VALKEY_PORT:-6379}/0"
+      REDIS_URL: "redis://${REDIS_HOST:-host.docker.internal}:${REDIS_PORT:-6379}/0"
       MINIO_ENDPOINT: "${MINIO_HOST:-host.docker.internal}:${MINIO_PORT:-19190}"
       MINIO_PUBLIC_ENDPOINT: "${MINIO_PUBLIC_ENDPOINT:-127.0.0.1:19190}"
       MINIO_BUCKET: "${MINIO_BUCKET:-video-artifacts}"

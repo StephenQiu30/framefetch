@@ -168,7 +168,7 @@ final result: passed
 - `npm run format:check`：155 个文件全部通过；前端换行契约已由 `.gitattributes` 固定为 LF，不再依赖开发机 Git 配置。
 - `npm test`：27 个测试文件、97 项测试全部通过。
 - `npm run build`：Next.js 16.3 静态导出通过，9 个业务路由与 404 均成功生成。
-- Docker 启动链路：`database-init` 幂等执行并以 0 退出，API readiness 为 200，PostgreSQL、RabbitMQ、Valkey、MinIO 与 Media Runner 均健康。
+- Docker 启动链路：`database-init` 幂等执行并以 0 退出，API readiness 为 200，PostgreSQL、RabbitMQ、Redis、MinIO 与 Media Runner 均健康。
 - 部署后浏览器回归：历史页连续两次 CLS 为 `0`；390×844 注册页 CLS 为 `0`、无横向溢出，无效 `.invalid` 邮箱显示中文字段错误且未产生 `/api/auth/register` 请求。
 - 独立前端差异审查：无剩余 P0/P1/P2；本轮发现的 2 个中等级问题均已修复。
 

@@ -101,7 +101,7 @@ MeTube 和 cobalt 的公开文档都提醒：频繁更新 yt-dlp、限制并发�
 | 项目 | 目标用途 | 推荐方式 | 备注 |
 | --- | --- | --- | --- |
 | [sqlalchemy/alembic](https://github.com/sqlalchemy/alembic) | PostgreSQL schema 版本和生产迁移 | Python 依赖 + `backend/alembic/`，以当前 schema 建基线 revision | 需要先修改仓库“禁止 migrations”的治理规则 |
-| [valkey-io/valkey](https://github.com/valkey-io/valkey) + [alisaifee/limits](https://github.com/alisaifee/limits) | 分布式 IP/session/API key 限流、短期并发令牌 | 独立 Valkey 服务 + FastAPI 中间件/依赖；长期用量仍落 PostgreSQL | 限流不可只用进程内内存，否则多实例不一致 |
+| [redis-io/redis](https://github.com/redis-io/redis) + [alisaifee/limits](https://github.com/alisaifee/limits) | 分布式 IP/session/API key 限流、短期并发令牌 | 独立 Redis 服务 + FastAPI 中间件/依赖；长期用量仍落 PostgreSQL | 限流不可只用进程内内存，否则多实例不一致 |
 | [trallnag/prometheus-fastapi-instrumentator](https://github.com/trallnag/prometheus-fastapi-instrumentator) | FastAPI RED 指标 | 只导出低基数、脱敏指标；内部 metrics 端点 | Provider、队列和 Worker 指标仍需自定义 |
 | [open-telemetry/opentelemetry-python-contrib](https://github.com/open-telemetry/opentelemetry-python-contrib) | API→DB→消息→Worker 跨进程追踪 | P1 可选；先验证所选 instrumentation 的稳定性 | 上游明确提示 contrib instrumentation 多数仍为 beta，不作为 P0 唯一诊断手段 |
 | [caddyserver/caddy](https://github.com/caddyserver/caddy) | 单机/Compose ingress、TLS、安全 header、请求限制 | 作为可选受支持入口，静态前端仍由 FastAPI 同源提供 | Apache-2.0；不改变“无独立前端容器”原则 |
@@ -126,7 +126,7 @@ Supported Ingress
   ↓
 API + static frontend
   ├─ PostgreSQL（用户、任务、配额、outbox、审计）
-  ├─ Valkey（短窗口限流、并发令牌）
+  ├─ Redis（短窗口限流、并发令牌）
   ├─ RabbitMQ（下载/分析队列）
   └─ MinIO signing（不读取对象内容）
 

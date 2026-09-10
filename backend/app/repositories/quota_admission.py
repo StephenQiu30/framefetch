@@ -1,4 +1,4 @@
-"""Atomic owner budgets and global backlog admission in the caller transaction."""
+"""Atomic per-user business quotas in the caller transaction."""
 
 from datetime import datetime, timedelta
 from typing import Literal
@@ -10,16 +10,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.quota import ResourceAdmissionRow
 from app.repositories.owner_lock import lock_owner
 from app.repositories.quota_queries import ACTIVE_USAGE, STORED_BYTES
-from app.services.quotas import QuotaExceeded, QuotaPolicy
+from app.services.quotas import (
+    DEFAULT_USER_QUOTA,
+    QuotaExceeded,
+    QuotaPolicy,
+    UserQuota,
+)
 
 AdmissionKind = Literal["download", "media_import", "document_import", "analysis"]
 
 
 async def lock_admission(session: AsyncSession, owner_hash: str) -> None:
-    # All admissions take these locks before any resource row lock. The global
-    # lock covers only a short DB transaction, never network or worker execution.
+    # User quota remains transactional. Global throughput is controlled by
+    # RabbitMQ prefetch and bounded worker concurrency, not an API admission lock.
     await lock_owner(session, owner_hash)
-    await lock_owner(session, "__global_admission__")
 
 
 async def reserve(
@@ -32,13 +36,15 @@ async def reserve(
     now: datetime,
     size_bytes: int | None = None,
     analysis_attempts: int = 0,
-    is_admin: bool = False,
+    quota: UserQuota = DEFAULT_USER_QUOTA,
 ) -> None:
     """Reserve a user budget after replay and source validation.
 
-    Administrators bypass account-scoped budgets. The shared global active-task
-    capacity is still enforced for every account.
+    Administrators and explicitly exempt users bypass account-scoped budgets.
     """
+    if quota.exempt:
+        return
+    policy = quota.apply(policy)
     reserved = {
         "download": policy.download_bytes + policy.thumbnail_bytes,
         "media_import": (size_bytes or 0) + policy.thumbnail_bytes,
@@ -53,10 +59,6 @@ async def reserve(
         "thumbnail_bytes": policy.thumbnail_bytes,
     }
     active = (await session.execute(ACTIVE_USAGE, parameters)).one()
-    if active.global_active >= policy.max_active_global:
-        raise QuotaExceeded("service_capacity_exceeded")
-    if is_admin:
-        return
     if active.owner_active >= policy.max_active_per_owner:
         raise QuotaExceeded("active_task_quota_exceeded")
     daily = (

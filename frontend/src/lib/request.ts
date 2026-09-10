@@ -4,7 +4,7 @@ import axios, {
   type AxiosRequestConfig,
 } from 'axios';
 
-import { apiErrorFrom } from '@/lib/request-error';
+import { ApiError, apiErrorFrom } from '@/lib/request-error';
 
 const API_TIMEOUT_MS = 30_000;
 
@@ -74,14 +74,40 @@ function shouldRefresh(
 
 async function refreshAccessToken(): Promise<void> {
   if (!refreshRequest) {
-    refreshRequest = httpClient
-      .post('/api/auth/refresh')
-      .then(() => undefined)
-      .finally(() => {
-        refreshRequest = null;
-      });
+    refreshRequest = withBrowserRefreshLock(async (recheckSession) => {
+      if (recheckSession && (await hasCurrentSession())) return;
+      try {
+        await httpClient.post('/api/auth/refresh');
+      } catch (error) {
+        if (error instanceof ApiError && error.code === 'refresh_in_progress') {
+          return;
+        }
+        throw error;
+      }
+    }).finally(() => {
+      refreshRequest = null;
+    });
   }
   await refreshRequest;
+}
+
+async function withBrowserRefreshLock(
+  action: (recheckSession: boolean) => Promise<void>,
+): Promise<void> {
+  if (typeof navigator === 'undefined' || !navigator.locks) {
+    return action(false);
+  }
+  return navigator.locks.request('framefetch-auth-refresh', () => action(true));
+}
+
+async function hasCurrentSession(): Promise<boolean> {
+  const response = await fetch('/api/auth/me', {
+    credentials: 'include',
+    headers: { Accept: 'application/json', 'X-Client-Platform': 'web' },
+  });
+  if (response.ok) return true;
+  if (response.status === 401) return false;
+  throw apiErrorFrom(response.status, await response.json().catch(() => null));
 }
 
 function redirectToLogin(): void {

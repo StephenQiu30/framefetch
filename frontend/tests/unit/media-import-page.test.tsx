@@ -5,10 +5,15 @@ import DownloadWorkspace from '@/components/intake/download-workspace';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import * as mediaImportRuntime from '@/services/media-import';
 
-vi.mock('next/navigation', () => ({}));
+const push = vi.fn();
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push }),
+}));
 
 describe('DownloadWorkspace local video upload', () => {
   beforeEach(() => {
+    push.mockReset();
     window.history.replaceState({}, '', '/');
   });
 
@@ -51,9 +56,6 @@ describe('DownloadWorkspace local video upload', () => {
         observer.onProgress(72);
         return imported;
       });
-    const assign = vi
-      .spyOn(window.location, 'assign')
-      .mockImplementation(() => undefined);
     renderWorkspace();
 
     selectUploadTab();
@@ -67,7 +69,7 @@ describe('DownloadWorkspace local video upload', () => {
     expect(importRequest.mock.calls[0][0]).toBe(file);
     expect(importRequest.mock.calls[0][1]).toEqual(expect.any(String));
     await waitFor(() =>
-      expect(assign).toHaveBeenCalledWith(
+      expect(push).toHaveBeenCalledWith(
         `/downloads/detail?jobId=${encodeURIComponent(imported.download_id)}`,
       ),
     );

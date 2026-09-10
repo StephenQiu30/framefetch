@@ -21,6 +21,16 @@ export type UserEditorState = {
   user: API.ManagedUserResponse | null;
   role: API.UserRole;
   active: boolean;
+  quota: UserQuotaDraft;
   error: string;
   saving: boolean;
+};
+
+export type UserQuotaDraft = {
+  exempt: boolean;
+  maxActiveTasks: string;
+  dailyTasks: string;
+  dailyGiB: string;
+  storageGiB: string;
+  dailyAnalysisAttempts: string;
 };

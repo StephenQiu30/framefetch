@@ -57,7 +57,7 @@ async def create_media_import(
             declared_sha256=body.declared_sha256,
             rights_accepted=body.rights_accepted,
             declared_origin=body.declared_origin,
-            is_admin=user.is_admin,
+            quota=user.admission_quota,
         )
     except ImportApplicationError as error:
         raise import_application_error(error) from error

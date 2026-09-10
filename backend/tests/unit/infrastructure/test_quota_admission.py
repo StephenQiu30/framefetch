@@ -14,7 +14,7 @@ from app.repositories.document_import_repository import (
 from app.repositories.download_repository import SqlAlchemyDownloadRepository
 from app.repositories.media_import_repository import SqlAlchemyMediaImportRepository
 from app.services.downloads.download_models import DownloadCreate
-from app.services.quotas import QuotaExceeded, QuotaPolicy
+from app.services.quotas import QuotaExceeded, QuotaPolicy, UserQuota
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from tests.unit.infrastructure.analysis.factories import analysis_command, seed_artifact
@@ -58,10 +58,8 @@ async def test_cross_kind_concurrent_admission_and_replay(sessions):
     assert not replay.created
 
 
-async def test_global_capacity_serializes_different_owners(sessions):
-    repo = SqlAlchemyMediaImportRepository(
-        sessions, quota_policy=QuotaPolicy(max_active_global=1)
-    )
+async def test_different_owners_are_not_globally_rejected(sessions):
+    repo = SqlAlchemyMediaImportRepository(sessions)
     commands = [
         replace(media(), id=uuid4(), owner_hash=owner * 64) for owner in ("a", "b")
     ]
@@ -69,9 +67,7 @@ async def test_global_capacity_serializes_different_owners(sessions):
         *(repo.create_resource(command, now=NOW) for command in commands),
         return_exceptions=True,
     )
-    denied = [result for result in results if isinstance(result, QuotaExceeded)]
-    assert len(denied) == 1
-    assert denied[0].code == "service_capacity_exceeded"
+    assert all(not isinstance(result, Exception) for result in results)
 
 
 @pytest.mark.parametrize(
@@ -165,7 +161,7 @@ async def test_admin_download_bypasses_account_quotas(sessions):
         idempotency_key="admin-download",
         request_fingerprint="y" * 64,
         semantic_plan=job.semantic_plan,
-        is_admin=True,
+        quota=UserQuota(exempt=True),
     )
     repo = SqlAlchemyDownloadRepository(
         sessions,
@@ -183,6 +179,19 @@ async def test_admin_download_bypasses_account_quotas(sessions):
     assert saved.created
     async with sessions() as session:
         assert await session.get(ResourceAdmissionRow, command.id) is None
+
+
+async def test_user_quota_override_replaces_default_limit(sessions):
+    repo = SqlAlchemyMediaImportRepository(
+        sessions, quota_policy=QuotaPolicy(daily_tasks=10)
+    )
+    quota = UserQuota(daily_tasks=1)
+    first = replace(media(), quota=quota)
+    await repo.create_resource(first, now=NOW)
+
+    second = replace(first, id=uuid4(), idempotency_key="second")
+    with pytest.raises(QuotaExceeded, match="daily_task_quota_exceeded"):
+        await repo.create_resource(second, now=NOW)
 
 
 async def test_download_tombstone_remains_charged_until_physical_cleanup(sessions):

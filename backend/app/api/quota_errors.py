@@ -13,7 +13,6 @@ from app.services.quotas import QuotaExceeded
 async def quota_error_handler(request: Request, error: Exception) -> JSONResponse:
     quota = cast(QuotaExceeded, error)
     details = {
-        "service_capacity_exceeded": "The service is at capacity. Try again later.",
         "active_task_quota_exceeded": "Wait for active tasks to finish or cancel them.",
         "daily_task_quota_exceeded": "The rolling 24-hour task budget is exhausted.",
         "daily_byte_quota_exceeded": "The rolling 24-hour byte budget is exhausted.",
@@ -25,7 +24,7 @@ async def quota_error_handler(request: Request, error: Exception) -> JSONRespons
     return await app_error_handler(
         request,
         AppError(
-            status=503 if quota.code == "service_capacity_exceeded" else 429,
+            status=429,
             code=quota.code,
             title="Resource budget exceeded",
             detail=details[quota.code],

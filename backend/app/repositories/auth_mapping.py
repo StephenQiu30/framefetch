@@ -1,6 +1,7 @@
 from app.db.base import as_utc
 from app.models import UserRow
 from app.services.auth import AccountRecord, CurrentUser, UserRole
+from app.services.quotas import UserQuota
 
 
 def account_from_row(row: UserRow) -> AccountRecord:
@@ -13,6 +14,14 @@ def account_from_row(row: UserRow) -> AccountRecord:
         is_active=row.is_active,
         created_at=as_utc(row.created_at),
         updated_at=as_utc(row.updated_at),
+        quota=UserQuota(
+            exempt=row.quota_exempt,
+            max_active_per_owner=row.quota_max_active_tasks,
+            daily_tasks=row.quota_daily_tasks,
+            daily_bytes=row.quota_daily_bytes,
+            storage_bytes=row.quota_storage_bytes,
+            daily_analysis_attempts=row.quota_daily_analysis_attempts,
+        ),
     )
 
 

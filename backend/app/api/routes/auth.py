@@ -15,6 +15,7 @@ from app.api.auth_dependencies import (
 from app.api.dependencies import get_runtime_settings
 from app.api.errors import app_error_handler, auth_application_error
 from app.core.config import Settings
+from app.core.errors import AppError
 from app.schemas.auth import (
     EmailPasswordRequest,
     RegisterRequest,
@@ -22,7 +23,13 @@ from app.schemas.auth import (
     RegistrationCodeResponse,
     UserResponse,
 )
-from app.services.auth import AuthError, AuthErrorCode, AuthService, CurrentUser
+from app.services.auth import (
+    AuthError,
+    AuthErrorCode,
+    AuthService,
+    CurrentUser,
+    SessionRotationConflict,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 Auth = Annotated[AuthService, Depends(get_auth_service)]
@@ -43,7 +50,11 @@ async def send_registration_code(
     settings: SettingsDependency,
 ) -> RegistrationCodeResponse:
     await enforce_rate_limit(
-        request, "registration_code", _email_hash(str(body.email)), settings
+        request,
+        "registration_code",
+        _email_hash(str(body.email)),
+        settings,
+        include_client_ip=True,
     )
     try:
         await auth.send_registration_code(str(body.email))
@@ -70,7 +81,11 @@ async def register_user(
     ] = None,
 ) -> UserResponse:
     await enforce_rate_limit(
-        request, "register", _email_hash(str(body.email)), settings
+        request,
+        "register",
+        _email_hash(str(body.email)),
+        settings,
+        include_client_ip=True,
     )
     try:
         grant = await auth.register(
@@ -100,7 +115,13 @@ async def login_user(
     auth: Auth,
     settings: SettingsDependency,
 ) -> UserResponse:
-    await enforce_rate_limit(request, "login", _email_hash(str(body.email)), settings)
+    await enforce_rate_limit(
+        request,
+        "login",
+        _email_hash(str(body.email)),
+        settings,
+        include_client_ip=True,
+    )
     try:
         grant = await auth.login(str(body.email), body.password)
     except AuthError as exc:
@@ -138,6 +159,13 @@ async def refresh_user_session(
         )
     try:
         grant = await auth.refresh(refresh_token)
+    except SessionRotationConflict:
+        raise AppError(
+            status=409,
+            code="refresh_in_progress",
+            title="Session refresh in progress",
+            detail="Another request has already refreshed this session.",
+        ) from None
     except AuthError as exc:
         return await _cleared_auth_error_response(request, settings, exc)
     set_auth_cookies(response, settings, grant)

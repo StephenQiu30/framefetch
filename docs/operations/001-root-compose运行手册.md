@@ -3,10 +3,10 @@
 ## 运行模型
 
 业务拓扑只有一个运行入口：根目录 `docker-compose.yml`。本机直接复用已经运行的
-PostgreSQL、RabbitMQ、Valkey/Redis 和 MinIO，但前端、API、Worker、Runner 与
+PostgreSQL、RabbitMQ、Redis 和 MinIO，但前端、API、Worker、Runner 与
 Operator 必须处于同一 Compose 网络；不提供宿主机业务进程与容器 Operator 混合运行入口：
 
-| 文件 | 用途 | 是否启动 PostgreSQL、RabbitMQ、Valkey、MinIO |
+| 文件 | 用途 | 是否启动 PostgreSQL、RabbitMQ、Redis、MinIO |
 | --- | --- | --- |
 | docker-compose.yml | 本机/共享环境运行，只启动业务容器 | 否，复用宿主机已有服务 |
 | docker-compose-prod.yml | 独立的生产业务容器运行配置，与默认拓扑保持一致 | 否，复用生产宿主机服务 |
@@ -26,7 +26,7 @@ Operator 必须处于同一 Compose 网络；不提供宿主机业务进程与�
 ## Docker 文件使用规范
 
 - `docker-compose.yml` 和 `docker-compose-prod.yml` 只管理业务容器，不启动基础设施或初始化容器。
-- 直接沿用当前 `.env` / `.env.prod`。容器通过 `POSTGRES_HOST/PORT`、`RABBITMQ_HOST/PORT`、`VALKEY_HOST/PORT` 和 `MINIO_HOST/PORT` 访问已有服务；默认主机为 `host.docker.internal`，端口以本机实际配置为准。宿主机运行的命令使用相应回环地址。
+- 直接沿用当前 `.env` / `.env.prod`。容器通过 `POSTGRES_HOST/PORT`、`RABBITMQ_HOST/PORT`、`REDIS_HOST/PORT` 和 `MINIO_HOST/PORT` 访问已有服务；默认主机为 `host.docker.internal`，端口以本机实际配置为准。宿主机运行的命令使用相应回环地址。
 - MinIO 只配置一组 `MINIO_ACCESS_KEY` 与 `MINIO_SECRET_KEY`，所有业务进程共用。
 - `docker-compose-env.yml` 仅保留为 GitHub CI 的隔离夹具，本机启动和验证不使用它。CI 的临时服务端口不应复制到本机业务配置中。
 
@@ -36,7 +36,7 @@ Operator 必须处于同一 Compose 网络；不提供宿主机业务进程与�
 
 - PostgreSQL
 - RabbitMQ
-- Valkey/Redis
+- Redis
 - MinIO
 
 容器通过现有环境文件中的连接地址访问这些服务。连接地址和凭据不能提交到 Git。数据库结构变更时按需执行 `backend/sql/schema.sql`；已有 RabbitMQ 拓扑、MinIO bucket 和身份继续复用，启动项目不执行整套初始化。

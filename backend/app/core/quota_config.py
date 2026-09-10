@@ -9,7 +9,6 @@ class QuotaLimits(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     max_active_per_owner: int = Field(default=5, ge=1)
-    max_active_global: int = Field(default=200, ge=1)
     daily_tasks: int = Field(default=50, ge=1)
     daily_bytes: int = Field(default=100 * 1024**3, ge=1)
     storage_bytes: int = Field(default=100 * 1024**3, ge=1)

@@ -21,10 +21,15 @@ import {
   mockHttpResponses,
 } from '../helpers/http';
 
-vi.mock('next/navigation', () => ({}));
+const push = vi.fn();
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push }),
+}));
 
 describe('DownloadWorkspace', () => {
   beforeEach(() => {
+    push.mockReset();
     window.history.replaceState({}, '', '/');
   });
 
@@ -220,9 +225,6 @@ describe('DownloadWorkspace', () => {
 
   it('inspects a public URL, creates a download, and opens its Next route', async () => {
     mockHttpResponses(inspection, job());
-    const assign = vi
-      .spyOn(window.location, 'assign')
-      .mockImplementation(() => undefined);
     renderWorkspace();
 
     fireEvent.change(screen.getByLabelText('公开视频地址'), {
@@ -239,7 +241,7 @@ describe('DownloadWorkspace', () => {
     fireEvent.click(screen.getByRole('button', { name: '创建下载任务' }));
 
     await waitFor(() =>
-      expect(assign).toHaveBeenCalledWith(
+      expect(push).toHaveBeenCalledWith(
         `/downloads/detail?jobId=${encodeURIComponent(job().id)}`,
       ),
     );

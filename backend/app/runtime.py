@@ -8,11 +8,11 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.integrations.media_runner import MediaRunnerRouter
-from app.integrations.rate_limiter import ValkeyRateLimiter
+from app.integrations.rate_limiter import RedisRateLimiter
 from app.integrations.readiness import RuntimeReadiness
 from app.integrations.realtime import RabbitMqRealtimeConsumer, RealtimeHub
 from app.repositories.operational_metrics import OperationalMetrics
-from app.repositories.redis_auth_repository import ValkeyAuthSessionStore
+from app.repositories.redis_auth_repository import RedisAuthSessionStore
 from app.repositories.task_event_store import TaskEventStore
 from app.services.ai_providers import AiProviderService
 from app.services.analysis import (
@@ -132,7 +132,7 @@ class ApiServices:
     media_import_use_cases: MediaImportUseCases | None = None
     document_import_use_cases: DocumentImportUseCases | None = None
     source_discovery_use_cases: SourceDiscoveryUseCases | None = None
-    rate_limiter: ValkeyRateLimiter | None = None
+    rate_limiter: RedisRateLimiter | None = None
     readiness_probe: RuntimeReadiness | None = None
     realtime_hub: RealtimeHub | None = None
     task_event_store: TaskEventStore | None = None
@@ -149,7 +149,7 @@ class ApiRuntime:
     services: ApiServices
     engine: AsyncEngine
     runner: MediaRunnerRouter
-    auth_session_store: ValkeyAuthSessionStore
+    auth_session_store: RedisAuthSessionStore
     realtime_consumer: RabbitMqRealtimeConsumer
 
     async def start(self) -> None:

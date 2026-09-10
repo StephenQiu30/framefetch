@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import {
   type RefObject,
   useCallback,
@@ -45,6 +46,7 @@ type BusyAction = 'inspect' | 'select' | 'create' | null;
 type StableKey = { payload: string; value: string };
 
 export default function DownloadWorkspace() {
+  const router = useRouter();
   const [mode, setMode] = useState<IntakeMode>('link');
   const [url, setUrl] = useState('');
   const [inspection, setInspection] = useState<Inspection | null>(null);
@@ -59,16 +61,22 @@ export default function DownloadWorkspace() {
   const inspectionKey = useRef<StableKey | null>(null);
   const discoveryKey = useRef<StableKey | null>(null);
   const downloadKey = useRef<StableKey | null>(null);
-  const openDownload = useCallback((downloadId: string) => {
-    const target = `/downloads/detail?jobId=${encodeURIComponent(downloadId)}`;
-    markNavigationPush(target);
-    window.location.assign(target);
-  }, []);
-  const openDocument = useCallback((documentId: string) => {
-    const target = `/documents/detail?documentId=${encodeURIComponent(documentId)}`;
-    markNavigationPush(target);
-    window.location.assign(target);
-  }, []);
+  const openDownload = useCallback(
+    (downloadId: string) => {
+      const target = `/downloads/detail?jobId=${encodeURIComponent(downloadId)}`;
+      markNavigationPush(target);
+      router.push(target);
+    },
+    [router],
+  );
+  const openDocument = useCallback(
+    (documentId: string) => {
+      const target = `/documents/detail?documentId=${encodeURIComponent(documentId)}`;
+      markNavigationPush(target);
+      router.push(target);
+    },
+    [router],
+  );
   const mediaImport = useMediaImport(openDownload, mediaDeclaredOrigin);
   const documentImport = useDocumentImport(openDocument);
 

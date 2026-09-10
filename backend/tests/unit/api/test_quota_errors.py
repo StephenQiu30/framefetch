@@ -11,7 +11,6 @@ from fastapi.testclient import TestClient
         ("storage_quota_exceeded", 429),
         ("daily_task_quota_exceeded", 429),
         ("analysis_budget_exceeded", 429),
-        ("service_capacity_exceeded", 503),
     ],
 )
 def test_admission_failure_uses_problem_details_and_retry_header(code, status):

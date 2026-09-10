@@ -82,11 +82,23 @@ describe('administrator user management', () => {
       screen.getAllByRole('button', { name: '管理用户 editor' })[0],
     );
     const dialog = await screen.findByRole('dialog');
+    fireEvent.change(
+      within(dialog).getByRole('spinbutton', { name: '24 小时任务数' }),
+      { target: { value: '75' } },
+    );
     fireEvent.click(within(dialog).getByRole('button', { name: '保存更改' }));
     await waitFor(() =>
       expect(runtime.updateUserAccess).toHaveBeenCalledWith('editor-id', {
         is_active: true,
         role: 'user',
+        quota: {
+          daily_analysis_attempts: null,
+          daily_bytes: null,
+          daily_tasks: 75,
+          exempt: false,
+          max_active_per_owner: null,
+          storage_bytes: null,
+        },
       }),
     );
 
@@ -185,6 +197,7 @@ function managedUser(
     updated_at: '2026-08-09T10:00:00Z',
     username: 'editor',
     ...overrides,
+    quota: overrides.quota ?? { exempt: false },
   };
 }
 

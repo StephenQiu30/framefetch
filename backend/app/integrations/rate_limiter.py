@@ -1,4 +1,4 @@
-"""Atomic Valkey fixed-window limiter for expensive public operations."""
+"""Atomic Redis limiter for user operations and anonymous auth protection."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from valkey.asyncio import Valkey
+from redis.asyncio import Redis
 
 from app.core.rate_limits import (
     RateLimitOperation,
@@ -43,7 +43,7 @@ return {denied, retry}
 """
 
 
-class ValkeyRateLimiter:
+class RedisRateLimiter:
     def __init__(
         self,
         url: str,
@@ -53,18 +53,21 @@ class ValkeyRateLimiter:
     ) -> None:
         if not url or len(salt) < 16:
             raise ValueError("rate limiter URL and salt are required")
-        self._client: Any = Valkey.from_url(url, decode_responses=False)
+        self._client: Any = Redis.from_url(url, decode_responses=False)
         self._salt = salt
         self._policies = default_rate_limits() | dict(policies or {})
 
     async def check(
-        self, *, operation: RateLimitOperation, owner_hash: str, client_host: str
+        self,
+        *,
+        operation: RateLimitOperation,
+        owner_hash: str,
+        client_host: str | None = None,
     ) -> None:
         policy = self._policies[operation]
-        keys = [
-            self._key(operation, "ip", client_host, policy.window_seconds),
-            self._key(operation, "owner", owner_hash, policy.window_seconds),
-        ]
+        keys = [self._key(operation, "owner", owner_hash, policy.window_seconds)]
+        if client_host is not None:
+            keys.append(self._key(operation, "ip", client_host, policy.window_seconds))
         try:
             result = await self._client.eval(
                 _INCREMENT_SCRIPT,

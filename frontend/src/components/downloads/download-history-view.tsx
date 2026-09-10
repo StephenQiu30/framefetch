@@ -2,6 +2,7 @@
 
 import { ArrowClockwise, MagnifyingGlass, Plus } from '@phosphor-icons/react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import DownloadHistoryList, {
   downloadStatusLabels,
@@ -39,6 +40,7 @@ import {
 import type { DownloadHistoryItem, DownloadStatus } from '@/types/video';
 
 export default function DownloadHistoryView() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
@@ -78,7 +80,7 @@ export default function DownloadHistoryView() {
       const retried = await retryDownload(item.id, key);
       const target = `/downloads/detail?jobId=${encodeURIComponent(retried.id)}`;
       markNavigationPush(target);
-      window.location.assign(target);
+      router.push(target);
     } catch (reason) {
       setActionError(displayError(reason));
       setPendingAction(null);

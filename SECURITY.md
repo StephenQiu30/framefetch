@@ -7,7 +7,7 @@
 ## 强制控制
 
 - 生产环境必须替换 `.env.prod.example` 中的全部占位凭据；配置校验会拒绝开发密钥。
-- 匿名 Media Runner 不得获得 Provider Secret；凭据 Runner 只能获得对应 Provider 的版本化只读 Secret。所有 Runner 均不得获得 PostgreSQL、RabbitMQ、MinIO、Valkey 或 AI provider 凭据，也不得挂载 Docker socket。
+- 匿名 Media Runner 不得获得 Provider Secret；凭据 Runner 只能获得对应 Provider 的版本化只读 Secret。所有 Runner 均不得获得 PostgreSQL、RabbitMQ、MinIO、Redis 或 AI provider 凭据，也不得挂载 Docker socket。
 - 用户 URL 只加密持久化；普通日志、消息和 API 错误中不得出现完整 URL query。
 - 外部媒体流量只能经过 egress proxy；入口校验不是 SSRF 防线的替代品。
 - `POST /api/inspections` 等普通 JSON 接口不接受原始 Cookie；受控 Cookie 只能通过 005 运维 Secret 生命周期进入凭据 Runner。任意 yt-dlp 参数、shell 命令、输出路径或文件名模板始终不接受。

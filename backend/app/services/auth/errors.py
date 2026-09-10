@@ -29,3 +29,7 @@ class DuplicateEmailError(RuntimeError):
 
 class DuplicateUsernameError(RuntimeError):
     """Raised when a normalized username is already assigned."""
+
+
+class SessionRotationConflict(RuntimeError):
+    """Raised when another request has just rotated the same refresh session."""

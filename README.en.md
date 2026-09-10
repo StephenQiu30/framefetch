@@ -68,7 +68,7 @@ The web application includes media inspection and download, job history and deta
 ### Requirements
 
 - Docker Engine and Docker Compose
-- Existing PostgreSQL, RabbitMQ, Valkey/Redis and MinIO services; reuse their addresses and credentials
+- Existing PostgreSQL, RabbitMQ, Redis and MinIO services; reuse their addresses and credentials
 - Strong random secrets and a public origin are required before an internet-facing deployment
 
 ```bash
@@ -76,7 +76,7 @@ git clone https://github.com/StephenQiu30/video-server.git
 cd video-server
 test -f .env || cp .env.example .env
 
-# Configure .env to reuse existing PostgreSQL, RabbitMQ, Valkey/Redis and MinIO
+# Configure .env to reuse existing PostgreSQL, RabbitMQ, Redis and MinIO
 
 # Web, API, workers, runners and controlled egress proxy
 docker compose --env-file .env -f docker-compose.yml \
@@ -142,7 +142,7 @@ flowchart LR
 | --- | --- |
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS, Radix UI |
 | Backend | Python 3.12, FastAPI, SQLAlchemy, PostgreSQL |
-| Async | Transactional Outbox, RabbitMQ, Valkey, idempotent workers with leases and heartbeats |
+| Async | Transactional Outbox, RabbitMQ, Redis, idempotent workers with leases and heartbeats |
 | Media | FFmpeg, ffprobe, yt-dlp adapters, isolated runners and Squid egress proxy |
 | Storage | MinIO object storage with short-lived presigned access URLs |
 | Contract | OpenAPI is the single contract shared by the web, Flutter and server code |

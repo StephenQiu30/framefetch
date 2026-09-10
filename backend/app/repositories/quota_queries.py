@@ -34,8 +34,7 @@ WITH active AS (
       AND NOT EXISTS (SELECT 1 FROM analysis_report_artifacts a
                       WHERE a.report_id = r.id)
 )
-SELECT COUNT(*) AS global_active,
-    COUNT(*) FILTER (WHERE owner_hash = :owner) AS owner_active,
+SELECT COUNT(*) FILTER (WHERE owner_hash = :owner) AS owner_active,
     COALESCE(SUM(reserved_bytes) FILTER (WHERE owner_hash = :owner), 0) AS reserved
 FROM active
 """)

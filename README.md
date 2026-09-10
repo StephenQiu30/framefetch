@@ -76,7 +76,7 @@
 ### 前置条件
 
 - Docker Engine 与 Docker Compose
-- 本机已运行 PostgreSQL、RabbitMQ、Valkey/Redis 和 MinIO，已有配置直接复用
+- 本机已运行 PostgreSQL、RabbitMQ、Redis 和 MinIO，已有配置直接复用
 - 用于生产部署时，需要自行提供强随机密钥和公开访问地址
 
 ### Docker Compose 启动
@@ -86,7 +86,7 @@ git clone https://github.com/StephenQiu30/video-server.git
 cd video-server
 test -f .env || cp .env.example .env
 
-# 确认 .env 连接本机已运行的 PostgreSQL、RabbitMQ、Valkey/Redis 与 MinIO
+# 确认 .env 连接本机已运行的 PostgreSQL、RabbitMQ、Redis 与 MinIO
 
 # 启动 Web、API、Worker、Runner 与受控出口代理
 docker compose --env-file .env -f docker-compose.yml \
@@ -161,7 +161,7 @@ flowchart LR
 | --- | --- |
 | Frontend | Next.js 16、React 19、TypeScript、Tailwind CSS、Radix UI |
 | Backend | Python 3.12、FastAPI、SQLAlchemy、PostgreSQL |
-| Async | Transactional Outbox、RabbitMQ、Valkey、幂等 Worker 与 lease/heartbeat |
+| Async | Transactional Outbox、RabbitMQ、Redis、幂等 Worker 与 lease/heartbeat |
 | Media | FFmpeg、ffprobe、yt-dlp 适配层、隔离 Runner、Squid egress proxy |
 | Storage | MinIO 对象存储与短时预签名访问地址 |
 | Contract | OpenAPI 是 Web、Flutter 与服务端之间的唯一接口契约 |

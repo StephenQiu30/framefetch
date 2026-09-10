@@ -19,7 +19,6 @@ dependencies = [
   "email-validator>=2.2,<3",
   "pwdlib[argon2]>=0.3,<1",
   "PyJWT>=2.10,<3",
-  "valkey>=6.1,<7",
   "sqlalchemy[asyncio]>=2.0,<3",
   "uvicorn[standard]>=0.34,<1",
   "websockets>=16.1,<17",
@@ -29,6 +28,7 @@ dependencies = [
   "PyYAML>=6.0,<7",
   "pypdf==6.16.0",
   "botocore>=1.40,<2",
+  "redis>=6.4,<7",
 ]
 
 [dependency-groups]

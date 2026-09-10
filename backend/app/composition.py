@@ -19,7 +19,7 @@ from app.integrations.media_runner_factory import (
 from app.integrations.object_storage import MinioObjectStorage
 from app.integrations.passwords import Argon2PasswordHasher
 from app.integrations.provider_status import configured_provider_statuses
-from app.integrations.rate_limiter import ValkeyRateLimiter
+from app.integrations.rate_limiter import RedisRateLimiter
 from app.integrations.readiness import build_runtime_readiness
 from app.integrations.realtime import RabbitMqRealtimeConsumer, RealtimeHub
 from app.integrations.registration_mail import SmtpRegistrationMailer
@@ -57,7 +57,7 @@ from app.repositories.provider_status_evidence import (
 )
 from app.repositories.redis_auth_repository import (
     RedisAuthRepository,
-    ValkeyAuthSessionStore,
+    RedisAuthSessionStore,
 )
 from app.repositories.source_discovery_repository import (
     SqlAlchemySourceDiscoveryRepository,
@@ -128,8 +128,8 @@ from app.services.storage_files import StorageFileService
 
 
 def build_api_runtime(settings: Settings) -> ApiRuntime:
-    if not settings.valkey_url:
-        raise ValueError("API auth sessions require VALKEY_URL")
+    if not settings.redis_url:
+        raise ValueError("API auth sessions require REDIS_URL")
     configure_provider_instances(settings.peertube_allowed_instances)
     engine = create_engine(settings.database_url)
     sessions = create_session_factory(engine)
@@ -163,7 +163,7 @@ def build_api_runtime(settings: Settings) -> ApiRuntime:
         stale_after=timedelta(seconds=settings.analysis_worker_stale_seconds),
     )
     auth_database_repository = SqlAlchemyAuthRepository(sessions)
-    auth_session_store = ValkeyAuthSessionStore(settings.valkey_url)
+    auth_session_store = RedisAuthSessionStore(settings.redis_url)
     auth_repository = RedisAuthRepository(
         auth_database_repository,
         auth_session_store,
@@ -181,12 +181,12 @@ def build_api_runtime(settings: Settings) -> ApiRuntime:
     thumbnail_storage = MinioThumbnailStorage(storage)
     persist_thumbnail = PersistThumbnail(store, thumbnail_storage)
     rate_limiter = (
-        ValkeyRateLimiter(
-            settings.valkey_url,
+        RedisRateLimiter(
+            settings.redis_url,
             settings.request_fingerprint_secret.get_secret_value().encode(),
             policies=settings.rate_limit_policies,
         )
-        if settings.valkey_url
+        if settings.redis_url
         else None
     )
     clock = _utc_now
@@ -473,7 +473,7 @@ def build_api_runtime(settings: Settings) -> ApiRuntime:
             readiness_probe=build_runtime_readiness(
                 settings,
                 engine,
-                valkey_check=rate_limiter.ping if rate_limiter is not None else None,
+                redis_check=rate_limiter.ping if rate_limiter is not None else None,
             ),
             realtime_hub=realtime_hub,
             task_event_store=TaskEventStore(sessions),

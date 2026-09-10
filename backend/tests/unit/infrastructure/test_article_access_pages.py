@@ -32,7 +32,7 @@ def test_article_can_quote_a_complete_challenge_instruction() -> None:
 
 def test_article_title_can_name_security_verification() -> None:
     payload = (
-        '<html><title>安全验证</title><body>'
+        "<html><title>安全验证</title><body>"
         '<div id="js_content"><p>教程</p></div></body></html>'
     )
     assert parse_article_html(payload).title == "安全验证"

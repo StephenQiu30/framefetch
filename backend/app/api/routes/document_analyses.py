@@ -44,7 +44,7 @@ async def create_document_analysis(
             body.skill_id,
             body.output_language,
             body.custom_prompt,
-            is_admin=user.is_admin,
+            quota=user.admission_quota,
         )
     except AnalysisApplicationError as exc:
         raise analysis_application_error(exc) from exc

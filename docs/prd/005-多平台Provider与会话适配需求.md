@@ -163,7 +163,7 @@ Phase 2 不因本文存在而自动获得上线授权；必须完成对应验收
 
 - Cookie、visitor data、PO Token、Authorization、密码和临时路径不得进入 URL、API 响应、数据库明文、outbox、RabbitMQ、MinIO、普通日志、trace、metrics 或共享 `/work`。
 - Secret jar 只存在于 Runner 独占 tmpfs，目录 `0700`、文件 `0600`，同一 jar 不并发写，且成功/失败/取消/超时/信号均清理。
-- Runner 仍不得获得 DB、MQ、MinIO、Valkey 或 AI Secret，只能获得对应 Provider 的单次、限域会话租约。
+- Runner 仍不得获得 DB、MQ、MinIO、Redis 或 AI Secret，只能获得对应 Provider 的单次、限域会话租约。
 - 所有媒体流量继续经拒绝私网的 egress gateway；凭据不能绕过 SSRF 边界。
 
 ### 7.2 可靠性

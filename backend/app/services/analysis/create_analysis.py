@@ -27,6 +27,7 @@ from app.services.analysis.validation import (
     validate_sha256,
 )
 from app.services.analysis.views import analysis_job_view
+from app.services.quotas import DEFAULT_USER_QUOTA, UserQuota
 
 
 class CreateAnalysis:
@@ -60,7 +61,7 @@ class CreateAnalysis:
         output_language: str,
         custom_prompt: str | None = None,
         *,
-        is_admin: bool = False,
+        quota: UserQuota = DEFAULT_USER_QUOTA,
     ) -> AnalysisJobView:
         now = validate_now(self._now())
         # Admission is durable: a temporarily unavailable consumer must not
@@ -124,7 +125,7 @@ class CreateAnalysis:
             outbox_event_type="analysis.requested",
             input_kind=input_kind,
             result_contract=result_contract,
-            is_admin=is_admin,
+            quota=quota,
         )
         try:
             saved = await self._repository.create_job_and_enqueue(command, now=now)

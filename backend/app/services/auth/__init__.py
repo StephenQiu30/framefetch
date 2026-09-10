@@ -1,6 +1,6 @@
 """Email and password authentication use cases."""
 
-from app.services.auth.errors import AuthError, AuthErrorCode
+from app.services.auth.errors import AuthError, AuthErrorCode, SessionRotationConflict
 from app.services.auth.models import (
     AccountRecord,
     CurrentUser,
@@ -26,6 +26,7 @@ __all__ = [
     "ManagedUserPage",
     "PasswordCheck",
     "SessionGrant",
+    "SessionRotationConflict",
     "TokenClaims",
     "UserRole",
     "UserService",

@@ -51,7 +51,7 @@
 - [x] C7：并发操作的路径/inode 不同；一次 download 的后续命令能看到该 jar 的更新，且不改变只读源、其他任务或下一次操作。
 - [ ] C8：DB、RabbitMQ/outbox、MinIO、API 响应、日志、trace、metrics、container env、snapshot 和 `/work` 扫描不到 Cookie、visitor data、PO Token 或 Authorization。
 - [x] C9：非 YouTube 与 Generic 命令不含 `--cookies`，也无法打开 YouTube Secret。
-- [x] C10：Runner 仍不能访问 DB/MQ/MinIO/Valkey、Docker socket 或绕过 egress proxy。
+- [x] C10：Runner 仍不能访问 DB/MQ/MinIO/Redis、Docker socket 或绕过 egress proxy。
 
 ## 5. D. YouTube 全链路
 
@@ -164,7 +164,7 @@ docker compose --env-file .env.prod -f docker-compose-prod.yml config
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 2026-08-10 | 本地单元/契约/集成 | 本次提交（基线 `a72b2f0`） | Profile/context/session/error/API | anonymous + operator fixtures | yt-dlp `5d6b8c8` / EJS `0.8.0` / bgutil `1.3.1` | non-secret fixture | inspect/download | backend `400 passed`；ruff lint/mypy 通过 | 本文第 12 节命令；测试报告 |
 | 2026-08-10 | Compose config | 本次提交（基线 `a72b2f0`） | YouTube operator/POT | operator topology | `youtube-v2` / bgutil `1.3.1` OCI digest | Compose network ref | deploy config | 环境、业务、生产配置均通过 | `docker compose ... config --quiet` |
-| 2026-08-10 | production-like 本地容器 | 本次提交（基线 `a72b2f0`） | YouTube operator/POT | operator fixture | `youtube-v2` / bgutil `1.3.1` OCI digest | 三个内部网络 | startup/health/boundary | Runner/POT/egress healthy；Secret ro；tmpfs `0700`；无 DB/MQ/MinIO/Valkey env 或 Docker socket；无直连公网网络 | 临时假 Cookie fixture 已删除，容器已 `down` |
+| 2026-08-10 | production-like 本地容器 | 本次提交（基线 `a72b2f0`） | YouTube operator/POT | operator fixture | `youtube-v2` / bgutil `1.3.1` OCI digest | 三个内部网络 | startup/health/boundary | Runner/POT/egress healthy；Secret ro；tmpfs `0700`；无 DB/MQ/MinIO/Redis env 或 Docker socket；无直连公网网络 | 临时假 Cookie fixture 已删除，容器已 `down` |
 | 2026-08-10 | runtime 镜像 | 本次提交（基线 `a72b2f0`） | Provider runtime | N/A | yt-dlp `2026.07.04` / bgutil plugin | N/A | build/import | runtime build 通过；SBOM/NOTICE 与插件入口存在 | image `video-server:phase1-validation`（本地） |
 | 2026-08-10 | 前端本地 | 本次提交（基线 `a72b2f0`） | Provider status | authenticated | OpenAPI `listProviders` | N/A | API/UI | `81 passed`；lint/type/format/build 通过；`/providers` 静态导出 | 前端测试与 build 报告 |
 | 2026-08-07 | 本地浏览器 E2E | historical | Bilibili/抖音/小红书 single video | anonymous | 当时固定 Runner | historical | metadata/media/remux/probe | 成功；范围见研究记录 | `docs/research/001-GitHub开源方案调研.md` |

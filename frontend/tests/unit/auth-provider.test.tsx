@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthProvider, useAuth } from '@/components/auth/auth-provider';
+import { ApiError } from '@/lib/request-error';
 
 const runtime = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
@@ -100,16 +101,47 @@ describe('AuthProvider', () => {
     expect(runtime.logout).toHaveBeenCalledOnce();
     expect(runtime.resetSocket).toHaveBeenCalled();
   });
+
+  it('keeps the current page authenticated during a failed background refresh', async () => {
+    runtime.getCurrentUser
+      .mockResolvedValueOnce(user)
+      .mockRejectedValueOnce(
+        new ApiError(0, 'request_failed', '网络错误', '断网'),
+      );
+    render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
+    await screen.findByTestId('auth-user');
+
+    fireEvent.click(screen.getByRole('button', { name: '刷新用户' }));
+
+    await waitFor(() =>
+      expect(runtime.getCurrentUser).toHaveBeenCalledTimes(2),
+    );
+    expect(screen.getByTestId('auth-user')).toHaveAttribute(
+      'data-user',
+      'video_user',
+    );
+    expect(screen.getByRole('status')).toHaveAttribute(
+      'data-auth-state',
+      'ready',
+    );
+  });
 });
 
 function AuthProbe() {
-  const { loading, signOut, user } = useAuth();
+  const { loading, refreshUser, signOut, user } = useAuth();
   return (
     <div>
       <p data-auth-state={loading ? 'loading' : 'ready'} role="status" />
       <p data-testid="auth-user" data-user={user?.username ?? 'guest'} />
       <button onClick={() => void signOut()} type="button">
         退出
+      </button>
+      <button onClick={() => void refreshUser()} type="button">
+        刷新用户
       </button>
     </div>
   );

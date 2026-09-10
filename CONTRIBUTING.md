@@ -14,7 +14,7 @@
 ## Docker 使用规范
 
 - 本机直接复用已有基础服务和环境配置；`docker-compose-env.yml` 仅用于 GitHub CI，`docker-compose.yml` 只启动业务服务；`docker-compose-prod.yml` 只启动生产业务服务。
-- 业务服务通过 `.env` 的 `POSTGRES_HOST/PORT`、`RABBITMQ_HOST/PORT`、`VALKEY_HOST/PORT`、`MINIO_HOST/PORT` 连接基础服务。填写宿主机可达地址和实际端口，容器默认使用 `host.docker.internal`。
+- 业务服务通过 `.env` 的 `POSTGRES_HOST/PORT`、`RABBITMQ_HOST/PORT`、`REDIS_HOST/PORT`、`MINIO_HOST/PORT` 连接基础服务。填写宿主机可达地址和实际端口，容器默认使用 `host.docker.internal`。
 - 不得覆盖已有 `.env`，也不为本机验证启动基础服务。MinIO 只使用一组共享的 `MINIO_ACCESS_KEY` 与 `MINIO_SECRET_KEY`。
 - GitHub CI 使用隔离夹具；本地验证复用正在运行的基础服务，不创建新的环境或启动脚本。详细启动、停止和故障恢复规则见 [根目录 Compose 运行手册](docs/operations/001-root-compose运行手册.md)。
 

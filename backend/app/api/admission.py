@@ -13,7 +13,7 @@ from app.core.rate_limits import RateLimitOperation
 from app.integrations.rate_limiter import (
     RateLimiterUnavailable,
     RateLimitExceeded,
-    ValkeyRateLimiter,
+    RedisRateLimiter,
 )
 from app.services.auth import CurrentUser
 
@@ -28,6 +28,8 @@ class RateLimitAdmission:
         user: Annotated[CurrentUser, Depends(get_current_user)],
         settings: Annotated[Settings, Depends(get_runtime_settings)],
     ) -> None:
+        if user.is_admin:
+            return
         await enforce_rate_limit(request, self.operation, user.owner_hash, settings)
 
 
@@ -36,17 +38,21 @@ async def enforce_rate_limit(
     operation: RateLimitOperation,
     owner_hash: str,
     settings: Settings,
+    *,
+    include_client_ip: bool = False,
 ) -> None:
     limiter = cast(
-        ValkeyRateLimiter | None,
+        RedisRateLimiter | None,
         getattr(request.app.state.services, "rate_limiter", None),
     )
     if limiter is None:
         return
-    trusted = settings.trusted_proxy_cidrs
-    if settings.trusted_frontend_proxy_ip is not None:
-        trusted += (str(settings.trusted_frontend_proxy_ip),)
-    client_host = _client_host(request, trusted)
+    client_host = None
+    if include_client_ip:
+        trusted = settings.trusted_proxy_cidrs
+        if settings.trusted_frontend_proxy_ip is not None:
+            trusted += (str(settings.trusted_frontend_proxy_ip),)
+        client_host = _client_host(request, trusted)
     try:
         await limiter.check(
             operation=operation,

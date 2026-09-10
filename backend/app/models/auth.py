@@ -34,6 +34,12 @@ class UserRow(Base):
     password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
     role: Mapped[str] = mapped_column(String(16), nullable=False, default="user")
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    quota_exempt: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    quota_max_active_tasks: Mapped[int | None] = mapped_column(nullable=True)
+    quota_daily_tasks: Mapped[int | None] = mapped_column(nullable=True)
+    quota_daily_bytes: Mapped[int | None] = mapped_column(nullable=True)
+    quota_storage_bytes: Mapped[int | None] = mapped_column(nullable=True)
+    quota_daily_analysis_attempts: Mapped[int | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )

@@ -12,6 +12,7 @@ from app.domain.downloads import (
     DownloadStatus,
     MediaKind,
 )
+from app.services.quotas import UserQuota
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,7 +30,7 @@ class DownloadCreate:
     # re-inspects the provider source before selecting streams or writing an
     # artifact, so this only changes admission-time expiry handling.
     allow_expired_source: bool = False
-    is_admin: bool = False
+    quota: UserQuota = UserQuota()
 
 
 @dataclass(frozen=True, slots=True)

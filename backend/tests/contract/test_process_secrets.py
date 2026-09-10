@@ -52,5 +52,5 @@ def test_business_roles_use_explicit_scoped_secret_allowlists(filename):
         )
         assert "DATABASE_URL" in environment
         assert "APP_ENV" in environment
-    assert "VALKEY_URL" not in services["worker-download"]["environment"]
+    assert "REDIS_URL" not in services["worker-download"]["environment"]
     assert "RABBITMQ_URL" not in services["provider-canary"]["environment"]

@@ -168,7 +168,7 @@ def test_compose_does_not_bundle_host_managed_infrastructure() -> None:
         "database-init",
         "rabbitmq",
         "rabbitmq-init",
-        "valkey",
+        "redis",
         "minio",
         "minio-init",
     ):

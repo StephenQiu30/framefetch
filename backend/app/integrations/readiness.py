@@ -57,7 +57,7 @@ def build_runtime_readiness(
     engine: AsyncEngine,
     *,
     client: httpx.AsyncClient | None = None,
-    valkey_check: AsyncCheck | None = None,
+    redis_check: AsyncCheck | None = None,
 ) -> RuntimeReadiness:
     http_client = client or httpx.AsyncClient(
         timeout=settings.readiness_timeout_seconds,
@@ -99,8 +99,8 @@ def build_runtime_readiness(
     ]
     # Media Runner and analysis worker health are feature-level information.
     # Core APIs stay available while media services recover.
-    if valkey_check is not None:
-        checks.append(valkey_check)
+    if redis_check is not None:
+        checks.append(redis_check)
     return RuntimeReadiness(
         tuple(checks),
         http_client,

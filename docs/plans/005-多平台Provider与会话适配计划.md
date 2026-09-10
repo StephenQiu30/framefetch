@@ -75,7 +75,7 @@
 - 成功、非零退出、timeout、cancel、SIGTERM、workspace limit 和 Runner restart 均无临时文件残留。
 - 并发操作获得不同 inode/path，同一 jar 无并发 writer，文件权限严格为 `0600`，源文件内容和 mtime 不变。
 - 敏感 fixture 扫描 DB、RabbitMQ、MinIO、日志、trace、API snapshot、container env 和 `/work` 均无命中。
-- Runner 仍无法连接 DB/MQ/MinIO/Valkey 或绕过 egress proxy。
+- Runner 仍无法连接 DB/MQ/MinIO/Redis 或绕过 egress proxy。
 
 ## 5. Phase 3：YouTube 运维 Cookie 全链路
 

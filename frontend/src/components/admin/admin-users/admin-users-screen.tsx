@@ -9,6 +9,7 @@ import {
   PAGE_SIZE,
   type UserEditorState,
   type UserQueryState,
+  type UserQuotaDraft,
   type UserResultState,
 } from './model';
 import { UserEditor } from './user-editor';
@@ -26,6 +27,10 @@ type ScreenActions = {
   onEdit: (user: API.ManagedUserResponse) => void;
   onEditRole: (value: API.UserRole) => void;
   onEditActive: (value: boolean) => void;
+  onEditQuota: <K extends keyof UserQuotaDraft>(
+    field: K,
+    value: UserQuotaDraft[K],
+  ) => void;
   onCloseEditor: () => void;
   onSaveEditor: () => void;
 };
@@ -120,6 +125,7 @@ export function AdminUsersScreen({
         editor={editor}
         onRoleChange={actions.onEditRole}
         onActiveChange={actions.onEditActive}
+        onQuotaChange={actions.onEditQuota}
         onClose={actions.onCloseEditor}
         onSave={actions.onSaveEditor}
       />

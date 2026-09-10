@@ -16,12 +16,25 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(512) NOT NULL,
     role VARCHAR(16) NOT NULL DEFAULT 'user',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    quota_exempt BOOLEAN NOT NULL DEFAULT FALSE,
+    quota_max_active_tasks INTEGER CHECK (quota_max_active_tasks > 0),
+    quota_daily_tasks INTEGER CHECK (quota_daily_tasks > 0),
+    quota_daily_bytes BIGINT CHECK (quota_daily_bytes > 0),
+    quota_storage_bytes BIGINT CHECK (quota_storage_bytes > 0),
+    quota_daily_analysis_attempts INTEGER CHECK (quota_daily_analysis_attempts > 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_users_email UNIQUE (email),
     CONSTRAINT uq_users_normalized_username UNIQUE (normalized_username),
     CONSTRAINT ck_users_role CHECK (role IN ('admin', 'user'))
 );
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS quota_exempt BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS quota_max_active_tasks INTEGER CHECK (quota_max_active_tasks > 0);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS quota_daily_tasks INTEGER CHECK (quota_daily_tasks > 0);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS quota_daily_bytes BIGINT CHECK (quota_daily_bytes > 0);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS quota_storage_bytes BIGINT CHECK (quota_storage_bytes > 0);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS quota_daily_analysis_attempts INTEGER CHECK (quota_daily_analysis_attempts > 0);
 
 CREATE TABLE IF NOT EXISTS auth_sessions (
     id UUID PRIMARY KEY,

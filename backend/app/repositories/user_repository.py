@@ -14,6 +14,7 @@ from app.models import AuthSessionRow, UserRow
 from app.repositories.auth_mapping import account_from_row
 from app.services.auth import AccountRecord, ManagedUserPage, UserRole
 from app.services.auth.errors import DuplicateUsernameError
+from app.services.quotas import UserQuota
 
 
 class SqlAlchemyUserRepository:
@@ -99,6 +100,7 @@ class SqlAlchemyUserRepository:
         account_id: UUID,
         role: UserRole | None,
         is_active: bool | None,
+        quota: UserQuota | None,
         now: datetime,
     ) -> AccountRecord | None:
         values: dict[str, object] = {"updated_at": now}
@@ -106,6 +108,15 @@ class SqlAlchemyUserRepository:
             values["role"] = role.value
         if is_active is not None:
             values["is_active"] = is_active
+        if quota is not None:
+            values.update(
+                quota_exempt=quota.exempt,
+                quota_max_active_tasks=quota.max_active_per_owner,
+                quota_daily_tasks=quota.daily_tasks,
+                quota_daily_bytes=quota.daily_bytes,
+                quota_storage_bytes=quota.storage_bytes,
+                quota_daily_analysis_attempts=quota.daily_analysis_attempts,
+            )
         should_revoke_sessions = False
         async with self._sessions.begin() as session:
             row = await session.scalar(

@@ -7,13 +7,25 @@ import {
   type ActiveFilter,
   PAGE_SIZE,
   type RoleFilter,
+  type UserQuotaDraft,
 } from '@/components/admin/admin-users/model';
 import {
   AdminSkeleton,
   UnauthenticatedUsers,
 } from '@/components/admin/admin-users/user-states';
 import { useAuth } from '@/components/auth/auth-provider';
+import { ApiError } from '@/lib/request-error';
 import { displayError, listUsers, updateUserAccess } from '@/services/users';
+
+const GIB = 1024 ** 3;
+const EMPTY_QUOTA: UserQuotaDraft = {
+  exempt: false,
+  maxActiveTasks: '',
+  dailyTasks: '',
+  dailyGiB: '',
+  storageGiB: '',
+  dailyAnalysisAttempts: '',
+};
 
 export function AdminUsersView() {
   const { user, loading: authLoading } = useAuth();
@@ -30,6 +42,7 @@ export function AdminUsersView() {
   const [editing, setEditing] = useState<API.ManagedUserResponse | null>(null);
   const [editRole, setEditRole] = useState<API.UserRole>('user');
   const [editActive, setEditActive] = useState(true);
+  const [editQuota, setEditQuota] = useState<UserQuotaDraft>(EMPTY_QUOTA);
   const [editError, setEditError] = useState('');
   const [saving, setSaving] = useState(false);
   const requestId = useRef(0);
@@ -77,6 +90,7 @@ export function AdminUsersView() {
     setEditing(target);
     setEditRole(target.role);
     setEditActive(target.is_active);
+    setEditQuota(quotaDraft(target.quota));
     setEditError('');
   }
 
@@ -85,15 +99,21 @@ export function AdminUsersView() {
     setSaving(true);
     setEditError('');
     try {
+      const quota = quotaInput(editQuota);
       await updateUserAccess(editing.id, {
         role: editRole,
         is_active: editActive,
+        quota,
       });
       setEditing(null);
       setNotice(`已更新 ${editing.username} 的账户权限。`);
       await loadUsers();
     } catch (reason) {
-      setEditError(displayError(reason));
+      setEditError(
+        reason instanceof Error && !(reason instanceof ApiError)
+          ? reason.message
+          : displayError(reason),
+      );
     } finally {
       setSaving(false);
     }
@@ -111,6 +131,7 @@ export function AdminUsersView() {
         user: editing,
         role: editRole,
         active: editActive,
+        quota: editQuota,
         error: editError,
         saving,
       }}
@@ -131,6 +152,10 @@ export function AdminUsersView() {
         onEdit: openEditor,
         onEditRole: setEditRole,
         onEditActive: setEditActive,
+        onEditQuota: (field, value) => {
+          setEditQuota((current) => ({ ...current, [field]: value }));
+          setEditError('');
+        },
         onCloseEditor: () => {
           if (!saving) setEditing(null);
         },
@@ -138,4 +163,53 @@ export function AdminUsersView() {
       }}
     />
   );
+}
+
+function quotaDraft(quota: API.UserQuotaSettings): UserQuotaDraft {
+  return {
+    exempt: quota.exempt ?? false,
+    maxActiveTasks: quota.max_active_per_owner?.toString() ?? '',
+    dailyTasks: quota.daily_tasks?.toString() ?? '',
+    dailyGiB: bytesToGiB(quota.daily_bytes),
+    storageGiB: bytesToGiB(quota.storage_bytes),
+    dailyAnalysisAttempts: quota.daily_analysis_attempts?.toString() ?? '',
+  };
+}
+
+function quotaInput(quota: UserQuotaDraft): API.UserQuotaSettings {
+  return {
+    exempt: quota.exempt,
+    max_active_per_owner: positiveInteger(quota.maxActiveTasks, '同时活跃任务'),
+    daily_tasks: positiveInteger(quota.dailyTasks, '24 小时任务数'),
+    daily_bytes: positiveGiB(quota.dailyGiB, '24 小时处理量'),
+    storage_bytes: positiveGiB(quota.storageGiB, '保留存储'),
+    daily_analysis_attempts: positiveInteger(
+      quota.dailyAnalysisAttempts,
+      '24 小时分析尝试',
+    ),
+  };
+}
+
+function positiveInteger(value: string, label: string): number | null {
+  if (!value) return null;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new Error(`${label}必须是正整数。`);
+  }
+  return parsed;
+}
+
+function positiveGiB(value: string, label: string): number | null {
+  if (!value) return null;
+  const parsed = Number(value);
+  const bytes = Math.round(parsed * GIB);
+  if (!Number.isFinite(parsed) || parsed <= 0 || !Number.isSafeInteger(bytes)) {
+    throw new Error(`${label}必须是大于 0 的有效数值。`);
+  }
+  return bytes;
+}
+
+function bytesToGiB(value: number | null | undefined): string {
+  if (value == null) return '';
+  return (value / GIB).toString();
 }

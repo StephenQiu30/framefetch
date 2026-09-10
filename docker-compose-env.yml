@@ -141,20 +141,20 @@ services:
         declare_binding video.events.dead video.analysis-report.dead video.analysis-report.dead
         declare_binding video.events.dead video.import.dead video.import.dead
 
-  valkey:
-    image: valkey/valkey:8-alpine
-    container_name: video-env-valkey
+  redis:
+    image: redis:8-alpine
+    container_name: video-env-redis
     restart: unless-stopped
-    command: ["valkey-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "127.0.0.1:${HOST_VALKEY_PORT:-16380}:6379"
+      - "127.0.0.1:${HOST_REDIS_PORT:-16380}:6379"
     networks:
       - default
       - app_net
     volumes:
-      - video_env_valkey_data:/data
+      - video_env_redis_data:/data
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -204,7 +204,7 @@ services:
 volumes:
   video_env_postgres_data:
   video_env_rabbitmq_data:
-  video_env_valkey_data:
+  video_env_redis_data:
   video_env_minio_data:
 
 networks:

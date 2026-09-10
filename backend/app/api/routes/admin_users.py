@@ -66,6 +66,7 @@ async def update_user_access(
             user_id,
             role=body.role,
             is_active=body.is_active,
+            quota=body.quota.to_quota() if body.quota is not None else None,
         )
     except AuthError as exc:
         raise auth_application_error(exc) from exc

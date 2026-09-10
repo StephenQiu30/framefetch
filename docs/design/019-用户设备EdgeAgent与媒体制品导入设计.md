@@ -116,7 +116,7 @@ browser_import:  uploading → verifying → importing
 
 保存 `id`、`owner_hash`、显示名、系统平台、设备公钥及指纹、Agent 版本、能力列表、状态、最后在线时间和创建/撤销时间。只保存设备身份，不保存任何 Provider 会话。设备状态为 `active/revoked/upgrade_required`；撤销后不再发放上传会话，进行中的任务进入取消或超时收敛。
 
-配对 challenge 与短码使用 Valkey TTL 保存，服务重启后允许失效并重新配对；设备本身以 PostgreSQL 为事实来源。
+配对 challenge 与短码使用 Redis TTL 保存，服务重启后允许失效并重新配对；设备本身以 PostgreSQL 为事实来源。
 
 #### `media_imports`
 

@@ -13,6 +13,7 @@ from app.services.auth.models import (
     TokenClaims,
     UserRole,
 )
+from app.services.quotas import UserQuota
 
 
 class AuthRepository(Protocol):
@@ -92,6 +93,7 @@ class UserRepository(Protocol):
         account_id: UUID,
         role: UserRole | None,
         is_active: bool | None,
+        quota: UserQuota | None,
         now: datetime,
     ) -> AccountRecord | None: ...
 

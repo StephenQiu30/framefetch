@@ -926,6 +926,7 @@ declare namespace API {
     created_at: string;
     /** Updated At */
     updated_at: string;
+    quota: UserQuotaSettings;
   };
 
   type MediaImportRequest = {
@@ -1440,6 +1441,7 @@ declare namespace API {
     role?: UserRole | null;
     /** Is Active */
     is_active?: boolean | null;
+    quota?: UserQuotaSettings | null;
   };
 
   type UploadPartResponse = {
@@ -1447,6 +1449,21 @@ declare namespace API {
     part_number: number;
     /** Url */
     url: string;
+  };
+
+  type UserQuotaSettings = {
+    /** Exempt */
+    exempt?: boolean;
+    /** Max Active Per Owner */
+    max_active_per_owner?: number | null;
+    /** Daily Tasks */
+    daily_tasks?: number | null;
+    /** Daily Bytes */
+    daily_bytes?: number | null;
+    /** Storage Bytes */
+    storage_bytes?: number | null;
+    /** Daily Analysis Attempts */
+    daily_analysis_attempts?: number | null;
   };
 
   type UserResponse = {

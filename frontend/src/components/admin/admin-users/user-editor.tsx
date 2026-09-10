@@ -18,6 +18,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -28,12 +29,16 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 
-import type { UserEditorState } from './model';
+import type { UserEditorState, UserQuotaDraft } from './model';
 
 type UserEditorProps = {
   editor: UserEditorState;
   onRoleChange: (value: API.UserRole) => void;
   onActiveChange: (value: boolean) => void;
+  onQuotaChange: <K extends keyof UserQuotaDraft>(
+    field: K,
+    value: UserQuotaDraft[K],
+  ) => void;
   onClose: () => void;
   onSave: () => void;
 };
@@ -42,6 +47,7 @@ export function UserEditor({
   editor,
   onRoleChange,
   onActiveChange,
+  onQuotaChange,
   onClose,
   onSave,
 }: UserEditorProps) {
@@ -104,6 +110,57 @@ export function UserEditor({
                 onCheckedChange={onActiveChange}
               />
             </Field>
+            <Field
+              className="rounded-md bg-surface px-4 py-4"
+              orientation="horizontal"
+            >
+              <FieldContent>
+                <FieldLabel htmlFor="edit-quota-exempt">配额豁免</FieldLabel>
+                <FieldDescription className="text-xs">
+                  管理员始终豁免；普通用户可按需单独豁免业务配额。
+                </FieldDescription>
+              </FieldContent>
+              <Switch
+                checked={editor.quota.exempt}
+                disabled={editor.saving || editor.role === 'admin'}
+                id="edit-quota-exempt"
+                onCheckedChange={(value) => onQuotaChange('exempt', value)}
+              />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <QuotaInput
+                id="edit-quota-active"
+                label="同时活跃任务"
+                value={editor.quota.maxActiveTasks}
+                onChange={(value) => onQuotaChange('maxActiveTasks', value)}
+              />
+              <QuotaInput
+                id="edit-quota-daily-tasks"
+                label="24 小时任务数"
+                value={editor.quota.dailyTasks}
+                onChange={(value) => onQuotaChange('dailyTasks', value)}
+              />
+              <QuotaInput
+                id="edit-quota-daily-gib"
+                label="24 小时处理量（GiB）"
+                value={editor.quota.dailyGiB}
+                onChange={(value) => onQuotaChange('dailyGiB', value)}
+              />
+              <QuotaInput
+                id="edit-quota-storage-gib"
+                label="保留存储（GiB）"
+                value={editor.quota.storageGiB}
+                onChange={(value) => onQuotaChange('storageGiB', value)}
+              />
+              <QuotaInput
+                id="edit-quota-analysis"
+                label="24 小时分析尝试"
+                value={editor.quota.dailyAnalysisAttempts}
+                onChange={(value) =>
+                  onQuotaChange('dailyAnalysisAttempts', value)
+                }
+              />
+            </div>
             {editor.error ? (
               <Alert variant="destructive">
                 <WarningCircle aria-hidden />
@@ -129,5 +186,32 @@ export function UserEditor({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function QuotaInput({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Field>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <Input
+        id={id}
+        inputMode="numeric"
+        min="1"
+        placeholder="使用系统默认"
+        type="number"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </Field>
   );
 }

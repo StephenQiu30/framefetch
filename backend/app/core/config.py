@@ -93,7 +93,7 @@ class Settings(BaseSettings):
     download_worker_threads: int = Field(default=4, ge=1, le=64)
     outbox_batch_size: int = Field(default=50, ge=1, le=200)
     outbox_poll_interval_seconds: float = Field(default=1.0, ge=0.1, le=60)
-    valkey_url: str | None = None
+    redis_url: str | None = None
 
     minio_endpoint: str = "localhost:19190"
     minio_public_endpoint: str = "127.0.0.1:19190"
@@ -579,8 +579,8 @@ class Settings(BaseSettings):
         )
         if insecure or insecure_urls or default_url_key:
             raise ValueError("production secrets must be explicitly configured")
-        if self.service_role == "api" and not self.valkey_url:
-            raise ValueError("production API requires VALKEY_URL")
+        if self.service_role == "api" and not self.redis_url:
+            raise ValueError("production API requires REDIS_URL")
         if self.service_role == "api" and self.auth_bootstrap_admin_email is None:
             raise ValueError("production API requires AUTH_BOOTSTRAP_ADMIN_EMAIL")
         return self

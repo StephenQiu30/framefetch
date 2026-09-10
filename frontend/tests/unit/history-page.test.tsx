@@ -23,9 +23,12 @@ const runtime = vi.hoisted(() => ({
   issueDownloadUrl: vi.fn(),
   retryDownload: vi.fn(),
   triggerBrowserDownload: vi.fn(),
+  push: vi.fn(),
 }));
 
-vi.mock('next/navigation', () => ({}));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: runtime.push }),
+}));
 
 vi.mock('@/services/download', () => ({
   displayError: (reason: unknown) =>
@@ -45,6 +48,7 @@ describe('download history', () => {
     runtime.issueDownloadUrl.mockReset();
     runtime.retryDownload.mockReset();
     runtime.triggerBrowserDownload.mockReset();
+    runtime.push.mockReset();
   });
 
   it('maps pagination, search, status, and refresh to the history facade', async () => {
@@ -204,9 +208,6 @@ describe('download history', () => {
       }),
     );
     runtime.retryDownload.mockResolvedValue({ id: 'retried-job' });
-    const assign = vi
-      .spyOn(window.location, 'assign')
-      .mockImplementation(() => undefined);
     render(<DownloadHistoryView />);
 
     fireEvent.click(await screen.findByRole('button', { name: '重新下载' }));
@@ -217,7 +218,9 @@ describe('download history', () => {
         'history-retry-key',
       ),
     );
-    expect(assign).toHaveBeenCalledWith('/downloads/detail?jobId=retried-job');
+    expect(runtime.push).toHaveBeenCalledWith(
+      '/downloads/detail?jobId=retried-job',
+    );
   });
 
   it('changes pages through the shared pagination controls', async () => {

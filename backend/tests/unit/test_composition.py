@@ -20,7 +20,7 @@ def test_non_test_app_wires_download_use_cases(tmp_path: Path) -> None:
     settings = Settings(
         app_env="development",
         runner_base_url="http://runner.test",
-        valkey_url="redis://127.0.0.1:6379/0",
+        redis_url="redis://127.0.0.1:6379/0",
         _env_file=None,
     )
     application = create_app(settings)
@@ -36,7 +36,7 @@ def test_non_test_app_wires_runtime_readiness_into_the_route(tmp_path: Path) -> 
     settings = Settings(
         app_env="development",
         runner_base_url="http://runner.test",
-        valkey_url="redis://127.0.0.1:6379/0",
+        redis_url="redis://127.0.0.1:6379/0",
         _env_file=None,
     )
     application = create_app(settings)

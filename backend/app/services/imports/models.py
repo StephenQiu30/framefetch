@@ -12,6 +12,7 @@ from app.domain.imports import (
     ImportSourceFormat,
     ImportStatus,
 )
+from app.services.quotas import UserQuota
 
 
 class ImportDisposition(StrEnum):
@@ -65,7 +66,7 @@ class ImportResourceCreate:
     declared_sha256: str = field(repr=False)
     rights_statement_version: str
     declared_origin: DeclaredOrigin = DeclaredOrigin.USER_FILE
-    is_admin: bool = False
+    quota: UserQuota = UserQuota()
 
 
 @dataclass(frozen=True, slots=True)

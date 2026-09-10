@@ -228,7 +228,7 @@ def test_admin_download_route_forwards_admin_admission_context(tmp_path: Path) -
         )
 
     assert response.status_code == 201
-    assert stubs["create"].calls[0][1]["is_admin"] is True
+    assert stubs["create"].calls[0][1]["quota"].exempt is True
 
 
 def test_download_file_route_streams_an_owned_range(tmp_path: Path) -> None:

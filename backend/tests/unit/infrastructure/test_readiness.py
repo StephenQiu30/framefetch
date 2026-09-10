@@ -40,7 +40,7 @@ async def runtime_probe(
     engine: AsyncEngine,
     *,
     operator_runners: dict[str, str] | None = None,
-    valkey_check: AsyncCheck | None = None,
+    redis_check: AsyncCheck | None = None,
 ) -> AsyncIterator[Any]:
     client = httpx.AsyncClient(transport=handler)
     settings = Settings(
@@ -54,7 +54,7 @@ async def runtime_probe(
         readiness_timeout_seconds=1,
     )
     probe = build_runtime_readiness(
-        settings, engine, client=client, valkey_check=valkey_check
+        settings, engine, client=client, redis_check=redis_check
     )
     try:
         yield probe
@@ -151,7 +151,7 @@ async def test_runtime_readiness_does_not_depend_on_analysis_worker(
 
 
 @pytest.mark.usefixtures("rabbitmq_is_available")
-@pytest.mark.parametrize("dependency", ["rabbitmq", "valkey"])
+@pytest.mark.parametrize("dependency", ["rabbitmq", "redis"])
 async def test_core_dependency_failure_still_rejects_readiness(
     postgres_engine: AsyncEngine, monkeypatch: pytest.MonkeyPatch, dependency: str
 ) -> None:
@@ -163,6 +163,6 @@ async def test_core_dependency_failure_still_rejects_readiness(
     async with runtime_probe(
         httpx.MockTransport(lambda _: httpx.Response(200)),
         postgres_engine,
-        valkey_check=unavailable if dependency == "valkey" else None,
+        redis_check=unavailable if dependency == "redis" else None,
     ) as probe:
         assert await probe.check() is False

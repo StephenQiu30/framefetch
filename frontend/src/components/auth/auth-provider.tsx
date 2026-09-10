@@ -12,6 +12,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { ApiError } from '@/lib/request-error';
 import { taskSocket } from '@/lib/task-socket';
 import { type AuthUser, getCurrentUser, logout } from '@/services/auth';
 
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<AuthUser>();
   const [loading, setLoading] = useState(true);
   const designPreview = useRef(false);
+  const initialized = useRef(false);
   const setUser = useCallback<Dispatch<SetStateAction<AuthUser | undefined>>>(
     (value) => {
       taskSocket.reset();
@@ -61,15 +63,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return DESIGN_USER;
     }
 
-    setLoading(true);
+    if (!initialized.current) setLoading(true);
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
       return currentUser;
-    } catch {
-      setUser(undefined);
+    } catch (reason) {
+      if (
+        !initialized.current ||
+        (reason instanceof ApiError && reason.status === 401)
+      ) {
+        setUser(undefined);
+      }
       return undefined;
     } finally {
+      initialized.current = true;
       setLoading(false);
     }
   }, [setUser]);
@@ -77,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isDesignInspection()) {
       designPreview.current = true;
+      initialized.current = true;
       setUser(DESIGN_USER);
       setLoading(false);
       return;

@@ -14,6 +14,32 @@ from pydantic import (
 
 from app.services.auth import ManagedUser, ManagedUserPage, UserRole
 from app.services.auth.usernames import normalize_username
+from app.services.quotas import UserQuota
+
+
+class UserQuotaSettings(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    exempt: bool = False
+    max_active_per_owner: int | None = Field(default=None, ge=1)
+    daily_tasks: int | None = Field(default=None, ge=1)
+    daily_bytes: int | None = Field(default=None, ge=1)
+    storage_bytes: int | None = Field(default=None, ge=1)
+    daily_analysis_attempts: int | None = Field(default=None, ge=1)
+
+    @classmethod
+    def from_quota(cls, quota: UserQuota) -> UserQuotaSettings:
+        return cls(
+            exempt=quota.exempt,
+            max_active_per_owner=quota.max_active_per_owner,
+            daily_tasks=quota.daily_tasks,
+            daily_bytes=quota.daily_bytes,
+            storage_bytes=quota.storage_bytes,
+            daily_analysis_attempts=quota.daily_analysis_attempts,
+        )
+
+    def to_quota(self) -> UserQuota:
+        return UserQuota(**self.model_dump())
 
 
 class UpdateProfileRequest(BaseModel):
@@ -36,6 +62,7 @@ class ManagedUserResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    quota: UserQuotaSettings
 
     @classmethod
     def from_user(cls, user: ManagedUser) -> ManagedUserResponse:
@@ -47,6 +74,7 @@ class ManagedUserResponse(BaseModel):
             is_active=user.is_active,
             created_at=user.created_at,
             updated_at=user.updated_at,
+            quota=UserQuotaSettings.from_quota(user.quota),
         )
 
 
@@ -71,9 +99,10 @@ class UpdateUserAccessRequest(BaseModel):
 
     role: UserRole | None = None
     is_active: bool | None = None
+    quota: UserQuotaSettings | None = None
 
     @model_validator(mode="after")
     def require_change(self) -> UpdateUserAccessRequest:
-        if self.role is None and self.is_active is None:
-            raise ValueError("role or is_active is required")
+        if self.role is None and self.is_active is None and self.quota is None:
+            raise ValueError("role, is_active or quota is required")
         return self

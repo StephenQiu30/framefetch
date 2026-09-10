@@ -6,6 +6,8 @@ from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
+from app.services.quotas import UserQuota
+
 
 class UserRole(StrEnum):
     ADMIN = "admin"
@@ -22,6 +24,7 @@ class AccountRecord:
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    quota: UserQuota = UserQuota()
 
     def public_view(self) -> CurrentUser:
         return CurrentUser(
@@ -31,6 +34,7 @@ class AccountRecord:
             role=self.role,
             created_at=self.created_at,
             updated_at=self.updated_at,
+            quota=self.quota,
         )
 
     def managed_view(self) -> ManagedUser:
@@ -42,6 +46,7 @@ class AccountRecord:
             is_active=self.is_active,
             created_at=self.created_at,
             updated_at=self.updated_at,
+            quota=self.quota,
         )
 
 
@@ -53,6 +58,7 @@ class CurrentUser:
     role: UserRole
     created_at: datetime
     updated_at: datetime
+    quota: UserQuota = UserQuota()
 
     @property
     def owner_hash(self) -> str:
@@ -61,6 +67,12 @@ class CurrentUser:
     @property
     def is_admin(self) -> bool:
         return self.role is UserRole.ADMIN
+
+    @property
+    def admission_quota(self) -> UserQuota:
+        if self.is_admin:
+            return UserQuota(exempt=True)
+        return self.quota
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +84,7 @@ class ManagedUser:
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    quota: UserQuota = UserQuota()
 
 
 @dataclass(frozen=True, slots=True)

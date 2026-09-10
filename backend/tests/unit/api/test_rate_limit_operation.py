@@ -64,7 +64,7 @@ def test_client_host_fails_closed_for_a_malformed_forwarding_chain() -> None:
 def test_all_analysis_creation_routes_enforce_admission(path: str) -> None:
     app = create_app(Settings(app_env="test", _env_file=None))
     app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
-        owner_hash="a" * 64
+        owner_hash="a" * 64, is_admin=False
     )
 
     class Limiter:

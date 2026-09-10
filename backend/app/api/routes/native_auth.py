@@ -11,6 +11,7 @@ from app.api.dependencies import get_runtime_settings
 from app.api.errors import auth_application_error
 from app.api.openapi import ERROR_RESPONSES
 from app.core.config import Settings
+from app.core.errors import AppError
 from app.schemas.auth import (
     EmailPasswordRequest,
     RegisterRequest,
@@ -23,7 +24,12 @@ from app.schemas.native_auth import (
     NativeRefreshRequest,
     NativeSessionResponse,
 )
-from app.services.auth import AuthError, AuthService, CurrentUser
+from app.services.auth import (
+    AuthError,
+    AuthService,
+    CurrentUser,
+    SessionRotationConflict,
+)
 
 router = APIRouter(
     prefix="/api/app/v1/auth",
@@ -129,6 +135,13 @@ async def refresh_native_session(
 ) -> NativeSessionResponse:
     try:
         grant = await auth.refresh(body.refresh_token)
+    except SessionRotationConflict:
+        raise AppError(
+            status=409,
+            code="refresh_in_progress",
+            title="Session refresh in progress",
+            detail="Another request has already refreshed this session.",
+        ) from None
     except AuthError as exc:
         raise auth_application_error(exc) from exc
     return NativeSessionResponse.from_grant(grant)

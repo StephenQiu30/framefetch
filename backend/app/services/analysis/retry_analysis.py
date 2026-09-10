@@ -21,6 +21,7 @@ from app.services.analysis.validation import (
     validate_owner_hash,
 )
 from app.services.analysis.views import analysis_job_view
+from app.services.quotas import DEFAULT_USER_QUOTA, UserQuota
 
 
 class RetryAnalysis:
@@ -47,7 +48,7 @@ class RetryAnalysis:
         owner_hash: str,
         idempotency_key: str,
         *,
-        is_admin: bool = False,
+        quota: UserQuota = DEFAULT_USER_QUOTA,
     ) -> AnalysisJobView:
         owner_hash = validate_owner_hash(owner_hash)
         idempotency_key = validate_idempotency_key(idempotency_key)
@@ -68,7 +69,7 @@ class RetryAnalysis:
             max_runs_per_job=self._max_runs_per_job,
             min_interval_seconds=self._min_interval_seconds,
             retries_per_day=self._retries_per_day,
-            is_admin=is_admin,
+            quota=quota,
         )
         try:
             saved = await self._repository.retry_job_and_enqueue(command, now=now)

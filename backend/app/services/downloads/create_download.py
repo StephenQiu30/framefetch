@@ -20,6 +20,7 @@ from app.services.downloads.validation import (
     validate_owner_hash,
 )
 from app.services.downloads.views import download_view
+from app.services.quotas import DEFAULT_USER_QUOTA, UserQuota
 
 
 class CreateDownload:
@@ -47,7 +48,7 @@ class CreateDownload:
         owner_hash: str,
         idempotency_key: str,
         *,
-        is_admin: bool = False,
+        quota: UserQuota = DEFAULT_USER_QUOTA,
     ) -> DownloadView:
         owner_hash = validate_owner_hash(owner_hash)
         idempotency_key = validate_idempotency_key(idempotency_key)
@@ -98,7 +99,7 @@ class CreateDownload:
             ),
             semantic_plan=semantic,
             max_attempts=self._max_attempts,
-            is_admin=is_admin,
+            quota=quota,
         )
         try:
             saved = await self._repository.create_job(command, now=now)

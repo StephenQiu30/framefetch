@@ -6,21 +6,31 @@ import math
 from datetime import datetime
 from uuid import UUID
 
-from valkey.asyncio import Valkey
+from redis.asyncio import Redis
 
 from app.repositories.auth_repository import SqlAlchemyAuthRepository
-from app.services.auth import AccountRecord, CurrentUser, UserRole
+from app.services.auth import (
+    AccountRecord,
+    CurrentUser,
+    SessionRotationConflict,
+    UserRole,
+)
 
 _SESSION_KEY_PREFIX = "video:auth:session:"
 _USER_SESSIONS_KEY_PREFIX = "video:auth:user-sessions:"
+_ROTATED_PREFIX = "rotated:"
+_ROTATION_GRACE_SECONDS = 10
 
 _ROTATE_SESSION_SCRIPT = """
 local current_user = redis.call('GET', KEYS[1])
+if current_user and string.sub(current_user, 1, 8) == 'rotated:' then
+  return 2
+end
 if not current_user or current_user ~= ARGV[1] then
   return 0
 end
 
-redis.call('DEL', KEYS[1])
+redis.call('SET', KEYS[1], 'rotated:' .. ARGV[1], 'EX', ARGV[5])
 redis.call('SREM', KEYS[3], ARGV[2])
 redis.call('SET', KEYS[2], ARGV[1], 'EX', ARGV[3])
 redis.call('SADD', KEYS[3], ARGV[4])
@@ -29,13 +39,13 @@ return 1
 """
 
 
-class ValkeyAuthSessionStore:
-    """Store only refresh-token hashes in Valkey with an atomic rotation."""
+class RedisAuthSessionStore:
+    """Store only refresh-token hashes in Redis with an atomic rotation."""
 
     def __init__(self, url: str) -> None:
         if not url:
             raise ValueError("auth session store URL is required")
-        self._client = Valkey.from_url(url, decode_responses=True)
+        self._client = Redis.from_url(url, decode_responses=True)
 
     async def create_session(
         self,
@@ -59,10 +69,16 @@ class ValkeyAuthSessionStore:
         value = await self._client.get(_session_key(token_hash))
         if not isinstance(value, str):
             return None
+        if value.startswith(_ROTATED_PREFIX):
+            return None
         try:
             return UUID(value)
         except ValueError:
             return None
+
+    async def is_rotated(self, token_hash: str) -> bool:
+        value = await self._client.get(_session_key(token_hash))
+        return isinstance(value, str) and value.startswith(_ROTATED_PREFIX)
 
     async def delete_session(self, token_hash: str) -> None:
         user_id = await self.user_id_for_session(token_hash)
@@ -94,7 +110,10 @@ class ValkeyAuthSessionStore:
             previous_token_hash,
             str(ttl),
             token_hash,
+            str(_ROTATION_GRACE_SECONDS),
         )
+        if int(result) == 2:
+            raise SessionRotationConflict
         return int(result) == 1
 
     async def delete_user_sessions(self, user_id: UUID) -> None:
@@ -115,12 +134,12 @@ class ValkeyAuthSessionStore:
 
 
 class RedisAuthRepository:
-    """Use Valkey for new sessions while reading legacy SQL sessions once."""
+    """Use Redis for new sessions while reading legacy SQL sessions once."""
 
     def __init__(
         self,
         database: SqlAlchemyAuthRepository,
-        sessions: ValkeyAuthSessionStore,
+        sessions: RedisAuthSessionStore,
     ) -> None:
         self._database = database
         self._sessions = sessions
@@ -186,6 +205,8 @@ class RedisAuthRepository:
             if account is None or not account.is_active:
                 return None
             return account.public_view()
+        if await self._sessions.is_rotated(token_hash):
+            raise SessionRotationConflict
 
         # Existing SQL sessions remain refreshable during the migration window.
         return await self._database.find_user_by_session(token_hash, now)

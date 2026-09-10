@@ -353,7 +353,7 @@ def test_production_accepts_explicit_secrets() -> None:
         app_env="production",
         database_url="postgresql+asyncpg://app:StrongDbPass123@postgres:5432/video",
         rabbitmq_url="amqp://app:StrongMqPass123@rabbitmq:5672/",
-        valkey_url="redis://valkey:6379/0",
+        redis_url="redis://redis:6379/0",
         auth_jwt_secret=SecretStr("s" * 48),
         request_fingerprint_secret=SecretStr("f" * 48),
         url_encryption_key=SecretStr("MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="),
@@ -431,7 +431,7 @@ def test_production_url_key_required_only_for_consumers(role: str) -> None:
         metrics_access_key="k" * 48,
         auth_bootstrap_admin_secret="a" * 48,
         auth_bootstrap_admin_email="admin@example.com",
-        valkey_url="redis://valkey:6379/0",
+        redis_url="redis://redis:6379/0",
     )
     with pytest.raises(ValidationError, match="production secrets"):
         Settings(**kwargs, url_encryption_key=DEFAULT_URL_ENCRYPTION_KEY)

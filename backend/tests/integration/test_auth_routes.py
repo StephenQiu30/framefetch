@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import cast
 from uuid import uuid4
 
 from app.core.config import Settings
@@ -14,7 +15,7 @@ from app.main import create_app
 from app.repositories.auth_repository import SqlAlchemyAuthRepository
 from app.repositories.email_verification_repository import SqlAlchemyVerificationStore
 from app.repositories.user_repository import SqlAlchemyUserRepository
-from app.services.auth import AuthService, UserService
+from app.services.auth import AuthService, SessionRotationConflict, UserService
 from app.services.auth.email_verification import EmailVerification
 from httpx import ASGITransport, AsyncClient, Response
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -26,6 +27,11 @@ class CapturingMailer:
 
     async def send_code(self, email: str, code: str) -> None:
         self.codes[email] = code
+
+
+class ConflictingRefreshAuth:
+    async def refresh(self, refresh_token: str) -> None:
+        raise SessionRotationConflict
 
 
 class AuthTestClient(AsyncClient):
@@ -140,6 +146,26 @@ async def test_register_creates_http_only_session_and_logout_revokes_it(
     assert logged_out.headers["set-cookie"].lower().count("max-age=0") == 2
     assert after_logout.status_code == 401
     assert after_logout.json()["code"] == "unauthenticated"
+
+
+async def test_refresh_rotation_conflict_preserves_browser_cookies() -> None:
+    app = create_app(
+        Settings(
+            app_env="test",
+            auth_access_cookie_name="test_access",
+            auth_refresh_cookie_name="test_refresh",
+        )
+    )
+    app.state.services.auth_service = cast(AuthService, ConflictingRefreshAuth())
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
+        client.cookies.set("test_refresh", "already-rotated")
+        response = await client.post("/api/auth/refresh")
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "refresh_in_progress"
+    assert "set-cookie" not in response.headers
 
 
 async def test_login_uses_generic_errors_and_duplicate_email_is_rejected(
@@ -262,7 +288,18 @@ async def test_profile_and_admin_user_management_are_role_protected(
         )
         user_id = user.json()["id"]
         promoted = await client.patch(
-            f"/api/admin/users/{user_id}", json={"role": "admin"}
+            f"/api/admin/users/{user_id}",
+            json={
+                "role": "admin",
+                "quota": {
+                    "exempt": False,
+                    "max_active_per_owner": 9,
+                    "daily_tasks": 120,
+                    "daily_bytes": None,
+                    "storage_bytes": None,
+                    "daily_analysis_attempts": 80,
+                },
+            },
         )
         disabled = await client.patch(
             f"/api/admin/users/{user_id}", json={"is_active": False}
@@ -284,6 +321,14 @@ async def test_profile_and_admin_user_management_are_role_protected(
     assert users.json()["total"] == 1
     assert users.json()["items"][0]["username"] == "renamed_user"
     assert promoted.json()["role"] == "admin"
+    assert promoted.json()["quota"] == {
+        "exempt": False,
+        "max_active_per_owner": 9,
+        "daily_tasks": 120,
+        "daily_bytes": None,
+        "storage_bytes": None,
+        "daily_analysis_attempts": 80,
+    }
     assert disabled.json()["is_active"] is False
     assert self_demote.status_code == 409
     assert self_demote.json()["code"] == "self_admin_change"

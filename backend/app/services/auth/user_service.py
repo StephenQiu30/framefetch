@@ -8,6 +8,7 @@ from app.services.auth.errors import AuthError, AuthErrorCode, DuplicateUsername
 from app.services.auth.models import CurrentUser, ManagedUser, ManagedUserPage, UserRole
 from app.services.auth.ports import UserRepository
 from app.services.auth.usernames import normalize_username
+from app.services.quotas import UserQuota
 
 
 class UserService:
@@ -63,6 +64,7 @@ class UserService:
         *,
         role: UserRole | None,
         is_active: bool | None,
+        quota: UserQuota | None = None,
     ) -> ManagedUser:
         _require_admin(actor)
         if actor.id == account_id and (
@@ -73,6 +75,7 @@ class UserService:
             account_id=account_id,
             role=role,
             is_active=is_active,
+            quota=quota,
             now=self._now(),
         )
         if account is None:

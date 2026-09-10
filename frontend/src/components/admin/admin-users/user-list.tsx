@@ -56,6 +56,9 @@ export function UserList({ items, currentUserId, onEdit }: UserListProps) {
         <Badge variant={item.is_active ? 'success' : 'neutral'}>
           {item.is_active ? '已启用' : '已停用'}
         </Badge>
+        {(item.role === 'admin' || item.quota.exempt) && (
+          <Badge variant="neutral">配额豁免</Badge>
+        )}
       </span>
     );
   }
