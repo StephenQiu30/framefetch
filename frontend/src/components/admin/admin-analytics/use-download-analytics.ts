@@ -3,11 +3,12 @@ import { getDownloadAnalytics } from '@/api/admin';
 import { privateQueryKey } from '@/lib/query-keys';
 import { displayError } from '@/lib/request-error';
 
-export function useAdminDownloadAnalytics(days: 7 | 30 | 90) {
+export function useAdminDownloadAnalytics(days: 7 | 30 | 90, enabled = true) {
   const result = useQuery({
     queryKey: privateQueryKey('admin-download-analytics', days),
     queryFn: ({ signal }) => getDownloadAnalytics({ days }, { signal }),
     placeholderData: keepPreviousData,
+    enabled,
   });
   return {
     data: result.data ?? null,
