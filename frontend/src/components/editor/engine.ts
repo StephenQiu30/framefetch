@@ -1,5 +1,8 @@
 import type { ToolConstructable } from '@editorjs/editorjs';
 
+type CodeToolOptions = { data?: { code?: string; language?: string } };
+type CodeToolInstance = { save(element: HTMLElement): { code: string } };
+
 export async function loadEditorEngine() {
   // Editor.js and its tools access browser globals; never evaluate them during SSR.
   const [core, header, list, quote, code, table, delimiter, inlineCode] =
@@ -13,6 +16,21 @@ export async function loadEditorEngine() {
       import('@editorjs/delimiter'),
       import('@editorjs/inline-code'),
     ]);
+  // The official code tool saves only `code`; keep the fenced language (e.g. mermaid).
+  const OfficialCode = code.default as unknown as new (
+    options: CodeToolOptions,
+  ) => CodeToolInstance;
+  class LanguageCode extends OfficialCode {
+    private readonly language?: string;
+    constructor(options: CodeToolOptions) {
+      super(options);
+      this.language = options.data?.language;
+    }
+    save(element: HTMLElement) {
+      const data = super.save(element);
+      return this.language ? { ...data, language: this.language } : data;
+    }
+  }
   return {
     EditorJS: core.default,
     tools: {
@@ -38,7 +56,7 @@ export async function loadEditorEngine() {
           captionPlaceholder: '引用署名（可选）',
         },
       },
-      code: code.default as ToolConstructable,
+      code: LanguageCode as unknown as ToolConstructable,
       table: { class: table.default as ToolConstructable, inlineToolbar: true },
       delimiter: delimiter.default as ToolConstructable,
       inlineCode: inlineCode.default as ToolConstructable,

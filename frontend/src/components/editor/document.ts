@@ -74,7 +74,9 @@ function blocksFromTokens(
         return [
           {
             type: 'code',
-            data: { code: `${code.text}\n` },
+            data: code.lang
+              ? { code: `${code.text}\n`, language: code.lang }
+              : { code: `${code.text}\n` },
           },
         ];
       }
