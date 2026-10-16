@@ -539,7 +539,7 @@ async def test_late_cookie_timeout_cannot_complete_next_request(
 
     socket = AsyncMock()
     socket.receive_text.side_effect = receive_text
-    responses = asyncio.create_task(service._responses(socket))
+    responses = asyncio.create_task(service._responses(socket, asyncio.TaskGroup()))
     try:
         await incoming.put(
             {"type": "cookies", "request_id": old_id, "cause": "extension_timeout"}
@@ -804,3 +804,148 @@ async def test_reddit_visitor_or_other_platform_session_is_not_identity(source, 
     with pytest.raises(m.IdentityUnavailable, match="credential_missing"):
         await service.cookies(request("reddit"))
     assert not service._pending and service._requests == 0
+
+
+async def test_youtube_diagnostics_bind_latest_task_and_fresh_material(source):
+    service, state = source
+    state["cookies"] = [
+        {**COOKIE, "domain": ".youtube.com", "name": name}
+        for name in ("LOGIN_INFO", "SAPISID")
+    ]
+    operation = request("youtube")
+    material = await service.cookies(operation)
+    assert await service.youtube_status() == {
+        "type": "youtube_status",
+        "material": "available",
+        "outcome": "not_checked",
+        "task_id": None,
+        "checked_at": None,
+        "failure_class": None,
+    }
+    report = m.IdentityResult(
+        **operation.model_dump(), digest=material["digest"], failure_class=None
+    )
+    assert service.record_result(report)
+    status = await service.youtube_status()
+    assert status["outcome"] == "accepted" and status["task_id"] == "task"
+    assert status["checked_at"] and "digest" not in status and "cookies" not in status
+    # A new task, even with the same material, cannot borrow the old success.
+    next_task = operation.model_copy(update={"task_id": "new-task"})
+    await service.cookies(next_task)
+    assert not service.record_result(report)
+    assert (await service.youtube_status())["outcome"] == "not_checked"
+    report = m.IdentityResult(
+        **next_task.model_dump(),
+        digest=material["digest"],
+        failure_class="rate_limited",
+    )
+    assert service.record_result(report)
+    status = await service.youtube_status()
+    assert status["outcome"] == "failed" and status["failure_class"] == "rate_limited"
+    state["cookies"][0]["value"] = "changed-account"
+    assert (await service.youtube_status())["outcome"] == "not_checked"
+    state["cookies"][0]["value"] = "synthetic"
+    assert (await service.youtube_status())["outcome"] == "not_checked"
+
+
+async def test_youtube_diagnostics_missing_busy_expiry_and_disconnect(
+    source, monkeypatch
+):
+    service, state = source
+    state["cookies"] = []
+    assert (await service.youtube_status())["material"] == "missing"
+    state["cookies"] = [
+        {**COOKIE, "domain": ".youtube.com", "name": name}
+        for name in ("LOGIN_INFO", "SAPISID")
+    ]
+    operation = request("youtube")
+    material = await service.cookies(operation)
+    assert service.record_result(
+        m.IdentityResult(
+            **operation.model_dump(), digest=material["digest"], failure_class=None
+        )
+    )
+    service._requests = 1
+    assert (await service.youtube_status())["material"] == "unavailable"
+    service._requests = 0
+    monkeypatch.setattr(m.time, "monotonic", lambda: 1e15)
+    assert (await service.youtube_status())["outcome"] == "not_checked"
+    service.disconnected(service.connection)
+    assert (await service.youtube_status())["material"] == "unavailable"
+    assert not service.record_result(
+        m.IdentityResult(
+            **operation.model_dump(), digest=material["digest"], failure_class=None
+        )
+    )
+
+
+def test_identity_result_endpoint_private_strict_and_bound_to_issued_request():
+    with TestClient(m.create_app(settings())) as client:
+        body = {
+            **request("youtube").model_dump(mode="json"),
+            "digest": "a" * 64,
+            "failure_class": None,
+        }
+        assert client.post("/identity-result", json=body).status_code == 401
+        headers = {"Authorization": f"Bearer {TOKEN}"}
+        assert (
+            client.post("/identity-result", json=body, headers=headers).status_code
+            == 409
+        )
+        for extra in (
+            {"cookies": "secret"},
+            {"site": "instagram"},
+            {"failure_class": "raw-secret"},
+        ):
+            response = client.post(
+                "/identity-result", json={**body, **extra}, headers=headers
+            )
+            assert response.status_code == 422 and "secret" not in response.text
+
+
+def test_popup_status_uses_authenticated_cookie_flow_without_blocking_heartbeat():
+    with TestClient(m.create_app(settings())) as client:
+        with client.websocket_connect(
+            "/extension", headers={"Origin": extension_origin()}
+        ) as ws:
+            authenticate(ws)
+            ws.send_json({"type": "youtube_status", "request_id": "b" * 32})
+            query = ws.receive_json()
+            assert query["type"] == "cookies"
+            ws.send_json({"type": "ping"})
+            assert ws.receive_json() == {"type": "pong"}
+            ws.send_json(
+                {"type": "cookies", "request_id": query["request_id"], "cookies": []}
+            )
+            status = ws.receive_json()
+            assert (
+                status["type"] == "youtube_status" and status["material"] == "missing"
+            )
+            assert status["outcome"] == "not_checked"
+            assert status["request_id"] == "b" * 32
+            ws.send_json({"type": "youtube_status", "site": "evil"})
+            with pytest.raises(WebSocketDisconnect):
+                ws.receive_json()
+
+
+async def test_new_failed_material_request_cannot_keep_prior_success(source):
+    service, state = source
+    state["cookies"] = [
+        {**COOKIE, "domain": ".youtube.com", "name": name}
+        for name in ("LOGIN_INFO", "SAPISID")
+    ]
+    operation = request("youtube")
+    material = await service.cookies(operation)
+    assert service.record_result(
+        m.IdentityResult(
+            **operation.model_dump(), digest=material["digest"], failure_class=None
+        )
+    )
+    state["cookies"] = []
+    with pytest.raises(m.IdentityUnavailable):
+        await service.cookies(operation.model_copy(update={"task_id": "new-task"}))
+    state["cookies"] = [
+        {**COOKIE, "domain": ".youtube.com", "name": name}
+        for name in ("LOGIN_INFO", "SAPISID")
+    ]
+    assert (await service.youtube_status())["outcome"] == "not_checked"

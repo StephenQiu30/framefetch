@@ -300,7 +300,7 @@ async def test_cancelled_request_late_capture_cannot_complete_next_request(sourc
 
     socket = AsyncMock()
     socket.receive_text.side_effect = receive_text
-    responses = asyncio.create_task(service._responses(socket))
+    responses = asyncio.create_task(service._responses(socket, asyncio.TaskGroup()))
     try:
         await incoming.put({"type": "yuanbao_parse", "request_id": old_id, **RESULT})
         await delivered.wait()

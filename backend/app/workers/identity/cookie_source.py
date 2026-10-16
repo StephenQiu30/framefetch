@@ -17,6 +17,7 @@ from typing import Literal
 from urllib.parse import unquote
 
 from app.core.config import CookieSourceSettings
+from app.services.provider_failures import FailureClass
 from app.workers.identity.extension import extension_origin
 from app.workers.identity.yuanbao_parse import (
     YUANBAO_ORIGIN,
@@ -176,6 +177,12 @@ class CookieRequest(BaseModel):
     deadline: AwareDatetime
 
 
+class IdentityResult(CookieRequest):
+    site: Literal["youtube"]
+    digest: str = Field(pattern=r"^[a-f0-9]{64}$")
+    failure_class: FailureClass | None
+
+
 class ShareParseRequest(CookieRequest):
     site: Literal["wechat_channels"]
     canonical_share_url: str = Field(strict=True, max_length=282)
@@ -283,6 +290,9 @@ class CookieSource:
         self._pending_kinds: dict[str, str] = {}
         self._requests = 0
         self._send_lock = asyncio.Lock()
+        self._diagnosing = False
+        self._youtube_request: tuple[CookieRequest, str, float] | None = None
+        self._youtube_result: dict[str, object] | None = None
 
     async def close(self) -> None:
         if self.connection is not None:
@@ -294,6 +304,8 @@ class CookieSource:
             return
         self.connection = None
         self.version = None
+        self._youtube_request = None
+        self._youtube_result = None
         for future in self._pending.values():
             if not future.done():
                 future.set_exception(IdentityUnavailable("extension_disconnected"))
@@ -355,7 +367,7 @@ class CookieSource:
                 await self.send(websocket, {"type": "ready"})
             async with asyncio.TaskGroup() as group:
                 group.create_task(self._heartbeat(websocket))
-                group.create_task(self._responses(websocket))
+                group.create_task(self._responses(websocket, group))
         except (Exception, asyncio.CancelledError):
             # Never log validation errors or messages (they can contain Cookie values).
             with suppress(Exception):
@@ -369,7 +381,7 @@ class CookieSource:
             await asyncio.sleep(HEARTBEAT_SECONDS)
             await self.send(websocket, {"type": "ping"})
 
-    async def _responses(self, websocket: WebSocket) -> None:
+    async def _responses(self, websocket: WebSocket, group: asyncio.TaskGroup) -> None:
         while True:
             async with asyncio.timeout(45):
                 message = await receive(websocket, allow_yuanbao_parse=True)
@@ -377,6 +389,17 @@ class CookieSource:
                 await self.send(websocket, {"type": "pong"})
             elif message == {"type": "pong"}:
                 continue
+            elif message.get("type") == "youtube_status":
+                request_id = message.get("request_id")
+                if (
+                    set(message) != {"type", "request_id"}
+                    or not isinstance(request_id, str)
+                    or not re.fullmatch(r"[a-f0-9]{32}", request_id)
+                ):
+                    raise ValueError("invalid_request")
+                if not self._diagnosing:
+                    self._diagnosing = True
+                    group.create_task(self._send_youtube_status(websocket, request_id))
             elif message.get("type") == "cookies":
                 request_id = message.get("request_id")
                 if not isinstance(request_id, str) or not re.fullmatch(
@@ -436,7 +459,80 @@ class CookieSource:
             result = None
             cookies = None
 
-    async def cookies(self, request: CookieRequest) -> dict[str, str]:
+    async def _send_youtube_status(self, websocket: WebSocket, request_id: str) -> None:
+        try:
+            await self.send(
+                websocket, {**await self.youtube_status(), "request_id": request_id}
+            )
+        finally:
+            self._diagnosing = False
+
+    def record_result(self, report: IdentityResult) -> bool:
+        issued = self._youtube_request
+        if (
+            issued is None
+            or self._youtube_result is not None
+            or report.deadline <= datetime.now(UTC)
+            or time.monotonic() - issued[2] >= 300
+            or report.task_id != issued[0].task_id
+            or report.deadline != issued[0].deadline
+            or not hmac.compare_digest(report.digest, issued[1])
+        ):
+            return False
+        self._youtube_result = {
+            "outcome": "accepted" if report.failure_class is None else "failed",
+            "task_id": report.task_id,
+            "checked_at": datetime.now(UTC).isoformat(),
+            "failure_class": report.failure_class.value
+            if report.failure_class
+            else None,
+        }
+        return True
+
+    async def youtube_status(self) -> dict[str, object]:
+        result: dict[str, object] = {
+            "type": "youtube_status",
+            "material": "unavailable",
+            "outcome": "not_checked",
+            "task_id": None,
+            "checked_at": None,
+            "failure_class": None,
+        }
+        try:
+            material = await self.cookies(
+                CookieRequest(
+                    site="youtube",
+                    task_id="diagnostic",
+                    deadline=datetime.now(UTC) + timedelta(seconds=REQUEST_TIMEOUT),
+                ),
+                diagnostic=True,
+            )
+        except IdentityUnavailable as error:
+            if error.cause == "credential_missing":
+                result["material"] = "missing"
+                self._youtube_request = None
+                self._youtube_result = None
+            return result
+        except Exception:
+            return result
+        result["material"] = "available"
+        issued = self._youtube_request
+        if issued is not None and (
+            time.monotonic() - issued[2] >= 300
+            or not hmac.compare_digest(material["digest"], issued[1])
+        ):
+            self._youtube_request = None
+            self._youtube_result = None
+        if self._youtube_request is not None and self._youtube_result is not None:
+            result.update(self._youtube_result)
+        return result
+
+    async def cookies(
+        self, request: CookieRequest, *, diagnostic: bool = False
+    ) -> dict[str, str]:
+        if request.site == "youtube" and not diagnostic:
+            self._youtube_request = None
+            self._youtube_result = None
         remaining = (request.deadline - datetime.now(UTC)).total_seconds()
         if remaining <= 0:
             raise IdentityUnavailable("identity_deadline_invalid")
@@ -578,6 +674,9 @@ class CookieSource:
                 }
                 if datetime.now(UTC) >= request.deadline:
                     raise IdentityUnavailable("identity_deadline_invalid")
+                if request.site == "youtube" and not diagnostic:
+                    self._youtube_request = (request, digest, time.monotonic())
+                    self._youtube_result = None
                 return result
         except TimeoutError:
             raise IdentityUnavailable("extension_timeout") from None
@@ -694,7 +793,7 @@ def create_app(settings: CookieSourceSettings) -> FastAPI:
                 headers={"Cache-Control": "no-store"},
             )
         if (
-            request.url.path not in {"/cookies", "/yuanbao-parse"}
+            request.url.path not in {"/cookies", "/yuanbao-parse", "/identity-result"}
             or request.method != "POST"
         ):
             return JSONResponse({"cause": "not_found"}, status_code=404)
@@ -727,6 +826,13 @@ def create_app(settings: CookieSourceSettings) -> FastAPI:
         except Exception:
             return JSONResponse({"cause": "identity_material_invalid"}, status_code=503)
         return JSONResponse(result)
+
+    @app.post("/identity-result")
+    async def identity_result(report: IdentityResult) -> JSONResponse:
+        accepted = source.record_result(report)
+        return JSONResponse(
+            {"recorded": accepted}, status_code=200 if accepted else 409
+        )
 
     @app.post("/yuanbao-parse")
     async def yuanbao_parse(request: ShareParseRequest) -> JSONResponse:

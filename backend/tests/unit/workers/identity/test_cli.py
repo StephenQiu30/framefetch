@@ -273,7 +273,7 @@ def test_manifest_registry_permissions_and_stable_id():
         "alarms",
         "declarativeNetRequestWithHostAccess",
     ]
-    assert manifest["version"] == "1.3.3"
+    assert manifest["version"] == "1.4.0"
     assert manifest["action"]["default_popup"] == "popup.html"
     assert manifest["minimum_chrome_version"] == "120"
     assert set(manifest["host_permissions"]) == {

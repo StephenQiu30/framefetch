@@ -16,7 +16,7 @@ chrome.runtime.onInstalled.addListener(() => { void initialize(); });
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
   if (sender.id !== chrome.runtime.id || sender.url !== chrome.runtime.getURL('popup.html') ||
       !message || Object.keys(message).join(',') !== 'type' ||
-      !['status', 'login_yuanbao', 'reconnect'].includes(message.type)) return false;
+      !['status', 'login_yuanbao', 'login_youtube', 'reconnect'].includes(message.type)) return false;
   void popupRequest(message.type).then(respond).catch(() => respond({ error: 'status_unavailable' }));
   return true;
 });
@@ -24,6 +24,9 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
 async function popupRequest(type) {
   if (type === 'login_yuanbao') {
     await chrome.tabs.create({ url: 'https://yuanbao.tencent.com/', active: true });
+  }
+  if (type === 'login_youtube') {
+    await chrome.tabs.create({ url: 'https://www.youtube.com/', active: true });
   }
   if (type === 'reconnect') {
     if (!activeProtocol?.authenticated) {
@@ -35,9 +38,12 @@ async function popupRequest(type) {
       await initialize();
     }
   }
-  const session = await FramefetchYuanbaoHTTP.status(chrome);
+  const [session, youtube] = await Promise.all([
+    FramefetchYuanbaoHTTP.status(chrome),
+    activeProtocol?.youtubeStatus() ?? FramefetchIdentity.unavailableYouTubeStatus(),
+  ]);
   return { connected: activeProtocol?.authenticated === true, version: chrome.runtime.getManifest().version,
-    session, busy: activeProtocol?.busy === true, cause: lastParseCause };
+    session, youtube, busy: activeProtocol?.busy === true, cause: lastParseCause };
 }
 
 async function ensureAlarm() {
@@ -105,6 +111,7 @@ async function initialize() {
     ws.onerror = () => ws.close();
     ws.onclose = () => {
       closed = true;
+      protocol.clearYouTubeStatus();
       clearTimeout(authTimer);
       clearInterval(heartbeat);
       if (socket === ws) { socket = null; activeProtocol = null; scheduleRetry(); }

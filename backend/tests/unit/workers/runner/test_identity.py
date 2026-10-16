@@ -371,3 +371,107 @@ async def test_runner_material_field_and_encoding_errors_are_precise(
         await identity.fetch_identity("instagram", "task", deadline())
     assert caught.value.failure.evidence["cause_code"] == cause
     assert list(root.iterdir()) == []
+
+
+async def test_youtube_result_reports_only_fixed_summary_over_private_route(
+    transport, tmp_path
+):
+    _, _, state, requests = transport
+    state.route = "/identity-result"
+    state.reply = {"recorded": True}
+    end = deadline()
+    material = identity.IdentityMaterial(tmp_path / "cookies.txt", "b" * 64)
+    await identity.report_youtube_result(
+        "youtube", "task", end, material, FailureClass.RATE_LIMITED
+    )
+    assert json.loads(requests[-1].content) == {
+        "site": "youtube",
+        "task_id": "task",
+        "deadline": end.isoformat(),
+        "digest": "b" * 64,
+        "failure_class": "rate_limited",
+    }
+    await identity.report_youtube_result("instagram", "task", end, material, None)
+    await identity.report_youtube_result(
+        "youtube", "task", datetime.now(UTC), material, None
+    )
+    await identity.report_youtube_result("youtube", "task", end, None, None)
+    assert len(requests) == 1
+    state.status = 503
+    # Diagnostics failure cannot turn a successful resolution into an error.
+    await identity.report_youtube_result("youtube", "task", end, material, None)
+    assert len(requests) == 2
+
+
+@pytest.mark.parametrize(
+    "failure", [None, FailureClass.LOGIN_REQUIRED, FailureClass.NETWORK_BLOCKED]
+)
+async def test_youtube_ladder_reports_final_resolution_outcome(
+    tmp_path, monkeypatch, failure
+):
+    from unittest.mock import AsyncMock
+
+    service = MediaRunnerService(runner_settings(tmp_path))
+    source = source_for(service, tmp_path)
+    request = provider_request("https://www.youtube.com/watch?v=D968qfUZMUE")
+    source = replace(source, request=request)
+    material = identity.IdentityMaterial(tmp_path / "cookies.txt", "b" * 64)
+    monkeypatch.setattr(identity, "fetch_identity", AsyncMock(return_value=material))
+    monkeypatch.setattr(identity.IdentityMaterial, "cleanup", lambda self: None)
+    monkeypatch.setattr(identity, "validate_cookie_file", lambda path: None)
+    reporter = AsyncMock()
+    monkeypatch.setattr(identity, "report_youtube_result", reporter)
+
+    class Final:
+        async def resolve(self, source, ctx):
+            if failure:
+                raise LayerFailure(failure, "②", {"kind": "unknown"})
+            return resolved(ctx)
+
+    for layer in request.profile.ladder:
+        monkeypatch.setitem(LAYER_TABLE, layer, Final)
+    if failure:
+        with pytest.raises(RunnerFailure):
+            await run_ladder(source, request.profile, source.run_context.deadline)
+    else:
+        await run_ladder(source, request.profile, source.run_context.deadline)
+    await asyncio.sleep(0)
+    reporter.assert_awaited_once()
+    assert reporter.call_args.args[0] == "youtube"
+    assert reporter.call_args.args[-2:] == (material, failure)
+
+
+async def test_diagnostic_transport_cannot_delay_successful_resolution(
+    tmp_path, monkeypatch
+):
+    from unittest.mock import AsyncMock
+
+    service = MediaRunnerService(runner_settings(tmp_path))
+    source = source_for(service, tmp_path)
+    request = provider_request("https://www.youtube.com/watch?v=D968qfUZMUE")
+    source = replace(source, request=request)
+    material = identity.IdentityMaterial(tmp_path / "cookies.txt", "b" * 64)
+    monkeypatch.setattr(identity, "fetch_identity", AsyncMock(return_value=material))
+    monkeypatch.setattr(identity, "validate_cookie_file", lambda path: None)
+    monkeypatch.setattr(identity.IdentityMaterial, "cleanup", lambda self: None)
+    release = asyncio.Event()
+
+    async def delayed(*args):
+        await release.wait()
+
+    monkeypatch.setattr(identity, "report_youtube_result", delayed)
+
+    class Success:
+        async def resolve(self, source, ctx):
+            return resolved(ctx)
+
+    for layer in request.profile.ladder:
+        monkeypatch.setitem(LAYER_TABLE, layer, Success)
+    try:
+        result = await asyncio.wait_for(
+            run_ladder(source, request.profile, source.run_context.deadline), 0.1
+        )
+        assert result.execution_context.identity_used
+    finally:
+        release.set()
+        await asyncio.sleep(0)

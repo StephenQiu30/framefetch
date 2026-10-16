@@ -12,12 +12,24 @@
       <header><h1>Framefetch</h1><span id="version"></span></header>
       <dl>
         <div><dt>宿主连接</dt><dd id="connection">正在检查…</dd></div>
-        <div><dt>元宝登录材料</dt><dd id="session">正在检查…</dd></div>
       </dl>
+      <section aria-labelledby="youtube-heading">
+        <h2 id="youtube-heading">YouTube</h2>
+        <dl>
+          <div><dt>登录材料</dt><dd id="youtube-material">正在检查…</dd></div>
+          <div><dt>实际解析</dt><dd id="youtube-outcome">尚未验证</dd></div>
+        </dl>
+        <p id="youtube-message" role="status" aria-live="polite">正在读取当前 Chrome 的材料状态。</p>
+        <p id="youtube-task" class="hint"></p>
+        <button id="login-youtube" type="button">打开 YouTube</button>
+      </section>
+      <section aria-labelledby="yuanbao-heading">
+      <h2 id="yuanbao-heading">视频号 / 元宝</h2>
+      <dl><div><dt>登录材料</dt><dd id="session">正在检查…</dd></div></dl>
       <p id="message" role="status" aria-live="polite">正在检查插件状态。</p>
-      <p class="hint">视频号解析直接在插件内部完成，无需打开元宝页面。登录过期时，请完成元宝登录后重试。</p>
+      <button id="login-yuanbao" type="button">登录元宝</button>
+      </section>
       <div class="actions">
-        <button id="login-yuanbao" type="button">登录元宝</button>
         <button id="refresh" type="button" class="secondary">刷新状态</button>
         <button id="reconnect" type="button" class="secondary" hidden>重新连接</button>
       </div>

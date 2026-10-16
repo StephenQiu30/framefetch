@@ -228,6 +228,76 @@ async def fetch_identity(
         raise _unavailable("cookie_source_unavailable") from None
 
 
+_youtube_reports: set[asyncio.Task[None]] = set()
+
+
+def publish_youtube_result(
+    site: str,
+    task_id: str,
+    deadline: datetime,
+    material: Identity | None,
+    failure_class: FailureClass | None,
+) -> None:
+    # Diagnostics never occupy the resolution deadline or delay its result.
+    # Keep strong references, bounded independently of platform task concurrency.
+    if (
+        site != "youtube"
+        or not isinstance(material, IdentityMaterial)
+        or len(_youtube_reports) >= 8
+    ):
+        return
+    task = asyncio.create_task(
+        report_youtube_result(site, task_id, deadline, material, failure_class)
+    )
+    _youtube_reports.add(task)
+    task.add_done_callback(_youtube_reports.discard)
+
+
+async def report_youtube_result(
+    site: str,
+    task_id: str,
+    deadline: datetime,
+    material: Identity | None,
+    failure_class: FailureClass | None,
+) -> None:
+    """Best-effort, private diagnostic only; never retries or changes task outcome."""
+    remaining = (deadline - datetime.now(UTC)).total_seconds()
+    if (
+        site != "youtube"
+        or not isinstance(material, IdentityMaterial)
+        or remaining <= 0
+    ):
+        return
+    try:
+        settings = get_runner_settings()
+        if settings.cookie_source_token is None:
+            return
+        token = settings.cookie_source_token.get_secret_value()
+        async with asyncio.timeout(min(1, remaining)):
+            async with httpx.AsyncClient(
+                proxy=settings.runner_egress_proxy,
+                trust_env=False,
+                follow_redirects=False,
+                timeout=min(1, remaining),
+            ) as client:
+                async with client.stream(
+                    "POST",
+                    f"http://host.docker.internal:{settings.cookie_source_port}/identity-result",
+                    headers={"Authorization": f"Bearer {token}"},
+                    json={
+                        "site": site,
+                        "task_id": task_id,
+                        "deadline": deadline.isoformat(),
+                        "digest": material.digest,
+                        "failure_class": failure_class.value if failure_class else None,
+                    },
+                ):
+                    pass
+    except Exception:
+        # No raw exception, response, account material or digest in normal logs.
+        return
+
+
 @asynccontextmanager
 async def operation_identity(
     site: str, task_id: str, deadline: datetime

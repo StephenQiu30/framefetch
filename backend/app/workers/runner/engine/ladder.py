@@ -239,6 +239,14 @@ async def run_ladder(
                         )
                         if expected is not None and expected != context:
                             raise RunnerFailure("context_changed", status=409)
+                        if profile.key == "youtube":
+                            identity.publish_youtube_result(
+                                profile.key,
+                                source.workspace.path.name.rsplit("-", 1)[0],
+                                deadline,
+                                ctx.identity,
+                                None,
+                            )
                         transferred = True
                         return Resolution(media, context, tuple(failures), ctx)
                     except RunnerFailure as error:
@@ -302,6 +310,14 @@ async def run_ladder(
         timeout_error.failures = (*failures, timeout_error.failure)
         raise timeout_error from exc
     except RunnerFailure as error:
+        if profile.key == "youtube":
+            identity.publish_youtube_result(
+                profile.key,
+                source.workspace.path.name.rsplit("-", 1)[0],
+                deadline,
+                ctx.identity,
+                error.failure.failure_class,
+            )
         error.attributed_to(
             replace(
                 context,

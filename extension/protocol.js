@@ -60,6 +60,25 @@
         encoder.encode(JSON.stringify(captured)).length > 4 * 1024 * 1024) throw new Error('invalid_parse_response');
     return { account_id: result.account_id, captured };
   }
+  function unavailableYouTubeStatus() {
+    return { type: 'youtube_status', material: 'unavailable', outcome: 'not_checked', task_id: null, checked_at: null, failure_class: null };
+  }
+  function checkedYouTubeStatus(message) {
+    const classes = ['network_blocked', 'challenge', 'login_required', 'identity_unavailable', 'rate_limited', 'context_changed', 'content_unavailable', 'content_protected', 'extractor_broken', 'format_unavailable', 'transient', 'invalid_input', 'runtime_unavailable'];
+    if (Object.keys(message).sort().join(',') !== 'checked_at,failure_class,material,outcome,request_id,task_id,type' ||
+        typeof message.request_id !== 'string' || !/^[a-f0-9]{32}$/.test(message.request_id) ||
+        !['available', 'missing', 'unavailable'].includes(message.material) ||
+        !['not_checked', 'accepted', 'failed'].includes(message.outcome)) throw new Error('invalid_status');
+    if (message.outcome === 'not_checked') {
+      if (message.task_id !== null || message.checked_at !== null || message.failure_class !== null) throw new Error('invalid_status');
+    } else {
+      if (message.material !== 'available' || typeof message.task_id !== 'string' ||
+          !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(message.task_id) ||
+          (message.outcome === 'accepted' ? message.failure_class !== null : !classes.includes(message.failure_class))) throw new Error('invalid_status');
+      requestDeadline(message.checked_at);
+    }
+    return message;
+  }
   class Protocol {
     constructor(config, getAll, send, version, readParse) {
       this.config = config;
@@ -71,6 +90,23 @@
       this.peer = null;
       this.authenticated = false;
       this.busy = false;
+      this.youtubePending = null;
+    }
+    youtubeStatus() {
+      if (!this.authenticated || this.busy) return Promise.resolve(unavailableYouTubeStatus());
+      if (this.youtubePending) return this.youtubePending.promise;
+      let resolve;
+      const promise = new Promise(done => { resolve = done; });
+      const timer = setTimeout(() => this.clearYouTubeStatus(), 5000);
+      const request_id = nonce().slice(0, 32);
+      this.youtubePending = { promise, resolve, timer, request_id };
+      this.send({ type: 'youtube_status', request_id });
+      return promise;
+    }
+    clearYouTubeStatus(status = unavailableYouTubeStatus()) {
+      const pending = this.youtubePending;
+      this.youtubePending = null;
+      if (pending) { clearTimeout(pending.timer); pending.resolve(status); }
     }
     async receive(message) {
       if (message.type === 'challenge' && !this.peer) {
@@ -87,6 +123,11 @@
         return;
       }
       if (!this.authenticated) throw new Error('unauthenticated_request');
+      if (message.type === 'youtube_status') {
+        const { request_id, ...status } = checkedYouTubeStatus(message);
+        if (this.youtubePending?.request_id === request_id) this.clearYouTubeStatus(status);
+        return;
+      }
       if (message.type === 'ping') { this.send({ type: 'pong' }); return; }
       if (message.type === 'pong' || message.type === 'ready') return;
       if (this.busy || typeof message.request_id !== 'string' || !/^[a-f0-9]{32}$/.test(message.request_id)) throw new Error('invalid_request');
@@ -166,7 +207,7 @@
     next() { return this.attempt++ === 0 ? 0 : Math.min(30000, 1000 * 2 ** Math.min(this.attempt - 2, 5)); }
     reset() { this.attempt = 0; }
   }
-  const api = { Protocol, Backoff, proof, filterCookies, MAX_MESSAGE_BYTES, MAX_PARSE_MESSAGE_BYTES };
+  const api = { unavailableYouTubeStatus, Protocol, Backoff, proof, filterCookies, MAX_MESSAGE_BYTES, MAX_PARSE_MESSAGE_BYTES };
   globalThis.FramefetchIdentity = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

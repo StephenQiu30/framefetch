@@ -198,10 +198,72 @@ test('popup exposes only credential availability, admits only its own sender, an
   assert.equal(listener({ type: 'status', script: 'evil' }, sender, () => assert.fail('unexpected fields')), false);
   let reply;
   listener({ type: 'status' }, sender, value => { reply = value; }); await w.flush();
-  assert.deepEqual(JSON.parse(JSON.stringify(reply)), { connected: false, version: '1.0.0', session: 'available', busy: false, cause: null });
+  assert.deepEqual(JSON.parse(JSON.stringify(reply)), { connected: false, version: '1.0.0', session: 'available', youtube: { type: 'youtube_status', material: 'unavailable', outcome: 'not_checked', task_id: null, checked_at: null, failure_class: null }, busy: false, cause: null });
   assert.equal(JSON.stringify(reply).includes('synthetic-secret'), false);
   assert.deepEqual(pages, []);
   assert.equal(reads.length, 3);
   listener({ type: 'login_yuanbao' }, sender, value => { reply = value; }); await w.flush();
   assert.deepEqual(JSON.parse(JSON.stringify(pages)), [{ url: 'https://yuanbao.tencent.com/', active: true }]);
+});
+
+async function authenticateWorker(w) {
+  await w.flush();
+  const ws = w.sockets[0], server = 'd'.repeat(64);
+  ws.onmessage({ data: JSON.stringify({ type: 'challenge', nonce: server }) }); await w.flush();
+  ws.onmessage({ data: JSON.stringify({ type: 'proof', proof: await proof(KEY, 'server', ws.sent[0].nonce, server) }) });
+  await waitFor(() => w.intervals.length === 1, 'worker authenticates');
+  return ws;
+}
+test('YouTube popup uses the authenticated host rule and opens only the fixed login entry', async () => {
+  const pages = [];
+  const w = worker({ tabs: { create: async details => { pages.push(details); } } });
+  const ws = await authenticateWorker(w);
+  const sender = { id: 'test', url: 'chrome-extension://test/popup.html' };
+  let reply;
+  w.listeners.message({ type: 'login_youtube' }, sender, value => { reply = value; });
+  await w.flush();
+  assert.deepEqual(JSON.parse(JSON.stringify(pages)), [{ url: 'https://www.youtube.com/', active: true }]);
+  assert.equal(ws.sent.at(-1).type, 'youtube_status');
+  // Real Cookie material is requested by the host over its existing channel.
+  ws.onmessage({ data: JSON.stringify({ type: 'youtube_status', request_id: ws.sent.at(-1).request_id, material: 'available', outcome: 'accepted', task_id: 'task-1', checked_at: '2026-10-16T10:00:00+00:00', failure_class: null }) });
+  await w.flush();
+  assert.equal(reply.youtube.material, 'available');
+  assert.equal(reply.youtube.outcome, 'accepted');
+  assert.equal(reply.youtube.task_id, 'task-1');
+  assert.equal('cookies' in reply.youtube, false);
+});
+test('YouTube status is bounded, cleared on disconnect, and rejects unsolicited fields', async () => {
+  for (const disconnect of [false, true]) {
+    const w = worker(); const ws = await authenticateWorker(w);
+    const sender = { id: 'test', url: 'chrome-extension://test/popup.html' };
+    let reply;
+    w.listeners.message({ type: 'status' }, sender, value => { reply = value; }); await w.flush();
+    assert.equal(ws.sent.at(-1).type, 'youtube_status');
+    if (disconnect) ws.close();
+    else w.timers.findLast(t => t.ms === 5000 && t.active).fn();
+    await w.flush();
+    assert.equal(reply.youtube.material, 'unavailable');
+    assert.equal(reply.youtube.outcome, 'not_checked');
+  }
+  const w = worker(); const ws = await authenticateWorker(w);
+  ws.onmessage({ data: JSON.stringify({ type: 'youtube_status', material: 'available', outcome: 'accepted', task_id: 'task', checked_at: '2026-10-16T10:00:00Z', failure_class: null, cookies: 'private' }) });
+  await w.flush(); assert.equal(ws.readyState, 3);
+});
+test('late YouTube status cannot complete a newer popup refresh', async () => {
+  const w = worker(); const ws = await authenticateWorker(w);
+  const sender = { id: 'test', url: 'chrome-extension://test/popup.html' };
+  let first, second;
+  w.listeners.message({ type: 'status' }, sender, value => { first = value; }); await w.flush();
+  const oldId = ws.sent.at(-1).request_id;
+  assert.match(oldId ?? '', /^[a-f0-9]{32}$/);
+  w.timers.findLast(t => t.ms === 5000 && t.active).fn(); await w.flush();
+  assert.equal(first.youtube.outcome, 'not_checked');
+  w.listeners.message({ type: 'status' }, sender, value => { second = value; }); await w.flush();
+  const currentId = ws.sent.at(-1).request_id;
+  assert.notEqual(currentId, oldId);
+  const status = { type: 'youtube_status', material: 'available', outcome: 'not_checked', task_id: null, checked_at: null, failure_class: null };
+  ws.onmessage({ data: JSON.stringify({ ...status, request_id: oldId }) }); await w.flush();
+  assert.equal(second, undefined);
+  ws.onmessage({ data: JSON.stringify({ ...status, request_id: currentId }) }); await w.flush();
+  assert.equal(second.youtube.material, 'available');
 });
