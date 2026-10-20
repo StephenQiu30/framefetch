@@ -8,6 +8,7 @@ from app.services.download_execution.errors import classify_runner_failure
 from app.services.downloads.rules.enums import DownloadErrorCode
 from app.services.provider_failures import (
     FailureClass,
+    FailureEvidenceKind,
     FailurePhase,
     ProviderFailure,
     parse_retry_after,
@@ -140,3 +141,52 @@ def test_extractor_failure_is_not_relabelled_as_local_file_validation(phase, evi
         "extractor_broken", phase=phase, evidence_kind=FailureEvidenceKind(evidence)
     )
     assert classify_runner_failure(error) is DownloadErrorCode.EXTRACTOR_BROKEN
+
+
+def test_local_validation_keeps_safe_comparison_evidence():
+    facts = {
+        "kind": "local_validation",
+        "validation_rule": "frame_rate_mismatch",
+        "expected": "fps_30",
+        "observed": "fps_60",
+        "evidence_source": "full_presentation_timeline",
+        "observed_fps": "60000/1001",
+        "decoded_frames": 488,
+    }
+    failure = ProviderFailure.for_code(
+        "invalid_artifact",
+        phase=FailurePhase.VALIDATE,
+        evidence_kind=FailureEvidenceKind.LOCAL_VALIDATION,
+        evidence=facts,
+    )
+    assert failure.evidence == facts
+
+
+@pytest.mark.parametrize(
+    "facts",
+    [
+        {"expected": "https://secret.example/media"},
+        {"observed": {"cookie": "secret"}},
+        {"evidence_source": "upstream_cookie"},
+        {"observed_fps": "NaN"},
+        {"observed_fps": "30/0"},
+        {"decoded_frames": True},
+        {"decoded_frames": -1},
+        {"raw_timestamps": [1, 2, 3]},
+    ],
+)
+def test_validation_evidence_rejects_secrets_and_malformed_comparisons(facts):
+    with pytest.raises(ValueError):
+        ProviderFailure.for_code(
+            "invalid_artifact",
+            phase=FailurePhase.VALIDATE,
+            evidence_kind=FailureEvidenceKind.LOCAL_VALIDATION,
+            evidence={"kind": "local_validation", **facts},
+        )
+
+
+def test_validation_timeout_is_not_reported_as_a_damaged_file():
+    from app.services.download_execution.errors import validation_failure_message
+
+    error = RunnerFailure("download_timeout", phase=FailurePhase.VALIDATE)
+    assert not validation_failure_message(error).startswith("文件校验未通过")

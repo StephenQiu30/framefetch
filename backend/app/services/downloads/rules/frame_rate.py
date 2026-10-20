@@ -10,6 +10,18 @@ from app.services.downloads.rules.enums import FpsBucket
 def probe_frame_rate(
     video: Mapping[str, object], *, allow_nominal_fps: bool = False
 ) -> float | None:
+    presentation = video.get("_framefetch_presentation")
+    if isinstance(presentation, Mapping):
+        if (
+            presentation.get("complete") is not True
+            or presentation.get("source") != "full_presentation_timeline"
+        ):
+            return None
+        average_rate = _positive_fraction(presentation.get("average_rate_lower_bound"))
+        sustained_rate = _positive_fraction(presentation.get("sustained_rate"))
+        if average_rate is None:
+            return None
+        return float(max(average_rate, sustained_rate or average_rate))
     average = _positive_fraction(video.get("avg_frame_rate"))
     nominal = _positive_fraction(video.get("r_frame_rate"))
     if average is None:
@@ -29,23 +41,6 @@ def probe_frame_rate(
             if allow_nominal_fps and header_complete and nominal is not None
             else None
         )
-    ticks = video.get("duration_ts")
-    frames = _positive_fraction(video.get("nb_frames"))
-    time_base = _positive_fraction(video.get("time_base"))
-    if (
-        nominal is not None
-        and frames is not None
-        and frames.denominator == 1
-        and frames > 1
-        and time_base is not None
-        and type(ticks) is int
-        and ticks > 0
-    ):
-        duration = ticks * time_base
-        # Copy remuxing may shorten only the final sample. Require exact frame
-        # accounting and a discrepancy strictly smaller than one nominal frame.
-        if average * duration == frames and frames - 1 < nominal * duration <= frames:
-            return float(nominal)
     return float(average)
 
 
@@ -59,13 +54,19 @@ def _positive_fraction(value: object) -> Fraction | None:
         return None
 
 
-def needs_local_frame_rate_probe(video: Mapping[str, object]) -> bool:
-    """Remote edit lists can move an average across its encoded cadence bucket."""
-    average = probe_frame_rate(video)
+def needs_local_frame_rate_probe(
+    video: Mapping[str, object], *, remote: bool = False
+) -> bool:
+    """Separate an incomplete remote clock base from conflicting local facts."""
+    if isinstance(video.get("_framefetch_presentation"), Mapping):
+        return False
+    average = _positive_fraction(video.get("avg_frame_rate"))
     nominal = _positive_fraction(video.get("r_frame_rate"))
-    return (
-        average is not None
-        and nominal is not None
-        and average > float(nominal)
-        and FpsBucket.from_fps(average) is not FpsBucket.from_fps(float(nominal))
+    if average is None:
+        return not remote
+    if nominal is None:
+        return False
+    mismatch = FpsBucket.from_fps(float(average)) is not FpsBucket.from_fps(
+        float(nominal)
     )
+    return mismatch and (not remote or average > nominal)

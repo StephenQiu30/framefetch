@@ -10,6 +10,7 @@ from app.services.download_execution.models import ArtifactDetails
 from app.services.downloads.inspection_models import EncryptedUrl
 from app.services.downloads.rules.enums import DownloadStage, MediaKind
 from app.services.downloads.rules.formats import DownloadPlan
+from app.services.provider_failures import ProviderFailure
 from app.services.provider_types import ExecutionContext
 
 
@@ -162,6 +163,7 @@ class ExecutionRepository(Protocol):
         retryable: bool,
         now: datetime,
         retry_at: datetime | None,
+        failure: ProviderFailure | None = None,
     ) -> JobState: ...
 
 

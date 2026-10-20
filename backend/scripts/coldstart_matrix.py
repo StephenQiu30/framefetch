@@ -23,10 +23,20 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from fractions import Fraction
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 from uuid import uuid4
 
 import httpx
+from app.services.downloads.rules.enums import FpsBucket
+from app.services.downloads.rules.frame_rate import (
+    needs_local_frame_rate_probe,
+    probe_frame_rate,
+)
+from app.services.downloads.rules.frame_timeline import (
+    InvalidPresentationTimeline,
+    PresentationTimeline,
+)
 from app.workers.identity.permissions import require_private_file
 from dotenv import dotenv_values
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
@@ -236,7 +246,9 @@ class MatrixFailure(Exception):
         self.evidence = evidence or {}
 
 
-def run_command(argv: list[str], *, timeout: float, log: Path) -> str:
+def run_command(
+    argv: list[str], *, timeout: float, log: Path, read_output: bool = True
+) -> str:
     """Bound subprocess output on disk and kill the whole process group on exit."""
     with log.open("w") as output:
         process = subprocess.Popen(
@@ -260,7 +272,7 @@ def run_command(argv: list[str], *, timeout: float, log: Path) -> str:
         raise MatrixFailure(
             "command_failed", {"command": argv[0], "exit_code": code, "log": log.name}
         )
-    return log.read_text()
+    return log.read_text() if read_output else ""
 
 
 def compose_project(output: Path) -> str:
@@ -567,6 +579,55 @@ def choose_format(inspection: Json, case: Case) -> Json:
     return min(valid, key=lambda item: item["plan"]["width"] * item["plan"]["height"])
 
 
+def enrich_local_probe(probe: Json, target: Path, timeout: float) -> None:
+    """Use shared playback rules without importing Runner implementation.
+
+    The subprocess writes a temporary stream on disk; parsing keeps bounded
+    memory and deletes the raw timestamps. The report retains only the summary.
+    """
+    videos = [s for s in probe.get("streams", []) if s.get("codec_type") == "video"]
+    if len(videos) != 1 or not needs_local_frame_rate_probe(videos[0]):
+        return
+    video = videos[0]
+    try:
+        reader = PresentationTimeline(Fraction(video["time_base"]))
+        with TemporaryDirectory(prefix="framefetch-timeline-") as directory:
+            log = Path(directory) / "frames.txt"
+            run_command(
+                [
+                    "ffprobe",
+                    "-v",
+                    "error",
+                    "-err_detect",
+                    "explode",
+                    "-protocol_whitelist",
+                    "file",
+                    "-select_streams",
+                    "v:0",
+                    "-show_frames",
+                    "-show_entries",
+                    "frame=best_effort_timestamp:frame_side_data=",
+                    "-of",
+                    "compact=p=0:nk=0",
+                    str(target),
+                ],
+                timeout=timeout,
+                log=log,
+                read_output=False,
+            )
+            with log.open("rb") as stream:
+                while chunk := stream.read(64 * 1024):
+                    reader.consume(chunk)
+        video["_framefetch_presentation"] = reader.finish().evidence()
+    except (
+        KeyError,
+        ValueError,
+        ZeroDivisionError,
+        InvalidPresentationTimeline,
+    ) as exc:
+        raise MatrixFailure("frame_timeline_invalid") from exc
+
+
 def verify_probe(probe: Json, case: Case, plan: Json, tolerance_seconds: float) -> Json:
     duration = float(probe["format"]["duration"])
     videos = [s for s in probe["streams"] if s["codec_type"] == "video"]
@@ -596,13 +657,10 @@ def verify_probe(probe: Json, case: Case, plan: Json, tolerance_seconds: float) 
     ):
         raise MatrixFailure("audio_mismatch")
     if plan.get("fps_bucket"):
-        try:
-            fps = float(Fraction(video.get("avg_frame_rate", "0")))
-        except (ValueError, TypeError, ZeroDivisionError, OverflowError) as exc:
-            raise MatrixFailure("frame_rate_missing") from exc
-        if not math.isfinite(fps) or fps <= 0:
+        fps = probe_frame_rate(video)
+        if fps is None:
             raise MatrixFailure("frame_rate_missing")
-        bucket = "fps_30" if fps <= 30.01 else "fps_60" if fps <= 60.01 else "above_60"
+        bucket = FpsBucket.from_fps(fps).value
         if bucket != plan["fps_bucket"]:
             raise MatrixFailure(
                 "frame_rate_mismatch",
@@ -859,6 +917,8 @@ def run_case(api: Api, case: Case, args: argparse.Namespace, output: Path) -> Js
                 log=output / f"{case.id}.ffprobe.json",
             )
         )
+        if chosen["plan"].get("fps_bucket"):
+            enrich_local_probe(probe, target, args.decode_timeout)
         result["ffprobe"] = verify_probe(
             probe, case, chosen["plan"], args.duration_tolerance
         )

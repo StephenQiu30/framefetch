@@ -389,6 +389,7 @@ CREATE TABLE IF NOT EXISTS download_jobs (
     )
 );
 
+ALTER TABLE download_jobs ADD COLUMN IF NOT EXISTS failure_details JSONB;
 ALTER TABLE download_jobs
     ADD COLUMN IF NOT EXISTS source_kind VARCHAR(32);
 ALTER TABLE download_jobs
@@ -1568,7 +1569,7 @@ BEGIN
         'version', NEW.version, 'status', NEW.status, 'stage', NEW.stage,
         'progress', NEW.progress, 'attempt', NEW.attempt,
         'error', CASE WHEN NEW.error_code IS NULL THEN NULL
-            ELSE jsonb_build_object('code', NEW.error_code) END,
+            ELSE jsonb_build_object('code', NEW.error_code, 'details', NEW.failure_details) END,
         'occurred_at', NEW.updated_at
     ));
     INSERT INTO task_events (

@@ -272,11 +272,16 @@ def test_matrix_uses_no_runner_imports():
         if isinstance(node, ast.Import)
         for alias in node.names
     }
-    # Reuse the host identity file permission check, never parsing, download,
-    # application service or Runner internals in HTTP acceptance.
+    # Acceptance may share pure fact interpretation, never service orchestration,
+    # parsing, download or Runner internals; the delivered file is probed afresh.
     assert {
         module for module in modules if module == "app" or module.startswith("app.")
-    } <= {"app.workers.identity.permissions"}
+    } <= {
+        "app.workers.identity.permissions",
+        "app.services.downloads.rules.enums",
+        "app.services.downloads.rules.frame_rate",
+        "app.services.downloads.rules.frame_timeline",
+    }
     cases = json.loads((root / "scripts/fixtures/coldstart_cases.json").read_text())
     assert cases and all("platform" in case for case in cases)
 

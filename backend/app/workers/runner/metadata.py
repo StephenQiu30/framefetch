@@ -9,13 +9,16 @@ from urllib.parse import parse_qs, urlsplit
 
 from app.services.downloads.rules.enums import DynamicRange, MediaKind, StreamKind
 from app.services.downloads.rules.formats import CandidateStream
+from app.services.downloads.rules.frame_rate import (
+    needs_local_frame_rate_probe,
+    probe_frame_rate,
+)
 from app.workers.runner.codecs import (
     audio_codec_family,
     container_family,
     video_codec_family,
 )
 from app.workers.runner.errors import RunnerFailure
-from app.workers.runner.frame_rate import needs_local_frame_rate_probe, probe_frame_rate
 from app.workers.runner.options import build_download_options
 from app.workers.runner.url_policy import UrlPolicyError, validate_media_url
 
@@ -265,7 +268,9 @@ def enrich_format_metadata(
         enriched["vcodec"] = "none"
     else:
         fps = probe_frame_rate(video, allow_nominal_fps=allow_nominal_fps)
-        needs_file_probe = remote_probe and needs_local_frame_rate_probe(video)
+        needs_file_probe = remote_probe and needs_local_frame_rate_probe(
+            video, remote=True
+        )
         enriched.update(
             {
                 "vcodec": video.get("codec_name") or enriched.get("vcodec"),

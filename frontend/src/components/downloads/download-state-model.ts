@@ -180,7 +180,7 @@ const failedStatusDescriptions: Partial<Record<API.DownloadErrorCode, string>> =
     [DownloadErrorCode.LoginRequired]:
       '该内容需要登录，请确认部署主机已登录对应平台。',
     [DownloadErrorCode.MediaValidationFailed]:
-      '生成文件未通过完整性校验，系统会重新下载并再次验证。',
+      '生成文件未通过完整性校验，请手动重新获取并下载；规格不一致时请重新解析。',
   };
 
 export function isActiveDownloadStatus(status: API.DownloadStatus): boolean {
@@ -258,6 +258,12 @@ export function retryActionLabel(
 
 export function failureDescription(job: API.DownloadResponse): string {
   const detail = job.error_message?.trim();
+  if (
+    job.error_code === DownloadErrorCode.MediaValidationFailed &&
+    detail?.startsWith('文件校验未通过：') &&
+    detail.length <= 512
+  )
+    return detail;
   if (detail && detail !== job.error_code) {
     return (
       failureDetails[detail] ??

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -11,9 +12,10 @@ from app.services.downloads.rules.enums import (
     FpsBucket,
 )
 from app.services.downloads.rules.formats import DownloadPlan
+from app.services.downloads.rules.frame_rate import probe_frame_rate
+from app.services.provider_failures import FailurePhase
 from app.workers.runner.codecs import audio_codec_family, video_codec_family
 from app.workers.runner.errors import RunnerFailure
-from app.workers.runner.frame_rate import probe_frame_rate
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,14 +80,14 @@ def verify_probe(
     format_info = payload.get("format")
     streams = payload.get("streams")
     if not isinstance(format_info, dict) or not isinstance(streams, list):
-        raise RunnerFailure("invalid_artifact", status=422)
+        raise _invalid("container_mismatch")
     if not _container_matches(format_info.get("format_name"), expected_container):
-        raise RunnerFailure("invalid_artifact", status=422)
+        raise _invalid("container_mismatch")
 
     video = [item for item in streams if _stream_type(item) == "video"]
     audio = [item for item in streams if _stream_type(item) == "audio"]
     if len(video) != 1:
-        raise RunnerFailure("invalid_artifact", status=422)
+        raise _invalid("video_stream_count", expected="1", observed=str(len(video)))
     first_video = video[0]
     try:
         fps = probe_frame_rate(first_video)
@@ -93,39 +95,48 @@ def verify_probe(
             raise ValueError("missing average frame rate")
         bucket = FpsBucket.from_fps(fps)
     except (ValueError, ZeroDivisionError, OverflowError) as exc:
-        raise RunnerFailure("invalid_artifact", status=422) from exc
+        raise _invalid("frame_timeline_invalid") from exc
     if bucket is not plan.fps_bucket:
-        raise RunnerFailure("invalid_artifact", status=422)
+        raise _invalid(
+            "frame_rate_mismatch",
+            expected=plan.fps_bucket.value,
+            observed=bucket.value,
+            video=first_video,
+        )
     dynamic_range = (
         DynamicRange.HDR
         if first_video.get("color_transfer") in {"smpte2084", "arib-std-b67"}
         else DynamicRange.SDR
     )
     if dynamic_range is not plan.dynamic_range:
-        raise RunnerFailure("invalid_artifact", status=422)
+        raise _invalid(
+            "dynamic_range_mismatch",
+            expected=plan.dynamic_range.value,
+            observed=dynamic_range.value,
+        )
     dimensions = (first_video.get("width"), first_video.get("height"))
     if dimensions != (plan.width, plan.height):
-        raise RunnerFailure("invalid_artifact", status=422)
+        raise _invalid("dimensions_mismatch")
     if video_codec_family(first_video.get("codec_name")) is not plan.video_codec_family:
-        raise RunnerFailure("invalid_artifact", status=422)
+        raise _invalid("video_codec_mismatch")
     if plan.audio_codec_family is AudioCodecFamily.NONE:
         if audio:
-            raise RunnerFailure("invalid_artifact", status=422)
+            raise _invalid("audio_codec_mismatch")
     else:
         if not audio:
-            raise RunnerFailure("invalid_artifact", status=422)
+            raise _invalid("audio_codec_mismatch")
         if (
             audio_codec_family(audio[0].get("codec_name"))
             is not plan.audio_codec_family
         ):
-            raise RunnerFailure("invalid_artifact", status=422)
+            raise _invalid("audio_codec_mismatch")
 
     duration = _duration(format_info.get("duration"))
     tolerance = max(tolerance_seconds, expected_duration * 0.02)
     if duration is None or duration > max_duration:
-        raise RunnerFailure("invalid_artifact", status=422)
+        raise _invalid("duration_mismatch")
     if abs(duration - expected_duration) > tolerance:
-        raise RunnerFailure("invalid_artifact", status=422)
+        raise _invalid("duration_mismatch")
     for stream in (*video, *audio):
         if "duration" not in stream:
             continue
@@ -135,7 +146,7 @@ def verify_probe(
             or stream_duration > max_duration
             or abs(stream_duration - expected_duration) > tolerance
         ):
-            raise RunnerFailure("invalid_artifact", status=422)
+            raise _invalid("duration_mismatch")
     return VerifiedProbe(duration, len(video), len(audio))
 
 
@@ -163,3 +174,42 @@ def _duration(value: object) -> float | None:
     except (TypeError, ValueError, OverflowError):
         return None
     return duration if math.isfinite(duration) and duration > 0 else None
+
+
+def _invalid(
+    rule: str,
+    *,
+    expected: str | None = None,
+    observed: str | None = None,
+    video: Mapping[str, object] | None = None,
+) -> RunnerFailure:
+    evidence: dict[str, str | int | bool | None] = {
+        "kind": "local_validation",
+        "cause_code": rule,
+        "validation_rule": rule,
+        "evidence_source": "header_metadata",
+    }
+    if expected is not None:
+        evidence["expected"] = expected
+    if observed is not None:
+        evidence["observed"] = observed
+    if video is not None:
+        facts = video.get("_framefetch_presentation")
+        if isinstance(facts, Mapping) and facts.get("complete") is True:
+            evidence["evidence_source"] = "full_presentation_timeline"
+            frames = facts.get("decoded_frames")
+            if type(frames) is int:
+                evidence["decoded_frames"] = frames
+            from fractions import Fraction
+
+            rates = [
+                Fraction(str(facts[name]))
+                for name in ("average_rate_lower_bound", "sustained_rate")
+            ]
+            evidence["observed_fps"] = str(max(rates))
+    return RunnerFailure(
+        "invalid_artifact",
+        phase=FailurePhase.VALIDATE,
+        cause_code=rule,
+        evidence=evidence,
+    )

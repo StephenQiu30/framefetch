@@ -482,6 +482,7 @@ def cancel_job_row(row: DownloadJobRow, now: datetime) -> None:
     row.retry_at = None
     row.error_code = "cancelled"
     row.error_message = None
+    row.failure_details = None
     row.lease_owner = None
     row.lease_expires_at = None
     row.updated_at = now

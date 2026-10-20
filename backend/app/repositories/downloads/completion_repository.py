@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from uuid import UUID, uuid4
 
+from pydantic import TypeAdapter
 from sqlalchemy import select
 
 from app.core.db import as_utc
@@ -22,6 +23,7 @@ from app.repositories.repository_base import RepositoryBase
 from app.repositories.watermark import enqueue_automatic
 from app.services.downloads.download_models import ArtifactSnapshot, JobSnapshot
 from app.services.downloads.rules.artifact_keys import build_artifact_object_key
+from app.services.provider_failures import ProviderFailure
 
 
 def _validate_artifact(artifact: ArtifactCreate) -> None:
@@ -112,6 +114,7 @@ class CompletionRepository(RepositoryBase):
         retryable: bool,
         now: datetime,
         retry_at: datetime | None = None,
+        failure: ProviderFailure | None = None,
     ) -> JobSnapshot:
         async with self._sessions() as session, session.begin():
             row = await session.scalar(
@@ -133,6 +136,11 @@ class CompletionRepository(RepositoryBase):
             row.finished_at = None if should_retry else now
             row.error_code = error_code
             row.error_message = error_message[:512]
+            row.failure_details = (
+                None
+                if failure is None
+                else TypeAdapter(ProviderFailure).dump_python(failure, mode="json")
+            )
             row.lease_owner = None
             row.lease_expires_at = None
             row.updated_at = now

@@ -625,7 +625,7 @@ class MediaRunnerService:
                 "invalid_artifact", status=502, phase=FailurePhase.VALIDATE
             ) from exc
         self._active.update(request.task_id, RunnerTaskStage.VERIFYING, 85)
-        probe_payload = await self._commands.probe(
+        probe_payload = await commands.probe(
             artifact,
             workspace.path,
             failure_context=failure_context,

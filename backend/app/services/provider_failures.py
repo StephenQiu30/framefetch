@@ -310,8 +310,48 @@ class ProviderFailure:
             "egress_class",
             "egress_observed_ip",
             "identity_used",
+            "validation_rule",
+            "expected",
+            "observed",
+            "evidence_source",
+            "observed_fps",
+            "decoded_frames",
         }:
             raise ValueError("provider failure evidence contains unsupported facts")
+        validation_keys = {
+            "validation_rule",
+            "expected",
+            "observed",
+            "evidence_source",
+            "observed_fps",
+            "decoded_frames",
+        }
+        if set(self.evidence) & validation_keys:
+            if self.evidence_kind is not FailureEvidenceKind.LOCAL_VALIDATION:
+                raise ValueError("validation evidence must come from local validation")
+            for name in ("validation_rule", "expected", "observed"):
+                value = self.evidence.get(name)
+                if value is not None and (
+                    not isinstance(value, str) or _REFERENCE.fullmatch(value) is None
+                ):
+                    raise ValueError("invalid validation comparison")
+            if self.evidence.get("evidence_source") not in {
+                None,
+                "header_metadata",
+                "full_presentation_timeline",
+            }:
+                raise ValueError("invalid validation source")
+            rate = self.evidence.get("observed_fps")
+            if rate is not None and (
+                not isinstance(rate, str)
+                or re.fullmatch(r"[0-9]{1,32}(?:/[1-9][0-9]{0,31})?", rate) is None
+            ):
+                raise ValueError("invalid validation frame rate")
+            count = self.evidence.get("decoded_frames")
+            if count is not None and (
+                type(count) is not int or not 0 <= count <= 100_000_000
+            ):
+                raise ValueError("invalid decoded frame count")
         for name in ("client", "egress_route", "egress_revision"):
             value = self.evidence.get(name)
             if name in self.evidence and (

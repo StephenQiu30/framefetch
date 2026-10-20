@@ -38,3 +38,34 @@ describe('server artifact readiness is not device delivery', () => {
     },
   );
 });
+
+it('requires manual recovery for a terminal validation failure and reserves auto retry for retry_wait', () => {
+  const failed = {
+    ...job('failed'),
+    error_code: 'media_validation_failed' as const,
+  };
+  const { rerender } = render(<DownloadState job={failed} />);
+  expect(
+    screen.queryByText(/系统会重新下载并再次验证/),
+  ).not.toBeInTheDocument();
+  expect(screen.getByText(/重新获取|重新解析|手动/)).toBeInTheDocument();
+  rerender(<DownloadState job={{ ...failed, status: 'retry_wait' }} />);
+  expect(screen.getByText(/自动继续/)).toBeInTheDocument();
+});
+
+it('shows the safe validation reason while hiding unrelated raw provider errors', () => {
+  const failure = {
+    ...job('failed'),
+    error_code: 'media_validation_failed' as const,
+    error_message:
+      '文件校验未通过：帧率档位与确认规格不一致（期望 fps_30，实测 fps_60）',
+  };
+  const { rerender } = render(<DownloadState job={failure} />);
+  expect(screen.getByText(/期望 fps_30，实测 fps_60/)).toBeInTheDocument();
+  rerender(
+    <DownloadState
+      job={{ ...failure, error_message: 'raw private provider stderr' }}
+    />,
+  );
+  expect(screen.queryByText(/raw private/)).not.toBeInTheDocument();
+});

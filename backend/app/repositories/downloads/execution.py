@@ -19,6 +19,7 @@ from app.services.download_execution.errors import (
 )
 from app.services.download_execution.models import ArtifactDetails
 from app.services.downloads.download_models import JobSnapshot
+from app.services.provider_failures import ProviderFailure
 from app.services.provider_types import ExecutionContext
 
 
@@ -122,6 +123,7 @@ class DownloadExecutionRepository:
         retryable: bool,
         now: datetime,
         retry_at: datetime | None,
+        failure: ProviderFailure | None = None,
     ) -> JobSnapshot:
         with _translate_errors():
             return await self._repository.complete_failure(
@@ -130,6 +132,7 @@ class DownloadExecutionRepository:
                 attempt,
                 error_code=error_code,
                 error_message=error_message,
+                failure=failure,
                 retryable=retryable,
                 now=now,
                 retry_at=retry_at,

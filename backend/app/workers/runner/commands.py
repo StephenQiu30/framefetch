@@ -8,12 +8,18 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from contextlib import nullcontext
 from copy import copy
 from datetime import UTC, datetime
+from fractions import Fraction
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Protocol
 
 import httpx
 from app.services.downloads.rules.enums import Container, MediaKind
+from app.services.downloads.rules.frame_rate import needs_local_frame_rate_probe
+from app.services.downloads.rules.frame_timeline import (
+    InvalidPresentationTimeline,
+    PresentationTimeline,
+)
 from app.services.provider_failures import (
     FailureClass,
     FailureEvidenceKind,
@@ -65,6 +71,7 @@ class ProcessRunner(Protocol):
         cwd: Path,
         timeout_seconds: float,
         env: Mapping[str, str] | None = None,
+        stdout_consumer: Callable[[bytes], None] | None = None,
     ) -> ProcessResult: ...
 
 
@@ -606,10 +613,104 @@ class MediaCommands:
             failure_context=failure_context,
         )
         try:
-            return json_object(result.stdout, "media_probe_failed")
+            payload = json_object(result.stdout, "media_probe_failed")
+            streams = payload.get("streams", [])
+            video = next(
+                (
+                    x
+                    for x in streams
+                    if isinstance(x, dict) and x.get("codec_type") == "video"
+                ),
+                None,
+            )
+            if video is not None and (
+                needs_local_frame_rate_probe(video) or not video.get("avg_frame_rate")
+            ):
+                video["_framefetch_presentation"] = await self._presentation_timeline(
+                    artifact, cwd, video, phase=phase, failure_context=failure_context
+                )
+            return payload
         except RunnerFailure as error:
             error.during(phase)
             raise
+
+    async def _presentation_timeline(
+        self,
+        artifact: Path,
+        cwd: Path,
+        video: Mapping[str, object],
+        *,
+        phase: FailurePhase,
+        failure_context: ProviderFailureContext | None,
+    ) -> dict[str, str | int | bool | None]:
+        try:
+            base = Fraction(str(video.get("time_base")))
+            reader = PresentationTimeline(base)
+        except (ValueError, ZeroDivisionError) as exc:
+            raise RunnerFailure(
+                "invalid_artifact", phase=phase, cause_code="frame_timeline_invalid"
+            ) from exc
+        timeout = (
+            self._settings.runner_download_timeout_seconds
+            if phase is FailurePhase.VALIDATE
+            else self._settings.runner_inspect_timeout_seconds
+        )
+        if self._ctx is not None:
+            timeout = min(
+                timeout, (self._ctx.deadline - datetime.now(UTC)).total_seconds()
+            )
+        if timeout <= 0:
+            raise RunnerFailure(
+                "download_timeout"
+                if phase is FailurePhase.VALIDATE
+                else "inspection_timeout",
+                phase=phase,
+            )
+        result = await self._run(
+            (
+                self._settings.runner_ffprobe_bin,
+                "-v",
+                "error",
+                "-err_detect",
+                "explode",
+                "-protocol_whitelist",
+                "file",
+                "-select_streams",
+                "v:0",
+                "-show_frames",
+                "-show_entries",
+                "frame=best_effort_timestamp:frame_side_data=",
+                "-of",
+                "compact=p=0:nk=0",
+                str(artifact),
+            ),
+            cwd,
+            timeout,
+            timeout_code="download_timeout"
+            if phase is FailurePhase.VALIDATE
+            else "inspection_timeout",
+            failure_code="invalid_artifact",
+            phase=phase,
+            monitor_workspace=True,
+            failure_context=failure_context,
+            stdout_consumer=reader.consume,
+        )
+        if result.stdout_truncated:
+            raise RunnerFailure(
+                "invalid_artifact", phase=phase, cause_code="frame_timeline_invalid"
+            )
+        if result.stderr.strip() or result.stderr_truncated:
+            raise RunnerFailure(
+                "invalid_artifact", phase=phase, cause_code="full_decode_failed"
+            )
+        try:
+            return reader.finish().evidence()
+        except InvalidPresentationTimeline as exc:
+            raise RunnerFailure(
+                "invalid_artifact",
+                phase=phase,
+                cause_code="frame_timeline_invalid",
+            ) from exc
 
     async def verify_full_decode(
         self,
@@ -684,6 +785,7 @@ class MediaCommands:
         workspace_limit_bytes: int | None = None,
         egress_proxy: str | None = None,
         failure_context: ProviderFailureContext | None = None,
+        stdout_consumer: Callable[[bytes], None] | None = None,
     ) -> ProcessResult:
         selected_proxy = (
             egress_proxy
@@ -741,6 +843,11 @@ class MediaCommands:
                     cwd=cwd,
                     timeout_seconds=timeout,
                     env=environment,
+                    **(
+                        {"stdout_consumer": stdout_consumer}
+                        if stdout_consumer is not None
+                        else {}
+                    ),
                 )
                 if monitor_workspace:
                     result = await run_with_workspace_limit(

@@ -171,6 +171,7 @@ class JobRepository(RepositoryBase):
                 retry_at=None,
                 error_code=None,
                 error_message=None,
+                failure_details=None,
                 execution_context=None,
                 execution_context_attempt=None,
                 updated_at=now,

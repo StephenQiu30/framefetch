@@ -1550,3 +1550,32 @@ def test_fixture_and_registry_agree_on_content_scope_and_anonymous_hongguo():
         if sample.platform == "hongguo_web":
             assert profile.identity == "none" and not sample.needs_identity
             assert not profile.cookie_domain_allowlist
+
+
+def test_acceptance_uses_same_playback_facts_instead_of_mixed_encoded_counts():
+    from fractions import Fraction
+
+    from app.services.downloads.rules.frame_timeline import PresentationTimeline
+
+    actual = probe()
+    video = actual["streams"][0]
+    video.update(
+        avg_frame_rate="366750000/12214729",
+        r_frame_rate="30/1",
+        duration_ts=146574000,
+        time_base="1/9000000",
+        nb_frames="489",
+    )
+    reader = PresentationTimeline(Fraction(1, 9000000))
+    pts = [i * 300000 - (i // 32) * 100 for i in range(487)]
+    pts.append(pts[-1] + 178500)
+    reader.consume(b"".join(f"best_effort_timestamp={p}\n".encode() for p in pts))
+    video["_framefetch_presentation"] = reader.finish().evidence()
+    plan = {
+        "width": video["width"],
+        "height": video["height"],
+        "video_codec_family": "h264",
+        "audio_codec_family": "aac",
+        "fps_bucket": "fps_30",
+    }
+    matrix.verify_probe(actual, case(), plan, 2)

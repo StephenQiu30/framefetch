@@ -109,6 +109,9 @@ class DownloadJobRow(Base):
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     error_code: Mapped[str | None] = mapped_column(String(64))
     error_message: Mapped[str | None] = mapped_column(String(512))
+    failure_details: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB(none_as_null=True)
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )

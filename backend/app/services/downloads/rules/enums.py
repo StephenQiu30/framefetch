@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from enum import StrEnum
+from fractions import Fraction
 
 
 class StreamKind(StrEnum):
@@ -56,6 +57,9 @@ class CompatibilityProfile(StrEnum):
     SMALLEST = "smallest"
 
 
+FPS_BUCKET_CEILINGS = (Fraction(3001, 100), Fraction(6001, 100))
+
+
 class FpsBucket(StrEnum):
     FPS_30 = "fps_30"
     FPS_60 = "fps_60"
@@ -65,9 +69,9 @@ class FpsBucket(StrEnum):
     def from_fps(cls, fps: float) -> FpsBucket:
         if not math.isfinite(fps) or fps <= 0:
             raise ValueError("fps must be a positive finite number")
-        if fps <= 30.01:
+        if fps <= float(FPS_BUCKET_CEILINGS[0]):
             return cls.FPS_30
-        if fps <= 60.01:
+        if fps <= float(FPS_BUCKET_CEILINGS[1]):
             return cls.FPS_60
         return cls.ABOVE_60
 

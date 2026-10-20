@@ -15,6 +15,7 @@ from app.services.download_execution.errors import (
     LeaseInfrastructureError,
     LeaseLost,
     classify_runner_failure,
+    validation_failure_message,
 )
 from app.services.download_execution.models import (
     DownloadExecutionSettings,
@@ -39,6 +40,7 @@ from app.services.downloads.rules.enums import (
     DownloadStage,
     MediaKind,
 )
+from app.services.provider_failures import ProviderFailure
 from app.services.provider_types import ExecutionContext
 
 
@@ -159,11 +161,13 @@ class DownloadExecution:
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
+                failure = getattr(exc, "failure", None)
                 return await self._transitions.fail(
                     job_id,
                     attempt,
                     classify_runner_failure(exc),
-                    error_message=str(exc),
+                    error_message=validation_failure_message(exc),
+                    failure=(failure if isinstance(failure, ProviderFailure) else None),
                     retry_not_before=getattr(exc, "retry_at", None),
                 )
             try:

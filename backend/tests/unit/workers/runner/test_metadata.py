@@ -550,7 +550,7 @@ def test_enriches_single_sparse_provider_format_with_ffprobe_metadata() -> None:
     assert enriched["tbr"] == pytest.approx(885.064)
 
 
-def test_nominal_clip_rate_requires_exact_frame_accounting():
+def test_encoded_counts_do_not_override_presentation_rate_without_observations():
     probe = {
         "streams": [
             {
@@ -562,7 +562,7 @@ def test_nominal_clip_rate_requires_exact_frame_accounting():
     }
     assert enrich_format_metadata({}, probe)["fps"] > 30.01
     probe["streams"][0].update(nb_frames="1802", duration_ts=153687, time_base="1/2560")
-    assert enrich_format_metadata({}, probe)["fps"] == 30
+    assert enrich_format_metadata({}, probe)["fps"] > 30.01
     probe["streams"][0]["avg_frame_rate"] = "25/1"
     assert enrich_format_metadata({}, probe)["fps"] == 25
 
@@ -824,6 +824,16 @@ def test_short_final_sample_has_the_same_cadence_during_inspection_and_delivery(
                 "duration_ts": 120220,
             }
         ],
+    }
+    # Equalities involving encoded sample counts are insufficient: the
+    # decoded presentation proof, shared with delivery, establishes cadence.
+    assert enrich_format_metadata({}, probe)["fps"] > 60.01
+    probe["streams"][0]["_framefetch_presentation"] = {
+        "source": "full_presentation_timeline",
+        "complete": True,
+        "average_rate": "60/1",
+        "average_rate_lower_bound": "60/1",
+        "sustained_rate": "60/1",
     }
     assert enrich_format_metadata({}, probe)["fps"] == 60
 

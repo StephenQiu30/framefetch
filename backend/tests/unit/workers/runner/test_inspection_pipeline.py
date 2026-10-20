@@ -389,7 +389,7 @@ async def test_twitch_remote_clip_edit_list_does_not_change_rate_bucket(
                         "codec_name": "h264",
                         "width": 1920,
                         "height": 1080,
-                        "avg_frame_rate": "60/1",
+                        "avg_frame_rate": "30/1" if bucket == "fps_30" else "60/1",
                         "r_frame_rate": "60/1",
                     },
                     {"codec_type": "audio", "codec_name": "aac"},

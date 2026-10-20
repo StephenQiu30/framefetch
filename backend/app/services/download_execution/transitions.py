@@ -20,6 +20,7 @@ from app.services.download_execution.ports import (
     JobState,
 )
 from app.services.downloads.rules.enums import DownloadErrorCode
+from app.services.provider_failures import ProviderFailure
 
 
 class ExecutionTransitions:
@@ -43,6 +44,7 @@ class ExecutionTransitions:
         *,
         error_message: str | None = None,
         retry_not_before: datetime | None = None,
+        failure: ProviderFailure | None = None,
     ) -> ExecutionDisposition:
         now = self._clock()
         retry_at = now + _retry_delay(attempt) if code.retryable else None
@@ -55,6 +57,7 @@ class ExecutionTransitions:
                 attempt,
                 error_code=code.value,
                 error_message=_safe_error_message(error_message, code),
+                failure=failure,
                 retryable=code.retryable,
                 now=now,
                 retry_at=retry_at,

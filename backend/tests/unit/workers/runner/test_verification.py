@@ -264,7 +264,17 @@ def verify_twitter_short_clip(payload):
 
 
 def test_short_final_sample_keeps_60fps_cadence_without_changing_frames():
-    verify_twitter_short_clip(twitter_short_clip_probe())
+    from fractions import Fraction
+
+    from app.services.downloads.rules.frame_timeline import PresentationTimeline
+
+    payload = twitter_short_clip_probe()
+    reader = PresentationTimeline(Fraction(1, 12000))
+    reader.consume(
+        b"".join(f"best_effort_timestamp={i * 200}\n".encode() for i in range(602))
+    )
+    payload["streams"][0]["_framefetch_presentation"] = reader.finish().evidence()
+    verify_twitter_short_clip(payload)
 
 
 @pytest.mark.parametrize(

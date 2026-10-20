@@ -249,3 +249,21 @@ async def test_rate_limited_download_preserves_provider_retry_at(tmp_path):
     assert case.repository.failure["error_code"] == "rate_limited"
     assert case.repository.failure["retryable"] is True
     assert case.repository.failure["retry_at"] == provider_retry
+
+
+async def test_local_validation_preserves_structured_evidence_and_stops_retrying(
+    tmp_path,
+):
+    from app.services.provider_failures import FailurePhase, ProviderFailure
+
+    case = fixture(artifact(tmp_path))
+    fact = ProviderFailure.for_code(
+        "invalid_artifact",
+        phase=FailurePhase.VALIDATE,
+        cause_code="frame_rate_mismatch",
+    )
+    case.runner.error = MediaRunnerClientError("invalid_artifact", 422, failure=fact)
+    assert await case.execution.execute(case.job_id) is ExecutionDisposition.ACK
+    assert case.repository.failure["failure"] == fact
+    assert case.repository.failure["retryable"] is False
+    assert "帧率" in case.repository.failure["error_message"]

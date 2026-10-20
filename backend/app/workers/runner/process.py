@@ -4,7 +4,7 @@ import asyncio
 import os
 import signal
 import subprocess
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
@@ -57,6 +57,7 @@ class ProcessSupervisor:
         timeout_seconds: float,
         env: Mapping[str, str] | None = None,
         input_bytes: bytes | None = None,
+        stdout_consumer: Callable[[bytes], None] | None = None,
     ) -> ProcessResult:
         command = _validate_command(argv)
         if timeout_seconds <= 0:
@@ -65,7 +66,9 @@ class ProcessSupervisor:
         process = await _create_process(command, cwd, env, input_bytes)
         assert process.stdout is not None
         assert process.stderr is not None
-        combined = asyncio.create_task(self._collect(process, input_bytes))
+        combined = asyncio.create_task(
+            self._collect(process, input_bytes, stdout_consumer)
+        )
         try:
             result = await asyncio.wait_for(asyncio.shield(combined), timeout_seconds)
             if _process_group_exists(process.pid):
@@ -74,7 +77,7 @@ class ProcessSupervisor:
         except TimeoutError:
             result = await self._terminate_and_collect(process, combined)
             raise ProcessTimeoutError(result) from None
-        except asyncio.CancelledError:
+        except BaseException:
             await asyncio.shield(self._terminate_and_collect(process, combined))
             raise
 
@@ -82,11 +85,12 @@ class ProcessSupervisor:
         self,
         process: asyncio.subprocess.Process,
         input_bytes: bytes | None,
+        stdout_consumer: Callable[[bytes], None] | None,
     ) -> ProcessResult:
         assert process.stdout is not None
         assert process.stderr is not None
         stdout_task = asyncio.create_task(
-            self._read_stream(process.stdout, self._stdout_limit)
+            self._read_stream(process.stdout, self._stdout_limit, stdout_consumer)
         )
         stderr_task = asyncio.create_task(
             self._read_stream(process.stderr, self._stderr_limit)
@@ -106,10 +110,18 @@ class ProcessSupervisor:
             stderr_truncated=stderr.truncated,
         )
 
-    async def _read_stream(self, stream: asyncio.StreamReader, limit: int) -> _Capture:
+    async def _read_stream(
+        self,
+        stream: asyncio.StreamReader,
+        limit: int,
+        consumer: Callable[[bytes], None] | None = None,
+    ) -> _Capture:
         buffer = bytearray()
         truncated = False
         while chunk := await stream.read(64 * 1024):
+            if consumer is not None:
+                consumer(chunk)
+                continue
             remaining = limit - len(buffer)
             if remaining > 0:
                 buffer.extend(chunk[:remaining])

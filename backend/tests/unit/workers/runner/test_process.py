@@ -180,3 +180,92 @@ async def test_rejects_empty_command(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError):
         await supervisor.run((), cwd=tmp_path, timeout_seconds=1)
+
+
+async def test_streams_all_stdout_into_a_bounded_consumer_without_capture_loss(
+    tmp_path,
+):
+    supervisor = ProcessSupervisor(stdout_limit_bytes=32)
+    total = 0
+
+    def consume(chunk):
+        nonlocal total
+        total += len(chunk)
+
+    result = await supervisor.run(
+        python_command("import sys; sys.stdout.buffer.write(b'x'*200000)"),
+        cwd=tmp_path,
+        timeout_seconds=2,
+        stdout_consumer=consume,
+    )
+    assert total == 200000
+    assert result.returncode == 0
+    assert result.stdout == b""
+    assert result.stdout_truncated is False
+
+
+@pytest.mark.parametrize("streaming", [False, True])
+async def test_streaming_cancel_reaps_child_process_group(tmp_path, streaming):
+    supervisor = ProcessSupervisor(terminate_grace_seconds=0.05)
+    source = (
+        "import pathlib, subprocess, sys, time; "
+        "child=subprocess.Popen([sys.executable, '-c', "
+        "'import time; time.sleep(30)']); "
+        "pathlib.Path('child.pid').write_text(str(child.pid)); "
+        "print('started', flush=True); time.sleep(30)"
+    )
+    task = asyncio.create_task(
+        supervisor.run(
+            python_command(source),
+            cwd=tmp_path,
+            timeout_seconds=10,
+            stdout_consumer=(lambda chunk: None) if streaming else None,
+        )
+    )
+    pid = await wait_for_pid(tmp_path / "child.pid")
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    await wait_until_missing(pid)
+
+
+async def test_streaming_consumer_failure_reaps_process_group(tmp_path):
+    supervisor = ProcessSupervisor(terminate_grace_seconds=0.05)
+    source = (
+        "import pathlib, subprocess, sys, time; "
+        "child=subprocess.Popen([sys.executable, '-c', "
+        "'import time; time.sleep(30)']); "
+        "pathlib.Path('child.pid').write_text(str(child.pid)); "
+        "print('started', flush=True); time.sleep(30)"
+    )
+
+    def fail(chunk):
+        raise ValueError("invalid frame evidence")
+
+    with pytest.raises(ValueError, match="invalid frame evidence"):
+        await supervisor.run(
+            python_command(source),
+            cwd=tmp_path,
+            timeout_seconds=5,
+            stdout_consumer=fail,
+        )
+    await wait_until_missing(await wait_for_pid(tmp_path / "child.pid"))
+
+
+async def test_streaming_timeout_reaps_process_group(tmp_path):
+    supervisor = ProcessSupervisor(terminate_grace_seconds=0.05)
+    source = (
+        "import pathlib, subprocess, sys, time; "
+        "child=subprocess.Popen([sys.executable, '-c', "
+        "'import time; time.sleep(30)']); "
+        "pathlib.Path('child.pid').write_text(str(child.pid)); "
+        "print('started', flush=True); time.sleep(30)"
+    )
+    with pytest.raises(ProcessTimeoutError):
+        await supervisor.run(
+            python_command(source),
+            cwd=tmp_path,
+            timeout_seconds=0.2,
+            stdout_consumer=lambda chunk: None,
+        )
+    await wait_until_missing(await wait_for_pid(tmp_path / "child.pid"))

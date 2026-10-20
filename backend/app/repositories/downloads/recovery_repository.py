@@ -108,6 +108,7 @@ class RecoveryRepository(RepositoryBase):
                 row.finished_at = None if can_retry else now
                 row.error_code = "worker_lost"
                 row.error_message = "worker lease expired"
+                row.failure_details = None
                 row.lease_owner = None
                 row.lease_expires_at = None
                 row.updated_at = now
