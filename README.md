@@ -4,7 +4,7 @@
 
 [![CI 状态](https://github.com/StephenQiu30/framefetch-server/actions/workflows/ci.yml/badge.svg)](https://github.com/StephenQiu30/framefetch-server/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-111111.svg)](LICENSE)
-[![Preview release](https://img.shields.io/github/v/release/StephenQiu30/framefetch-server?include_prereleases&color=111111)](https://github.com/StephenQiu30/framefetch-server/releases)
+[![Latest release](https://img.shields.io/github/v/release/StephenQiu30/framefetch-server?color=111111)](https://github.com/StephenQiu30/framefetch-server/releases)
 
 [界面预览](#界面预览) · [快速开始](#快速开始) · [首次使用](#首次使用) · [从素材到报告](#从素材到报告) · [内置 Skill](#内置-skill) · [使用范围](#使用范围与部署要求) · [设计文档](docs/design/README.md) · [English](README.en.md)
 
@@ -258,24 +258,24 @@ Web 工作区提供解析详情、下载记录、个人处理记录、视频播�
 
 ## 使用范围与部署要求
 
-帧取处于公开预览阶段。CI 验证确定性的工程检查；平台完整文件、真实模型、App 真机和桌面业务流程需要各自的验收证据。平台注册、解析成功和界面截图不能替代这些验证。
+Server/Web 按正式版本发布。CI 验证确定性的工程检查；平台完整文件、真实模型、App 真机和桌面业务流程需要各自的验收证据。平台注册、解析成功和界面截图不能替代这些验证。
 
 - 处理你有权获取和分析的 HTTP(S) 非 DRM 素材。平台接入包括 YouTube、哔哩哔哩、抖音、TikTok、小红书、快手、微博等；具体链接受内容范围、账号、网络和平台变化影响。视频号支持下载微信官方非加密分享文件，需要 Chrome 中已有有效元宝登录，无需打开元宝页面；公众号文章提供来源发现。准确平台状态与完整文件证据见 [验证状态](docs/design/14-解析引擎.md#13-验证状态)。
 - 提供自托管源码与构建方式。服务器、基础服务、存储、网络和模型由部署者准备，外部模型可能计费；启用外部 AI 会向选定服务发送分析所需的文本或画面。
 - 当前能力覆盖素材获取、管理、内置 Skill 分析／文档整理和报告。方法及输出的真实样本验收见执行计划，不能仅机械换行或截取正文开头就视为整理完成；模型分析须核查。内容写作、剧本改写、图卡制作、ASR／OCR、剪辑和账号发布不在本轮范围内。
 - 成功素材和报告持久保存，管理员应规划容量、备份与显式清理。详细安全要求见 [安全策略](SECURITY.md)与解析设计；对外部署前替换占位配置并核对网络、存储与模型服务。
 
-## 公开预览与版本
+## 发行版本
 
-三个仓库的公开预览连接同一 Server：
+三个客户端连接同一 Server；App 继续使用现有 Beta 版本：
 
-| 项目         | 当前预览                                                                                   | 发行内容                                                   |
+| 项目         | 当前版本                                                                                   | 发行内容                                                   |
 | ------------ | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| Server / Web | [v0.3.0-beta.2](https://github.com/StephenQiu30/framefetch-server/releases/tag/v0.3.0-beta.2)   | 自托管源码与 Compose 部署方式                              |
+| Server / Web | [v0.3.0](https://github.com/StephenQiu30/framefetch-server/releases/tag/v0.3.0)   | 自托管源码与 Compose 部署方式                              |
 | App          | [v0.2.0-beta.1](https://github.com/StephenQiu30/framefetch-app/releases/tag/v0.2.0-beta.1)      | iOS／Android 源码；未附 APK、IPA 或商店安装包              |
-| Desktop      | [v0.2.0-beta.1](https://github.com/StephenQiu30/framefetch-electron/releases/tag/v0.2.0-beta.1) | macOS Apple Silicon DMG、Windows x64 安装包与 SHA-256 清单 |
+| Desktop      | [v0.2.0](https://github.com/StephenQiu30/framefetch-electron/releases/tag/v0.2.0) | macOS Apple Silicon DMG、Windows x64 安装包与 SHA-256 清单 |
 
-这些版本均为 Beta 预览。桌面安装包未签名，macOS 未公证；干净安装、升级与真实 Server 完整业务需要独立验证。Git tag 标识发行快照：当前预览内嵌 Server/API/Worker 包版本仍为 `0.2.0`，App 为 `0.1.0+1`，桌面包为 `0.2.0`。部署相关组件时使用匹配源码与服务端契约，不能仅凭 tag 数字判断兼容性。
+Server/API/Worker 与 Web 包版本为 `0.3.0`，Desktop 为 `0.2.0`；App 的现有 Beta 包保持 `0.1.0+1`。桌面安装包未签名，macOS 未公证；干净安装、升级与真实 Server 完整业务需要独立验证。Git tag 标识发行快照，部署相关组件时使用匹配源码与服务端契约。
 
 README 描述当前主分支；固定版本的安装、升级步骤和验证范围以对应 Release 与标签下 README 为准。
 

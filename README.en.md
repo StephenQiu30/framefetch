@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/StephenQiu30/framefetch-server/actions/workflows/ci.yml/badge.svg)](https://github.com/StephenQiu30/framefetch-server/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-111111.svg)](LICENSE)
-[![Preview release](https://img.shields.io/github/v/release/StephenQiu30/framefetch-server?include_prereleases&color=111111)](https://github.com/StephenQiu30/framefetch-server/releases)
+[![Latest release](https://img.shields.io/github/v/release/StephenQiu30/framefetch-server?color=111111)](https://github.com/StephenQiu30/framefetch-server/releases)
 
 [Screenshots](#screenshots) · [Quick start](#quick-start) · [First use](#first-use) · [Workflow](#from-material-to-report) · [Skills](#built-in-skills) · [Scope](#scope-and-deployment-requirements) · [Documentation](docs/design/README.md) · [简体中文](README.md)
 
@@ -181,24 +181,24 @@ All clients connect to one Server. Originals, normalized text and reports reside
 
 ## Scope and deployment requirements
 
-Framefetch is in public preview. CI checks deterministic engineering behavior; complete platform files, real models, physical devices and desktop workflows need their own acceptance evidence. Registry entries, successful metadata inspection and screenshots do not establish that validation.
+Server/Web uses the stable release channel. CI checks deterministic engineering behavior; complete platform files, real models, physical devices and desktop workflows need their own acceptance evidence. Registry entries, successful metadata inspection and screenshots do not establish that validation.
 
 - Process authorized HTTP(S), non-DRM material. Registered integrations include YouTube, Bilibili, Douyin, TikTok, Xiaohongshu, Kuaishou and Weibo; actual links depend on content scope, identity, network and platform changes. WeChat Channels supports downloading official clear share files and requires a valid Yuanbao login in Chrome; no Yuanbao page needs to be open; official-account articles provide source discovery. See [parse engine verification status](docs/design/14-解析引擎.md#13-验证状态) for exact platform status and complete-file evidence.
 - Source and build workflows are self-hosted. The operator provides servers, infrastructure, storage, network and models. External models may incur charges and receive the text or frames needed for analysis.
 - Current capabilities cover intake, management, built-in Skill analysis/document formatting, and reports. Method and output fixture results are recorded in the execution plan; mechanical wrapping or initial excerpts do not establish useful document organization. Model conclusions require review. Content writing, screenplay rewriting, card production, ASR/OCR, editing timelines and publishing are outside this scope.
 - Successful material and reports persist; plan capacity, backups and explicit cleanup. See the [Security Policy](SECURITY.md) and parsing design. Replace placeholder configuration and check network, storage and models before exposing a deployment.
 
-## Public previews and versions
+## Releases and versions
 
-The three public previews connect to the same Server:
+The clients connect to the same Server; App remains on its existing Beta release:
 
-| Project      | Current preview                                                                            | Distribution                                                        |
+| Project      | Current release                                                                            | Distribution                                                        |
 | ------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| Server / Web | [v0.3.0-beta.2](https://github.com/StephenQiu30/framefetch-server/releases/tag/v0.3.0-beta.2)   | Self-hosted source and Compose deployment                           |
+| Server / Web | [v0.3.0](https://github.com/StephenQiu30/framefetch-server/releases/tag/v0.3.0)   | Self-hosted source and Compose deployment                           |
 | App          | [v0.2.0-beta.1](https://github.com/StephenQiu30/framefetch-app/releases/tag/v0.2.0-beta.1)      | iOS/Android source; no attached APK, IPA or store package           |
-| Desktop      | [v0.2.0-beta.1](https://github.com/StephenQiu30/framefetch-electron/releases/tag/v0.2.0-beta.1) | macOS Apple Silicon DMG, Windows x64 installer and SHA-256 manifest |
+| Desktop      | [v0.2.0](https://github.com/StephenQiu30/framefetch-electron/releases/tag/v0.2.0) | macOS Apple Silicon DMG, Windows x64 installer and SHA-256 manifest |
 
-All are Beta previews. Desktop installers are unsigned and the macOS build is not notarized; clean installation, upgrades and complete real-Server workflows require separate validation. Git tags identify release snapshots: embedded Server/API/Worker package versions remain `0.2.0`, App is `0.1.0+1`, and desktop packages are `0.2.0`. Use matching source and Server contracts when deploying; tag numbers alone do not establish compatibility.
+Server/API/Worker and Web packages are `0.3.0`, Desktop is `0.2.0`, and the existing App Beta package remains `0.1.0+1`. Desktop installers are unsigned and macOS is not notarized; clean installation, upgrades and complete real-Server workflows require separate validation. Git tags identify release snapshots. Deploy matching source and Server contracts.
 
 This README describes the current main branch. For a fixed version, use its Release and tagged README for installation, upgrades and validation scope.
 

@@ -26,7 +26,7 @@ services:
     restart: unless-stopped
     environment:
       ANALYSIS_ENABLED: ${ANALYSIS_ENABLED:-false}
-      APP_VERSION: ${APP_VERSION:-0.2.0}
+      APP_VERSION: ${APP_VERSION:-0.3.0}
       SMTP_ENABLED: ${SMTP_ENABLED:-false}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
@@ -164,7 +164,7 @@ services:
     environment:
       TEMPORAL_ADDRESS: ${TEMPORAL_HOST:-host.docker.internal}:${TEMPORAL_PORT:-7233}
       TEMPORAL_NAMESPACE: ${TEMPORAL_NAMESPACE:-framefetch}
-      APP_VERSION: ${APP_VERSION:-0.2.0}
+      APP_VERSION: ${APP_VERSION:-0.3.0}
       DOWNLOAD_WORKER_THREADS: ${DOWNLOAD_WORKER_THREADS:-4}
       REQUEST_FINGERPRINT_SECRET: ${REQUEST_FINGERPRINT_SECRET:-development-fingerprint-secret-change-me}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-video-access}
