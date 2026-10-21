@@ -33,6 +33,6 @@ export const publicQuestions = [
     id: 'mobile-app',
     question: '手机端是否能独立运行 AI 分析？',
     answer:
-      'iOS 和 Android 客户端位于独立的 framefetch-app 仓库，使用 Flutter 构建并连接自托管 framefetch-server。媒体处理与 AI 推理由服务端执行，手机端不内置离线提取器或离线 AI 模型。',
+      'iOS 和 Android 客户端位于独立的 framefetch-app 仓库，使用 Flutter 构建并连接自托管 framefetch。媒体处理与 AI 推理由服务端执行，手机端不内置离线提取器或离线 AI 模型。',
   },
 ] as const;

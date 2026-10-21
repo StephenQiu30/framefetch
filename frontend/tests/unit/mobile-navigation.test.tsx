@@ -56,15 +56,12 @@ describe('mobile navigation', () => {
     ).toHaveAttribute('href', '/about');
     expect(
       within(resources).getByRole('link', { name: 'GitHub' }),
-    ).toHaveAttribute(
-      'href',
-      'https://github.com/StephenQiu30/framefetch-server',
-    );
+    ).toHaveAttribute('href', 'https://github.com/StephenQiu30/framefetch');
     expect(
       within(resources).getByRole('link', { name: '文档' }),
     ).toHaveAttribute(
       'href',
-      'https://github.com/StephenQiu30/framefetch-server/tree/main/docs',
+      'https://github.com/StephenQiu30/framefetch/tree/main/docs',
     );
     expect(screen.getByRole('link', { name: '登录账户' })).toHaveAttribute(
       'href',

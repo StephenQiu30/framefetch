@@ -1,12 +1,14 @@
-# <img src="frontend/public/logo.svg" width="36" alt="帧取正式 Logo" /> 帧取 · Framefetch Server / Web
+# <img src="frontend/public/logo.svg" width="36" alt="帧取正式 Logo" /> 帧取 Framefetch · 开源自托管视频下载与 AI 分析
 
-**自托管的素材获取与分析工作站。** 导入有权使用的视频与文档，调用内置 Skill，核对依据并导出 Markdown / DOCX 报告。
+**Framefetch（帧取）是 MIT 开源的自托管视频下载与 AI 视频、剧本分析工作台。** 面向创作者、影视学习者、内容研究者和开发者，将有权使用的视频链接、本地 MP4 与剧本文档整理为素材，调用内置 Skill 核对分镜、场景与原文依据，再导出 Markdown / DOCX 报告。
 
-[![CI 状态](https://github.com/StephenQiu30/framefetch-server/actions/workflows/ci.yml/badge.svg)](https://github.com/StephenQiu30/framefetch-server/actions/workflows/ci.yml)
+本仓库包含 **FastAPI 后端、Next.js Web、后台 Worker、隔离媒体 Runner 与 Chrome 身份扩展**，通过 Docker Compose 部署。[桌面端](https://github.com/StephenQiu30/framefetch-electron)与[移动端](https://github.com/StephenQiu30/framefetch-app)独立维护并连接同一服务。
+
+[![CI 状态](https://github.com/StephenQiu30/framefetch/actions/workflows/ci.yml/badge.svg)](https://github.com/StephenQiu30/framefetch/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-111111.svg)](LICENSE)
-[![Latest release](https://img.shields.io/github/v/release/StephenQiu30/framefetch-server?color=111111)](https://github.com/StephenQiu30/framefetch-server/releases)
+[![Latest release](https://img.shields.io/github/v/release/StephenQiu30/framefetch?color=111111)](https://github.com/StephenQiu30/framefetch/releases)
 
-[界面预览](#界面预览) · [快速开始](#快速开始) · [首次使用](#首次使用) · [从素材到报告](#从素材到报告) · [内置 Skill](#内置-skill) · [使用范围](#使用范围与部署要求) · [设计文档](docs/design/README.md) · [English](README.en.md)
+[界面预览](#界面预览) · [快速开始](#快速开始) · [首次使用](#首次使用) · [从素材到报告](#从素材到报告) · [内置 Skill](#内置-skill) · [常见问题](#常见问题) · [使用范围](#使用范围与部署要求) · [设计文档](docs/design/README.md) · [English](README.en.md)
 
 ## 界面预览
 
@@ -42,6 +44,24 @@
 - **留下报告**：阅读并导出 Markdown / DOCX，重复导出复用已保存结果，不再次调用模型。
 - **控制工作站**：自行配置基础设施、存储与模型；各端共享账户、素材和任务。
 
+## 常见问题
+
+### Framefetch 适合哪些场景？
+
+用于个人视频素材整理、分镜与场景研究、剧本文档阅读和 AI 分析报告。视频观察关联抽样帧与源时间，文本结论关联原文引用，便于回到来源核查；AI 输出仍需人工审阅。
+
+### 可以只导入自己的视频和剧本吗？
+
+可以。支持本地 MP4，以及 DOCX、可提取文字的 PDF、TXT、Markdown、Fountain 文档。管理与阅读导入素材无需调用模型；需要分析时再配置 AI Worker。具体操作见[首次使用](#首次使用)。
+
+### Framefetch 免费开源吗？需要云服务吗？
+
+源代码采用 [MIT License](LICENSE)，可以自行部署、修改和分发。部署者承担服务器、存储和所选模型的费用；项目没有官方 SaaS。模型配置与宿主 AI Worker 的运行方式见[AI 分析配置](#启用-ai-分析)。
+
+### 视频下载支持范围如何确认？
+
+以[解析引擎的平台范围与验证状态](docs/design/14-解析引擎.md)为准。平台登记或元数据解析成功不代表完整文件已通过下载验证；项目不解密 DRM，内容授权与网络要求见[使用范围](#使用范围与部署要求)。
+
 ## 快速开始
 
 只维护两份 Compose：`docker-compose.yml` 完整定义业务服务，本机与生产共用；`docker-compose-env.yml` 独立提供 PostgreSQL、RabbitMQ、Redis 和 MinIO。已有基础服务直接复用；仅在没有现成服务的环境显式运行 `docker compose -f docker-compose-env.yml up -d --wait`，再把业务配置中的 `*_HOST`／`*_PORT` 指向其实际地址与发布端口。Temporal 单独提供。先部署 Server，再让浏览器、Electron 或 App 连接。平台身份按 Registry 声明从普通 Chrome 扩展取得，接入方法见下文。
@@ -57,8 +77,8 @@
 ### 本机启动（macOS，单人自用）
 
 ```bash
-git clone https://github.com/StephenQiu30/framefetch-server.git
-cd framefetch-server
+git clone https://github.com/StephenQiu30/framefetch.git
+cd framefetch
 test -f .env || cp .env.example .env
 
 # 确认 .env 连接本机已运行的 PostgreSQL、RabbitMQ、Redis、MinIO 与 Temporal
@@ -250,7 +270,7 @@ Web 工作区提供解析详情、下载记录、个人处理记录、视频播�
 
 ## 同一工作站，多种使用方式
 
-- **[Server / Web](https://github.com/StephenQiu30/framefetch-server)**：浏览器工作区、统一 FastAPI 接口、后台处理、存储、报告与管理。
+- **[Server / Web](https://github.com/StephenQiu30/framefetch)**：浏览器工作区、统一 FastAPI 接口、后台处理、存储、报告与管理。
 - **[Electron 桌面端](https://github.com/StephenQiu30/framefetch-electron)**：复用 Web 业务页面，提供原生窗口、菜单、按服务地址隔离的会话和系统文件保存。
 - **[Flutter App](https://github.com/StephenQiu30/framefetch-app)**：iOS／Android 原生文件选择、播放、报告阅读、保存与分享。
 
@@ -271,7 +291,7 @@ Server/Web 按正式版本发布。CI 验证确定性的工程检查；平台完
 
 | 项目         | 当前版本                                                                                   | 发行内容                                                   |
 | ------------ | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| Server / Web | [v0.3.0](https://github.com/StephenQiu30/framefetch-server/releases/tag/v0.3.0)   | 自托管源码与 Compose 部署方式                              |
+| Server / Web | [v0.3.0](https://github.com/StephenQiu30/framefetch/releases/tag/v0.3.0)   | 自托管源码与 Compose 部署方式                              |
 | App          | [v0.2.0-beta.1](https://github.com/StephenQiu30/framefetch-app/releases/tag/v0.2.0-beta.1)      | iOS／Android 源码；未附 APK、IPA 或商店安装包              |
 | Desktop      | [v0.2.0](https://github.com/StephenQiu30/framefetch-electron/releases/tag/v0.2.0) | macOS Apple Silicon DMG、Windows x64 安装包与 SHA-256 清单 |
 
@@ -371,7 +391,7 @@ docker-compose-env.yml   独立基础设施，已有服务时不启动
 
 ## 路线图
 
-平台支持与验证限制见[解析引擎](docs/design/14-解析引擎.md#13-验证状态)，其他未完成工作见[BACKLOG](BACKLOG.md)，内置 Skill 实施及验证见[PRD](docs/prd/PRD-内置Skill能力整合.md)与[执行计划](docs/plan/PLAN-内置Skill能力整合.md)。欢迎在 [Issues](https://github.com/StephenQiu30/framefetch-server/issues) 中讨论优先级，带有 `good first issue` / `help wanted` 标签的任务适合首次参与。
+平台支持与验证限制见[解析引擎](docs/design/14-解析引擎.md#13-验证状态)，其他未完成工作见[BACKLOG](BACKLOG.md)，内置 Skill 实施及验证见[PRD](docs/prd/PRD-内置Skill能力整合.md)与[执行计划](docs/plan/PLAN-内置Skill能力整合.md)。欢迎在 [Issues](https://github.com/StephenQiu30/framefetch/issues) 中讨论优先级，带有 `good first issue` / `help wanted` 标签的任务适合首次参与。
 
 ## 参与贡献
 
@@ -385,11 +405,11 @@ docker-compose-env.yml   独立基础设施，已有服务时不启动
 
 提交变更时，请保持实现、OpenAPI 契约、测试、运行手册和验收证据一致，并只提交小而完整、可独立验证的改动。
 
-如果帧取对你的创作、研究或自托管实践有帮助，可以关注 [Releases](https://github.com/StephenQiu30/framefetch-server/releases) 获取版本更新，或在 [Issues](https://github.com/StephenQiu30/framefetch-server/issues) 提交具体反馈。
+如果帧取对你有帮助，欢迎 Star 支持项目；也可以关注 [Releases](https://github.com/StephenQiu30/framefetch/releases) 获取版本更新，或在 [Issues](https://github.com/StephenQiu30/framefetch/issues) 提交具体反馈。
 
 ## 引用
 
-在论文、报告或课程材料中使用帧取时，可点击仓库侧栏的 “Cite this repository”，或直接使用根目录的 [`CITATION.cff`](CITATION.cff)。版本变更见 [Releases](https://github.com/StephenQiu30/framefetch-server/releases)。
+在论文、报告或课程材料中使用帧取时，可点击仓库侧栏的 “Cite this repository”，或直接使用根目录的 [`CITATION.cff`](CITATION.cff)。版本变更见 [Releases](https://github.com/StephenQiu30/framefetch/releases)。
 
 ## 许可证
 

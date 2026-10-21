@@ -1,4 +1,4 @@
-# framefetch-server 协作规范
+# framefetch 协作规范
 
 本文件约束在本仓库工作的代码代理与贡献者：怎么读、怎么改、怎么验证、怎么交付。技术栈、目录与接口链路见 [PROJECT.md](PROJECT.md)，界面视觉见 [design.md](design.md)，安全边界见 [SECURITY.md](SECURITY.md)，提交格式见 [CONTRIBUTING.md](CONTRIBUTING.md)。规则冲突时以用户最新要求为准，其次是本文件。
 

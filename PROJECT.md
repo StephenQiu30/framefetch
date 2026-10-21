@@ -1,6 +1,6 @@
-# framefetch-server 工程规范
+# framefetch 工程规范
 
-本文规定 `framefetch-server` 的技术栈、进程拓扑、目录职责、接口链路与命名规则。协作与交付见 [AGENTS.md](AGENTS.md)，运行方式见 [README.md](README.md)，界面视觉见 [design.md](design.md)。`framefetch-app` 与 `framefetch-electron` 是独立仓库，各自维护规范。
+本文规定 `framefetch` 的技术栈、进程拓扑、目录职责、接口链路与命名规则。协作与交付见 [AGENTS.md](AGENTS.md)，运行方式见 [README.md](README.md)，界面视觉见 [design.md](design.md)。`framefetch-app` 与 `framefetch-electron` 是独立仓库，各自维护规范。
 
 ## 1. 技术栈
 
@@ -40,7 +40,7 @@
 ## 3. 仓库结构
 
 ```text
-framefetch-server/
+framefetch/
 ├── backend/                  FastAPI、Worker、Runner、当前态 SQL 与测试
 ├── frontend/                 Next.js Web
 ├── extension/                身份扩展源码；manifest.json 与 config.local.json 由安装命令生成，不入库

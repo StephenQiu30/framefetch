@@ -54,14 +54,14 @@ const principles = [
 
 const repositories = [
   {
-    name: 'framefetch-server',
+    name: 'framefetch',
     href: siteConfig.repositoryUrl,
     text: 'FastAPI API、Next.js Web、下载 / 文档 / 报告 Worker、隔离 Media Runner 与 Docker Compose 部署。',
   },
   {
     name: 'framefetch-app',
     href: siteConfig.mobileRepositoryUrl,
-    text: '连接自托管 framefetch-server 的 Flutter iOS / Android 客户端；媒体处理与 AI 推理仍在服务端执行。',
+    text: '连接自托管 framefetch 的 Flutter iOS / Android 客户端；媒体处理与 AI 推理仍在服务端执行。',
   },
 ];
 

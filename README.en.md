@@ -1,12 +1,14 @@
-# <img src="frontend/public/logo.svg" width="36" alt="Official Framefetch logo" /> Framefetch Server / Web
+# <img src="frontend/public/logo.svg" width="36" alt="Official Framefetch logo" /> Framefetch · Open-source self-hosted video downloader & AI analysis
 
-**A self-hosted workstation for material acquisition and analysis.** Import authorized video and documents, invoke built-in Skills, inspect the evidence, and export Markdown / DOCX reports.
+**Framefetch is an MIT-licensed, self-hosted video downloader and AI video / screenplay analysis workspace.** Built for creators, film students, content researchers and developers, it brings authorized video links, local MP4 files and screenplay documents into one workflow: run built-in Skills, review shot, scene and source-text evidence, and export Markdown / DOCX reports.
 
-[![CI](https://github.com/StephenQiu30/framefetch-server/actions/workflows/ci.yml/badge.svg)](https://github.com/StephenQiu30/framefetch-server/actions/workflows/ci.yml)
+This repository includes the **FastAPI backend, Next.js web app, background workers, isolated media runner and Chrome identity extension**, deployed with Docker Compose. The separately maintained [desktop](https://github.com/StephenQiu30/framefetch-electron) and [mobile](https://github.com/StephenQiu30/framefetch-app) clients connect to the same service.
+
+[![CI](https://github.com/StephenQiu30/framefetch/actions/workflows/ci.yml/badge.svg)](https://github.com/StephenQiu30/framefetch/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-111111.svg)](LICENSE)
-[![Latest release](https://img.shields.io/github/v/release/StephenQiu30/framefetch-server?color=111111)](https://github.com/StephenQiu30/framefetch-server/releases)
+[![Latest release](https://img.shields.io/github/v/release/StephenQiu30/framefetch?color=111111)](https://github.com/StephenQiu30/framefetch/releases)
 
-[Screenshots](#screenshots) · [Quick start](#quick-start) · [First use](#first-use) · [Workflow](#from-material-to-report) · [Skills](#built-in-skills) · [Scope](#scope-and-deployment-requirements) · [Documentation](docs/design/README.md) · [简体中文](README.md)
+[Screenshots](#screenshots) · [Quick start](#quick-start) · [First use](#first-use) · [Workflow](#from-material-to-report) · [Skills](#built-in-skills) · [FAQ](#faq) · [Scope](#scope-and-deployment-requirements) · [Documentation](docs/design/README.md) · [简体中文](README.md)
 
 ## Screenshots
 
@@ -42,6 +44,24 @@ For creators, content researchers and developers who want to manage their own so
 - **Keep reports**: read and export Markdown / DOCX. Repeated exports reuse saved results without another model call.
 - **Control your workstation**: choose infrastructure, storage and model services; share accounts, material and jobs across clients.
 
+## FAQ
+
+### What can I use Framefetch for?
+
+Organize personal video sources, study shots and scenes, read screenplay documents, and create AI analysis reports. Video observations refer to sampled frames and source times; text conclusions refer to quotations so you can check the original. AI output still needs human review.
+
+### Can I use my own videos and screenplays?
+
+Yes. Import local MP4 files and DOCX, text-based PDF, TXT, Markdown or Fountain documents. Managing and reading imported sources does not invoke a model. Configure the AI Worker when you need analysis; see [First use](#first-use).
+
+### Is Framefetch free and open source? Does it require a cloud service?
+
+The source code uses the [MIT License](LICENSE), allowing self-hosting, modification and redistribution. You cover your infrastructure, storage and chosen model costs; there is no official SaaS. See [AI analysis setup](#optional-ai-worker) for model and host AI Worker configuration.
+
+### Which video sources can I download?
+
+Consult the [platform scope and verification status](docs/design/14-解析引擎.md) (Chinese). A registered platform or successful metadata lookup does not prove a complete download. Framefetch does not decrypt DRM; see [Scope](#scope-and-deployment-requirements) for authorization and network requirements.
+
 ## Quick start
 
 Keep two Compose files: `docker-compose.yml` defines all business services for local and production use; `docker-compose-env.yml` independently provisions PostgreSQL, RabbitMQ, Redis and MinIO. Reuse existing infrastructure. Only when it is absent, run `docker compose -f docker-compose-env.yml up -d --wait` explicitly, then configure business `*_HOST` / `*_PORT` values for its published endpoints. Provide Temporal separately. Deploy the Server, then connect Web, Electron or mobile clients. Platform identity follows the Registry declarations through the ordinary Chrome extension.
@@ -57,8 +77,8 @@ The business Compose project is named `framefetch`; the backend image is `framef
 ### Automatic local start (macOS)
 
 ```bash
-git clone https://github.com/StephenQiu30/framefetch-server.git
-cd framefetch-server
+git clone https://github.com/StephenQiu30/framefetch.git
+cd framefetch
 test -f .env || cp .env.example .env
 
 # Configure .env to reuse existing PostgreSQL, RabbitMQ, Redis, MinIO and Temporal
@@ -173,7 +193,7 @@ Available methods come from the server catalog. See the [requirements index](doc
 
 ## One workstation, multiple clients
 
-- **[Server / Web](https://github.com/StephenQiu30/framefetch-server)**: browser workspace, unified FastAPI API, background processing, storage, reports and administration.
+- **[Server / Web](https://github.com/StephenQiu30/framefetch)**: browser workspace, unified FastAPI API, background processing, storage, reports and administration.
 - **[Electron Desktop](https://github.com/StephenQiu30/framefetch-electron)**: shared Web business pages with native windows, menus, per-server sessions and system file saving.
 - **[Flutter App](https://github.com/StephenQiu30/framefetch-app)**: native iOS/Android file selection, playback, report reading, saving and sharing.
 
@@ -194,7 +214,7 @@ The clients connect to the same Server; App remains on its existing Beta release
 
 | Project      | Current release                                                                            | Distribution                                                        |
 | ------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| Server / Web | [v0.3.0](https://github.com/StephenQiu30/framefetch-server/releases/tag/v0.3.0)   | Self-hosted source and Compose deployment                           |
+| Server / Web | [v0.3.0](https://github.com/StephenQiu30/framefetch/releases/tag/v0.3.0)   | Self-hosted source and Compose deployment                           |
 | App          | [v0.2.0-beta.1](https://github.com/StephenQiu30/framefetch-app/releases/tag/v0.2.0-beta.1)      | iOS/Android source; no attached APK, IPA or store package           |
 | Desktop      | [v0.2.0](https://github.com/StephenQiu30/framefetch-electron/releases/tag/v0.2.0) | macOS Apple Silicon DMG, Windows x64 installer and SHA-256 manifest |
 
@@ -281,7 +301,7 @@ pnpm build
 
 ## Roadmap
 
-Platform support and validation limits are described in [the parsing design](docs/design/14-解析引擎.md#13-验证状态); other unfinished work is listed in [BACKLOG](BACKLOG.md) (Chinese); built-in Skills are defined in the [PRD](docs/prd/PRD-内置Skill能力整合.md), with work packages and acceptance checklists in the [execution plan](docs/plan/PLAN-内置Skill能力整合.md). Implementation and verification evidence are recorded in that plan. Discuss priorities in [Issues](https://github.com/StephenQiu30/framefetch-server/issues) — tasks labeled `good first issue` or `help wanted` are a good place to start.
+Platform support and validation limits are described in [the parsing design](docs/design/14-解析引擎.md#13-验证状态); other unfinished work is listed in [BACKLOG](BACKLOG.md) (Chinese); built-in Skills are defined in the [PRD](docs/prd/PRD-内置Skill能力整合.md), with work packages and acceptance checklists in the [execution plan](docs/plan/PLAN-内置Skill能力整合.md). Implementation and verification evidence are recorded in that plan. Discuss priorities in [Issues](https://github.com/StephenQiu30/framefetch/issues) — tasks labeled `good first issue` or `help wanted` are a good place to start.
 
 ## Contributing
 
@@ -289,11 +309,11 @@ Contributions to provider adapters, reliability, web and mobile UX, AI reports, 
 
 Keep implementation, OpenAPI contracts, tests, operations documentation and acceptance evidence aligned. Prefer small, independently verifiable changes.
 
-If Framefetch helps your creative work, research or self-hosting setup, watch [Releases](https://github.com/StephenQiu30/framefetch-server/releases) for updates or share specific feedback in [Issues](https://github.com/StephenQiu30/framefetch-server/issues).
+If Framefetch is useful to you, give the project a star or watch [Releases](https://github.com/StephenQiu30/framefetch/releases) for updates or share specific feedback in [Issues](https://github.com/StephenQiu30/framefetch/issues).
 
 ## Citation
 
-To cite Framefetch in papers, reports or course material, use “Cite this repository” in the GitHub sidebar or the root [`CITATION.cff`](CITATION.cff). See [Releases](https://github.com/StephenQiu30/framefetch-server/releases) for version history.
+To cite Framefetch in papers, reports or course material, use “Cite this repository” in the GitHub sidebar or the root [`CITATION.cff`](CITATION.cff). See [Releases](https://github.com/StephenQiu30/framefetch/releases) for version history.
 
 ## License
 

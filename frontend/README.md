@@ -1,6 +1,6 @@
 # <img src="public/logo.svg" width="32" alt="帧取" /> Framefetch Web
 
-**在浏览器中导入素材、管理下载与剧本文档、核对分析报告。** 本目录提供 framefetch-server 的 Next.js Web 工作区，Electron 复用其业务页面。
+**在浏览器中导入素材、管理下载与剧本文档、核对分析报告。** 本目录提供 framefetch 的 Next.js Web 工作区，Electron 复用其业务页面。
 
 [本地开发](#本地开发) · [响应式列表](#界面与响应式列表) · [接口生成](#自动生成接口) · [正文组件](#通用正文组件) · [项目首页](../README.md)
 

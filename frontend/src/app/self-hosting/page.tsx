@@ -39,7 +39,7 @@ const steps = [
     title: '克隆仓库并准备环境文件',
     text: '复制示例配置后，把 .env 中的连接信息改为本机已运行的 PostgreSQL、RabbitMQ、Redis 与 MinIO。真实密钥只写入未提交的 .env 或 Secret Manager。',
     code: `git clone ${siteConfig.repositoryUrl}.git
-cd framefetch-server
+cd framefetch
 test -f .env || cp .env.example .env`,
   },
   {

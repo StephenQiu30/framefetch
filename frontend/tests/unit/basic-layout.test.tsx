@@ -265,10 +265,7 @@ describe('BasicLayout', () => {
       ).toHaveAttribute('href', '/#architecture');
       expect(
         within(navigation).getByRole('link', { name: 'GitHub' }),
-      ).toHaveAttribute(
-        'href',
-        'https://github.com/StephenQiu30/framefetch-server',
-      );
+      ).toHaveAttribute('href', 'https://github.com/StephenQiu30/framefetch');
       expect(screen.getByRole('link', { name: '登录' })).toHaveAttribute(
         'href',
         '/user/login',

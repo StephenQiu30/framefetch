@@ -33,12 +33,10 @@ export const siteConfig = {
     '帧取 Framefetch 是 MIT 开源的自托管视频解析与 AI 分析平台，支持本地视频导入、剧本文档处理、分镜分析，以及 Markdown / DOCX 报告导出。',
   englishDescription:
     'Framefetch is a self-hosted open-source workflow for authorized video parsing, local media import, screenplay processing, and AI video analysis with Markdown and DOCX reports.',
-  repositoryUrl: 'https://github.com/StephenQiu30/framefetch-server',
-  documentationUrl:
-    'https://github.com/StephenQiu30/framefetch-server/tree/main/docs',
+  repositoryUrl: 'https://github.com/StephenQiu30/framefetch',
+  documentationUrl: 'https://github.com/StephenQiu30/framefetch/tree/main/docs',
   mobileRepositoryUrl: 'https://github.com/StephenQiu30/framefetch-app',
-  licenseUrl:
-    'https://github.com/StephenQiu30/framefetch-server/blob/main/LICENSE',
+  licenseUrl: 'https://github.com/StephenQiu30/framefetch/blob/main/LICENSE',
   maintainer: {
     name: 'StephenQiu30',
     url: 'https://github.com/StephenQiu30',

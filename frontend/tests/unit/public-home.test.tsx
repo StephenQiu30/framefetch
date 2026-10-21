@@ -13,11 +13,11 @@ describe('PublicHome', () => {
     );
     expect(screen.getByRole('link', { name: /查看源代码/ })).toHaveAttribute(
       'href',
-      'https://github.com/StephenQiu30/framefetch-server',
+      'https://github.com/StephenQiu30/framefetch',
     );
     expect(screen.getByRole('link', { name: /阅读部署说明/ })).toHaveAttribute(
       'href',
-      'https://github.com/StephenQiu30/framefetch-server/blob/main/README.md#快速开始',
+      'https://github.com/StephenQiu30/framefetch/blob/main/README.md#快速开始',
     );
   });
 

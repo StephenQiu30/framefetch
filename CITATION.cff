@@ -1,17 +1,17 @@
 cff-version: 1.2.0
 message: "If you use Framefetch in research or publications, please cite it as below."
-title: "Framefetch (帧取): self-hosted media workflow and AI video analysis"
+title: "Framefetch (帧取): self-hosted video downloader and AI video / screenplay analysis"
 abstract: >-
   Framefetch is an open-source, self-hosted workflow for authorized video
-  parsing, local media import, screenplay processing and AI video analysis
+  downloading, local MP4 import, screenplay processing and AI video analysis
   with Markdown and DOCX reports, built on FastAPI, Next.js, PostgreSQL,
-  RabbitMQ and MinIO.
+  Temporal, RabbitMQ and MinIO.
 type: software
-version: 0.2.0
-date-released: "2026-09-29"
+version: 0.3.0
+date-released: "2026-10-20"
 authors:
   - alias: StephenQiu30
-repository-code: "https://github.com/StephenQiu30/framefetch-server"
+repository-code: "https://github.com/StephenQiu30/framefetch"
 license: MIT
 keywords:
   - self-hosted
@@ -22,3 +22,6 @@ keywords:
   - nextjs
   - video-downloader
   - llm
+  - shot-analysis
+  - ffmpeg
+  - yt-dlp
