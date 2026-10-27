@@ -21,6 +21,7 @@ from app.workers.runner.engine.browser import (
     tiktok,
     wechat_channels,
     weibo,
+    x,
     xiaohongshu,
     youku,
     youtube,
@@ -45,6 +46,7 @@ PARSERS = {
     "weibo": weibo,
     "tiktok": tiktok,
     "youku": youku,
+    "x": x,
 }
 
 
@@ -96,6 +98,11 @@ async def _remove_identity(cookie: Path) -> None:
 def _expected_id(url: str, platform: str) -> str | None:
     parsed = urlsplit(url)
     segments = parsed.path.strip("/").split("/")
+    if platform == "x":
+        matched = re.fullmatch(
+            r"/[^/]+/status/(\d+)(?:/video/[1-9]\d*)?/?", parsed.path
+        )
+        return matched.group(1) if matched else None
     if platform == "douyin":
         value = parse_qs(parsed.query).get("modal_id", [segments[-1]])[0]
         return value if value.isdigit() else None
@@ -243,7 +250,18 @@ class BrowserLayer:
                     payloads.append(collector.queue.get_nowait())
                 for payload in payloads:
                     try:
-                        media = parser.parse_response(payload, expected)
+                        if profile.key == "x":
+                            selected = re.search(
+                                r"/video/([1-9]\d*)/?$",
+                                urlsplit(source.request.source_url).path,
+                            )
+                            media = x.parse_response(
+                                payload,
+                                expected,
+                                int(selected.group(1)) if selected else None,
+                            )
+                        else:
+                            media = parser.parse_response(payload, expected)
                         break
                     except RunnerFailure as error:
                         if (
@@ -320,7 +338,9 @@ class BrowserLayer:
                     )
                 except RunnerFailure:
                     # Only a successful native media response proves browser binding.
-                    if raw["url"] not in collector.media_urls:
+                    if raw["url"] not in collector.media_urls or profile.key == "x":
+                        # X formats carry no guessed codecs/fps. Playback alone
+                        # cannot replace the native probe's format evidence.
                         raise
                     handoff_kind = "browser"
                     usable = [raw]

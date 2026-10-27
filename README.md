@@ -185,9 +185,9 @@ uv run python -m app.workers.identity.cli check
 
 先执行 `install`，再在 Chrome 加载扩展。`manifest.template.json` 是源码模板，Chrome 需要生成后的 `manifest.json`；出现“清单文件缺失或不可读取”时，确认安装命令成功，再点击“重试”或重新选择扩展目录。
 
-在 Chrome 扩展页加载主工作区的 `extension/`（必须是绝对路径）。只加载到日常登录的一个普通 Profile；扩展申请 cookies、alarms、declarativeNetRequestWithHostAccess，host 权限限定 Registry 的 Cookie 域、视频号精确 `https://yuanbao.tencent.com/*` 与本机 WebSocket，不申请 scripting、广泛 tabs 或历史权限。1.3.3 的视频号解析在 Service Worker 内部通过固定 HTTP 接口完成：按解析接口 URL 读取当前 Profile 的 `hy_user`／`hy_token`，认证头及 Cookie 留在 Chrome，不导出给宿主或 Runner，不缓存凭据。打包的声明式规则仅将本扩展对固定元宝解析接口的 POST 请求 Origin 设置为元宝官网，补齐服务端来源校验所需的请求头；规则不匹配网页、其他扩展、其他接口或方法，不修改响应头。解析前确认规则集启用，否则在读取凭据之前终止。新增的是请求头修改能力，未扩大站点权限；升级时需要用户知悉并启用这一能力。解析与下载重解析均无需打开元宝页面，不执行页面脚本，也没有页面回退分支；账号切换、期限、重定向与响应大小均受校验。首次登录或登录过期时，通过面板“登录元宝”完成正常登录，再关闭页面即可。面板显示实际版本、连接、登录材料可用性及最近一次解析子因；1.4.0 增加 YouTube 固定官网入口、实时材料诊断与最近任务结果，材料和解析结果分开展示，完成登录后需回到帧取重新解析，状态刷新不会自动下载。诊断协议与结果失效条件见[YouTube 身份诊断](docs/design/15-平台身份.md#7-youtube-身份诊断)。材料可用不代表账号仍获服务端认可。加载后 `check` 报告实际连接状态与版本；Chrome 停止或尚未加载时显示 `connected=false`、`version=null`。升级后从主工作区重新执行 `install`，再在 Chrome 扩展页点一次“重新加载”。不要从 git worktree 加载；install 自动定位主工作区，宿主服务也使用主工作区的 backend。
+在 Chrome 扩展页加载主工作区的 `extension/`（必须是绝对路径）。只加载到日常登录的一个普通 Profile；扩展申请 cookies、alarms、declarativeNetRequestWithHostAccess，host 权限限定 Registry 的 Cookie 域、视频号精确 `https://yuanbao.tencent.com/*`；WebSocket 目标由生成的 CSP 限定，不申请 scripting、广泛 tabs 或历史权限。1.3.3 的视频号解析在 Service Worker 内部通过固定 HTTP 接口完成：按解析接口 URL 读取当前 Profile 的 `hy_user`／`hy_token`，认证头及 Cookie 留在 Chrome，不导出给宿主或 Runner，不缓存凭据。打包的声明式规则仅将本扩展对固定元宝解析接口的 POST 请求 Origin 设置为元宝官网，补齐服务端来源校验所需的请求头；规则不匹配网页、其他扩展、其他接口或方法，不修改响应头。解析前确认规则集启用，否则在读取凭据之前终止。新增的是请求头修改能力，未扩大站点权限；升级时需要用户知悉并启用这一能力。解析与下载重解析均无需打开元宝页面，不执行页面脚本，也没有页面回退分支；账号切换、期限、重定向与响应大小均受校验。首次登录或登录过期时，通过面板“登录元宝”完成正常登录，再关闭页面即可。面板显示实际版本、连接、登录材料可用性及最近一次解析子因；1.4.0 增加 YouTube 固定官网入口、实时材料诊断与最近任务结果，材料和解析结果分开展示，完成登录后需回到帧取重新解析，状态刷新不会自动下载。诊断协议与结果失效条件见[YouTube 身份诊断](docs/design/15-平台身份.md#7-youtube-身份诊断)。材料可用不代表账号仍获服务端认可。加载后 `check` 报告实际连接状态与版本；Chrome 停止或尚未加载时显示 `connected=false`、`version=null`。升级后从主工作区重新执行 `install`，再在 Chrome 扩展页点一次“重新加载”。不要从 git worktree 加载；install 自动定位主工作区，宿主服务也使用主工作区的 backend。
 
-macOS 扩展目录 `0700`、生成文件 `0600`；Windows 使用当前用户所有的 ACL，仅允许当前用户与 SYSTEM 访问。Windows 在写入密钥前收紧空文件的权限，读取或升级配置前检查访问规则，拒绝符号链接和目录联接。密钥和端口仅写入项目扩展目录的 `config.local.json`；它和生成的 `manifest.json` 均被 gitignore，安装会检查两者未被 Git 跟踪。源码只维护 `manifest.template.json`，不在 web_accessible_resources 中、不进入源码或发行包。**信任边界**：这些权限隔离网页与其他用户，不能隔离同一用户下可读写该目录的恶意进程。扩展和 cookie-source 共享配对密钥；Runner Bearer 是另一份独立凭据，不能复用。双向 HMAC 防止无配对密钥的本机假服务骗取 Cookie；不会赋予内容导出权利或扩大 content_scope。
+macOS 扩展目录 `0700`、生成文件 `0600`；Windows 使用当前用户所有的 ACL，仅允许当前用户与 SYSTEM 访问。Windows 在写入密钥前收紧空文件的权限，读取或升级配置前检查访问规则，拒绝符号链接和目录联接。密钥和唯一服务地址仅写入项目扩展目录的 `config.local.json`；它和生成的 `manifest.json` 均被 gitignore，安装会检查两者未被 Git 跟踪。源码只维护 `manifest.template.json`，不在 web_accessible_resources 中、不进入源码或发行包。**信任边界**：这些权限隔离网页与其他用户，不能隔离同一用户下可读写该目录的恶意进程。扩展和 cookie-source 共享配对密钥；Runner Bearer 是另一份独立凭据，不能复用。双向 HMAC 防止无配对密钥的本机假服务骗取 Cookie；不会赋予内容导出权利或扩大 content_scope。
 
 Compose 仅向 `session-runner` 加载 `.local-runtime/identity/runner.env`。该文件由 `install` 与宿主服务 `run` 根据独立身份配置生成，只包含 `COOKIE_SOURCE_TOKEN`；API、worker、egress-proxy 和 bgutil 不持有它。目录与文件使用当前用户私有权限，写入时原子替换，生成前检查路径未被 Git 跟踪且已忽略；不打印令牌、不改写项目 `.env` 或 `.env.prod`。配对密钥不写入此文件，也不进入任何容器。不要把整个宿主身份配置作为容器 env_file。
 
@@ -196,6 +196,18 @@ Compose 仅向 `session-runner` 加载 `.local-runtime/identity/runner.env`。�
 当前 Compose 与 squid 配套固定使用端口 `19101`，调整端口须同步精确代理 ACL。Runner 身份客户端显式使用受控代理，不使用环境代理、不跟随重定向；squid 只放行该宿主端口的 `POST /cookies` 和 `POST /yuanbao-parse`，强制直连，不经过 Clash／住宅上游。其他宿主端口、私网和 IP 字面量仍被拒绝。身份传输是明文 HTTP，egress-proxy 属于敏感信任组件，配置关闭访问日志、缓存和响应体存储。安装只启动宿主服务；业务服务由共享 Compose 启动，生产环境同时加载生产覆盖文件。
 
 扩展使用 20 秒心跳、30 秒 alarm 和上限 30 秒的指数退避，并同步注册启动事件。保活机制依据 [Chrome WebSocket 文档](https://developer.chrome.com/docs/extensions/how-to/web-platform/websockets)；真实关闭 DevTools、睡眠唤醒与各类重启恢复仍须实测。
+
+云端部署使用同一扩展，显式选择服务地址；本机只需 Chrome 与插件运行：
+
+```bash
+uv run --frozen python -m app.workers.identity.cli install \
+  --env-file "$HOME/Library/Application Support/Framefetch/cloud-identity.env" \
+  --server-url https://150.158.45.162
+```
+
+云端安装模式只生成主工作区的扩展配置，不启动或重启本机身份服务，不发布本机 Runner 凭据。经既有 SSH/SFTP 管理通道同步两端私有配对密钥后，在 Chrome 重新加载扩展；面板显示唯一服务地址，1.5.0 支持 WSS 云端连接。本地模式省略 `--server-url`。每个插件实例只连接一个服务；切换目标需要重新生成配置并加载。WebSocket 目标通过生成的 CSP 限定，平台 Cookie 域仍由 Registry 生成。
+
+云端 Linux 使用原生宿主身份进程，只开放精确 WSS 入口，Runner 的 Cookie 接口保留私有。systemd、Nginx、配对与部署步骤见[云端身份运行说明](infrastructure/identity/README.md)，技术约束见[连接设计](docs/design/17-云端插件连接.md)。网络出口单独配置；插件只提供本机 Chrome 身份，不转发本机网页或视频流量。连接成功、材料可读取与实际平台任务成功分别验证。
 
 Runner 身份调用、RunContext 材料所有权和私有 tmpfs 清理统一见[平台身份](docs/design/15-平台身份.md)与[解析引擎第 10 节](docs/design/14-解析引擎.md#10-模块接口)。真实 Chrome 保活、重连与需要身份的完整文件验收状态见[验证状态](docs/design/14-解析引擎.md#13-验证状态)。
 

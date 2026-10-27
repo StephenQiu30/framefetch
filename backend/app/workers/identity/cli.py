@@ -17,6 +17,7 @@ from pathlib import Path
 import httpx
 from app.core.config import CookieSourceSettings
 from app.workers.identity.extension import (
+    extension_endpoint,
     extension_home,
     install_extension,
 )
@@ -37,6 +38,8 @@ def agent_path() -> Path:
 
 
 def default_env_file() -> Path:
+    if sys.platform == "linux":
+        return Path.home() / ".config/framefetch/identity/identity.env"
     if sys.platform == "win32":
         return (
             Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData/Local"))
@@ -97,14 +100,18 @@ def prepare_config(env_file: Path) -> CookieSourceSettings:
     return settings
 
 
-def install(env_file: Path) -> Path:
+def install(env_file: Path, server_url: str | None = None) -> Path:
+    if server_url is not None:
+        extension_endpoint(19101, server_url)
     settings = prepare_config(env_file)
     if secrets.compare_digest(
         settings.cookie_source_token.get_secret_value(),
         settings.cookie_source_pairing_key.get_secret_value(),
     ):
         raise ValueError("pairing_key_must_differ_from_runner_token")
-    extension = install_extension(settings)
+    extension = install_extension(settings, server_url)
+    if server_url is not None:
+        return extension
     publish_runner_environment(settings)
     if sys.platform == "win32":
         manage_service(extension.parent / "backend", env_file)
@@ -217,17 +224,30 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="帧取宿主身份服务与 Chrome 扩展")
     parser.add_argument("command", choices=("run", "install", "uninstall", "check"))
     parser.add_argument("--env-file", type=Path)
+    parser.add_argument("--server-url", help="扩展连接的 HTTPS origin；省略时连接本机")
     args = parser.parse_args()
-    if sys.platform not in {"darwin", "win32"}:
-        print("cookie-source requires macOS or Windows", file=sys.stderr)
+    if sys.platform not in {"darwin", "win32", "linux"}:
+        print("cookie-source platform unavailable", file=sys.stderr)
         return 2
     try:
+        if args.server_url is not None and args.command != "install":
+            raise ValueError("server_url_requires_install")
+        if (
+            sys.platform == "linux"
+            and args.command in {"install", "uninstall"}
+            and not (args.command == "install" and args.server_url)
+        ):
+            raise ValueError("linux_identity_requires_systemd")
         if args.command == "uninstall":
             uninstall()
             return 0
         env_file = (args.env_file or default_env_file()).expanduser().absolute()
         if args.command == "install":
-            print(install(env_file))
+            print(
+                install(env_file, server_url=args.server_url)
+                if args.server_url
+                else install(env_file)
+            )
         else:
             settings = configured(env_file)
             if args.command == "check":

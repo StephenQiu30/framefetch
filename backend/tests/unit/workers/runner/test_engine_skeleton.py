@@ -207,7 +207,7 @@ async def test_layer_stubs_fail_closed(layer, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "key", ["douyin", "tiktok", "xiaohongshu", "kuaishou", "weibo", "youku"]
+    "key", ["douyin", "tiktok", "xiaohongshu", "kuaishou", "weibo", "youku", "x"]
 )
 def test_implemented_browser_parsers_reject_empty_payload(key):
     module = PARSERS[key]
@@ -216,9 +216,7 @@ def test_implemented_browser_parsers_reject_empty_payload(key):
         module.parse_response({})
 
 
-@pytest.mark.parametrize(
-    "key", ["facebook", "instagram", "x", "qqvideo", "hongguo_web"]
-)
+@pytest.mark.parametrize("key", ["facebook", "instagram", "qqvideo", "hongguo_web"])
 async def test_missing_browser_parser_fails_before_identity_or_browser_io(
     key, tmp_path, monkeypatch
 ):

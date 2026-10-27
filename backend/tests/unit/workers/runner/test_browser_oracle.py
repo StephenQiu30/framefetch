@@ -15,6 +15,7 @@ from app.workers.runner.engine.browser import (
     douyin,
     kuaishou,
     weibo,
+    x,
     xiaohongshu,
     youtube,
 )
@@ -30,6 +31,8 @@ from app.workers.runner.service import MediaRunnerService
 from helpers import settings
 from test_engine_skeleton import source_for
 from test_g2_browser import status
+from test_x_browser import TWEET, VIDEO, tweet_payload
+from test_x_browser import URL as X_MEDIA
 
 NOTE_ID = "6a82c08c0000000029032447"
 MEDIA = "https://media.example.org/video.mp4"
@@ -178,6 +181,7 @@ async def test_interception_first_party_path_and_bounded_body():
             "123",
         ),
         (weibo, "https://weibo.com/123/Abc", status(), "123"),
+        (x, f"https://x.com/public_user/status/{TWEET}", tweet_payload(), VIDEO),
     ],
 )
 async def test_home_initialization_material_handoff_and_terminal_cleanup(
@@ -189,6 +193,7 @@ async def test_home_initialization_material_handoff_and_terminal_cleanup(
     monkeypatch.setattr(identity, "COOKIE_TMPFS_ROOT", tmp_path / "private")
     monkeypatch.setattr(identity, "validate_cookie_file", lambda _: None)
     events = []
+    media_url = X_MEDIA if parser is x else MEDIA
     page = SimpleNamespace(url=source.request.source_url)
     page.on = lambda name, callback: events.append("intercept")
     page.remove_listener = lambda *args: None
@@ -220,7 +225,7 @@ async def test_home_initialization_material_handoff_and_terminal_cleanup(
             callback = captured[0]
             callback(
                 SimpleNamespace(
-                    url=MEDIA, status=200, headers={"content-type": "video/mp4"}
+                    url=media_url, status=200, headers={"content-type": "video/mp4"}
                 )
             )
 
@@ -250,6 +255,14 @@ async def test_home_initialization_material_handoff_and_terminal_cleanup(
     source.pipeline._commands.probe_remote = AsyncMock(return_value=probe)
     if handoff == "browser":
         source.pipeline._commands.probe_remote.side_effect = RunnerFailure("challenge")
+    if handoff == "browser" and parser is x:
+        with pytest.raises(RunnerFailure) as caught:
+            await BrowserLayer().resolve(source, source.run_context)
+        assert caught.value.failure.failure_class is FailureClass.CHALLENGE
+        operation.abort.assert_awaited_once()
+        assert list((tmp_path / "private").iterdir()) == []
+        source.workspace.cleanup()
+        return
     result = await BrowserLayer().resolve(source, source.run_context)
     assert events == [parser.HOME, "intercept", source.request.source_url]
     assert result.provider_media_id == work
@@ -262,7 +275,7 @@ async def test_home_initialization_material_handoff_and_terminal_cleanup(
     assert ctx.cookie_file.stat().st_mode & 0o777 == 0o600
     assert ctx.cookie_file.parent.stat().st_mode & 0o777 == 0o700
     if handoff == "browser":
-        await ctx.browser.download(MEDIA, tmp_path / "output.mp4")
+        await ctx.browser.download(media_url, tmp_path / "output.mp4")
         operation.download.assert_awaited_once()
         operation.close.assert_not_awaited()
     await ctx.browser.close()

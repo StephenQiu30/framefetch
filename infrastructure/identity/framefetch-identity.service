@@ -1,0 +1,29 @@
+[Unit]
+Description=Framefetch Chrome identity service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=framefetch-identity
+Group=framefetch-identity
+WorkingDirectory=/opt/framefetch/backend
+ExecStart=/opt/framefetch/backend/.venv/bin/python -m app.workers.identity.cli run --env-file /var/lib/framefetch-identity/identity.env
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/framefetch-identity /opt/framefetch/.local-runtime/identity
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LimitNOFILE=4096
+MemoryMax=384M
+TasksMax=32
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target

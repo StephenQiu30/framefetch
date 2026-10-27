@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import ipaddress
 import json
+import re
 import subprocess
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from app.core.config import CookieSourceSettings
 from app.services.provider_types import ProviderIdentity
@@ -61,15 +64,67 @@ def request_origins() -> list[str]:
     )
 
 
-def manifest(port: int) -> dict[str, object]:
+def extension_endpoint(port: int, server_url: str | None = None) -> str:
+    if server_url is None:
+        return f"ws://127.0.0.1:{port}/extension"
+    if any(ord(c) <= 32 or ord(c) >= 127 for c in server_url) or any(
+        c in server_url for c in "\\?#"
+    ):
+        raise ValueError("identity_requires_https_origin")
+    parsed = urlsplit(server_url)
+    host = parsed.hostname or ""
+    if (
+        parsed.scheme != "https"
+        or not host
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path not in ("", "/")
+        or parsed.netloc.endswith(":")
+    ):
+        raise ValueError("identity_requires_https_origin")
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        if (
+            not re.fullmatch(r"[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?", host)
+            or "." not in host
+            or host.endswith((".local", ".localhost"))
+            or any(
+                not part or len(part) > 63 or part.startswith("-") or part.endswith("-")
+                for part in host.split(".")
+            )
+        ):
+            raise ValueError("identity_requires_public_origin") from None
+    else:
+        if not address.is_global:
+            raise ValueError("identity_requires_public_origin")
+    if parsed.port is not None and not 1 <= parsed.port <= 65535:
+        raise ValueError("identity_requires_https_origin")
+    authority = f"[{host}]" if ":" in host else host
+    if parsed.port not in (None, 443):
+        authority += f":{parsed.port}"
+    return f"wss://{authority}/identity/extension"
+
+
+def manifest(port: int, server_url: str | None = None) -> dict[str, object]:
     result: dict[str, object] = json.loads(
         (EXTENSION_SOURCE / "manifest.template.json").read_text(encoding="utf-8")
     )
     result["host_permissions"] = [
         *(f"*://*.{domain}/*" for domain in cookie_domains()),
         *(f"{origin}/*" for origin in request_origins()),
-        f"ws://127.0.0.1:{port}/",
     ]
+    endpoint = urlsplit(extension_endpoint(port, server_url))
+    # WebSockets need no host permission. Chrome match patterns accept HTTP(S),
+    # not WS(S); constrain the selected socket origin in CSP instead.
+    connect = " ".join(
+        ["'self'", f"{endpoint.scheme}://{endpoint.netloc}", *request_origins()]
+    )
+    result["content_security_policy"] = {
+        "extension_pages": (
+            f"script-src 'self'; object-src 'self'; connect-src {connect};"
+        )
+    }
     return result
 
 
@@ -100,7 +155,9 @@ def require_untracked_outputs(destination: Path) -> None:
             raise ValueError("identity_generated_file_not_ignored")
 
 
-def install_extension(settings: CookieSourceSettings) -> Path:
+def install_extension(
+    settings: CookieSourceSettings, server_url: str | None = None
+) -> Path:
     destination = extension_home()
     if destination.resolve() != EXTENSION_SOURCE.resolve():
         raise ValueError("identity_install_requires_primary_workspace")
@@ -108,11 +165,11 @@ def install_extension(settings: CookieSourceSettings) -> Path:
     private_directory(destination)
     private_write(
         destination / "manifest.json",
-        json.dumps(manifest(settings.cookie_source_port), indent=2) + "\n",
+        json.dumps(manifest(settings.cookie_source_port, server_url), indent=2) + "\n",
     )
     # Not web-accessible; local pairing data is never shipped or tracked.
     config = {
-        "port": settings.cookie_source_port,
+        "endpoint": extension_endpoint(settings.cookie_source_port, server_url),
         "pairingKey": settings.cookie_source_pairing_key.get_secret_value(),
         "domains": cookie_domains(),
         "yuanbaoParse": YUANBAO_ORIGIN in request_origins(),

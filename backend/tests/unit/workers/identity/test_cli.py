@@ -17,6 +17,58 @@ from pydantic import SecretStr, ValidationError
 TOKEN = "synthetic-test-only-runner-token-32-bytes"
 
 
+def test_cloud_install_only_generates_paired_extension_without_local_service(
+    installation,
+):
+    environment, agent, home, run = installation
+    assert cli.install(environment, server_url="https://150.158.45.162") == home
+    config = json.loads((home / "config.local.json").read_text())
+    assert config["endpoint"] == "wss://150.158.45.162/identity/extension"
+    assert "port" not in config and "token" not in config
+    assert not agent.exists()
+    assert not (home.parent / ".local-runtime/identity/runner.env").exists()
+    run.assert_not_called()
+    permissions = json.loads((home / "manifest.json").read_text())["host_permissions"]
+    assert not any(item.startswith(("ws://", "wss://")) for item in permissions)
+    generated = json.loads((home / "manifest.json").read_text())
+    assert (
+        "connect-src 'self' wss://150.158.45.162 https://yuanbao.tencent.com;"
+        in generated["content_security_policy"]["extension_pages"]
+    )
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://example.com",
+        "https://user:pass@example.com",
+        "https://example.com/path",
+        "https://example.com?key=private",
+        "https://example.com#secret",
+        "https://127.0.0.1",
+        "https://example.com/identity/extension",
+        "https://example.com\\@other.example",
+        "https://example.com:",
+    ],
+)
+def test_cloud_origin_rejects_unsafe_or_ambiguous_targets_before_writing(
+    installation, url
+):
+    environment, agent, home, run = installation
+    with pytest.raises(ValueError):
+        cli.install(environment, server_url=url)
+    assert not environment.exists() and not agent.exists()
+    assert not (home / "config.local.json").exists()
+
+
+def test_local_extension_has_single_loopback_endpoint(installation):
+    environment, _, home, _ = installation
+    cli.install(environment)
+    config = json.loads((home / "config.local.json").read_text())
+    assert config["endpoint"] == "ws://127.0.0.1:19101/extension"
+    assert "port" not in config
+
+
 @pytest.fixture
 def installation(tmp_path, monkeypatch):
     if os.name == "nt":
@@ -273,13 +325,12 @@ def test_manifest_registry_permissions_and_stable_id():
         "alarms",
         "declarativeNetRequestWithHostAccess",
     ]
-    assert manifest["version"] == "1.4.0"
+    assert manifest["version"] == "1.5.0"
     assert manifest["action"]["default_popup"] == "popup.html"
     assert manifest["minimum_chrome_version"] == "120"
     assert set(manifest["host_permissions"]) == {
         *(f"*://*.{domain}/*" for domain in extension.cookie_domains()),
         "https://yuanbao.tencent.com/*",
-        "ws://127.0.0.1:19101/",
     }
     assert "web_accessible_resources" not in manifest
     assert len(extension.extension_origin().removeprefix("chrome-extension://")) == 32
@@ -422,7 +473,10 @@ def test_reddit_prefer_generates_cookie_permissions_without_install():
     assert "*://*.reddit.com/*" in extension.manifest(19101)["host_permissions"]
 
 
-def test_host_websocket_limit_accepts_native_parse_envelope(monkeypatch, tmp_path):
+@pytest.mark.parametrize("platform", ["darwin", "linux"])
+def test_host_websocket_limit_accepts_native_parse_envelope(
+    monkeypatch, tmp_path, platform
+):
     import sys
 
     import uvicorn
@@ -432,7 +486,7 @@ def test_host_websocket_limit_accepts_native_parse_envelope(monkeypatch, tmp_pat
         cookie_source_token=SecretStr(TOKEN),
         cookie_source_pairing_key=SecretStr("synthetic-test-only-pairing-key-32-bytes"),
     )
-    monkeypatch.setattr(cli.sys, "platform", "darwin")
+    monkeypatch.setattr(cli.sys, "platform", platform)
     monkeypatch.setattr(
         sys,
         "argv",

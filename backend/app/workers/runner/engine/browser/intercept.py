@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from collections.abc import Mapping
 from dataclasses import fields
 from typing import Any
@@ -113,6 +114,24 @@ class PageResponses:
                 and parsed.scheme == "https"
                 and parsed.path == "/ups/get.json"
             )
+        elif self.platform == "x":
+            allowed = (
+                parsed.scheme == "https"
+                and response.status == 200
+                and host
+                in {
+                    "x.com",
+                    "www.x.com",
+                    "twitter.com",
+                    "www.twitter.com",
+                    "mobile.twitter.com",
+                }
+                and re.fullmatch(
+                    r"/i/api/graphql/[A-Za-z0-9_-]+/(?:TweetDetail|TweetResultByRestId)",
+                    parsed.path,
+                )
+                is not None
+            )
         else:
             domains = (
                 ("kuaishou.com", "kuaishou.cn", "chenzhongtech.com", "gifshow.com")
@@ -149,6 +168,17 @@ class PageResponses:
                         0
                     ]
                     payload["_framefetch_requested_id"] = requested.rstrip("=")
+                elif self.platform == "x":
+                    raw_variables = parse_qs(urlsplit(response.url).query).get(
+                        "variables", [""]
+                    )[0]
+                    variables = json.loads(raw_variables)
+                    requested = variables.get("tweetId") or variables.get(
+                        "focalTweetId"
+                    )
+                    if not isinstance(requested, str) or not requested.isdigit():
+                        return
+                    payload["_framefetch_requested_id"] = requested
                 self.queue.put_nowait(payload)
         except Exception:
             # A cancelled navigation can invalidate a response. No raw text escapes.

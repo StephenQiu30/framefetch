@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Framefetch",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "按任务提供平台身份，视频号在插件内部直接解析，无需元宝页面",
   "minimum_chrome_version": "120",
   "permissions": [

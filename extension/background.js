@@ -8,6 +8,7 @@ let starting = false;
 let retryAt = 0;
 let activeProtocol = null;
 let lastParseCause = null;
+let serviceEndpoint = null;
 const backoff = new FramefetchIdentity.Backoff();
 
 chrome.alarms.onAlarm.addListener(alarm => { if (alarm.name === ALARM) void initialize(); });
@@ -42,7 +43,7 @@ async function popupRequest(type) {
     FramefetchYuanbaoHTTP.status(chrome),
     activeProtocol?.youtubeStatus() ?? FramefetchIdentity.unavailableYouTubeStatus(),
   ]);
-  return { connected: activeProtocol?.authenticated === true, version: chrome.runtime.getManifest().version,
+  return { connected: activeProtocol?.authenticated === true, endpoint: serviceEndpoint, version: chrome.runtime.getManifest().version,
     session, youtube, busy: activeProtocol?.busy === true, cause: lastParseCause };
 }
 
@@ -64,7 +65,9 @@ async function initialize() {
     const response = await fetch(chrome.runtime.getURL('config.local.json'));
     if (!response.ok) throw new Error('configuration_unavailable');
     const config = await response.json();
-    const ws = new WebSocket(`ws://127.0.0.1:${config.port}/extension`);
+    const endpoint = checkedEndpoint(config.endpoint);
+    serviceEndpoint = endpoint;
+    const ws = new WebSocket(endpoint);
     socket = ws;
     let closed = false;
     let heartbeat = null;
@@ -118,5 +121,15 @@ async function initialize() {
     };
   } catch { socket = null; scheduleRetry(); }
   finally { starting = false; }
+}
+function checkedEndpoint(value) {
+  if (typeof value !== 'string' || /[\s\\?#]/.test(value)) throw new Error('invalid_endpoint');
+  const url = new URL(value);
+  if (url.username || url.password) throw new Error('invalid_endpoint');
+  const local = url.protocol === 'ws:' && url.hostname === '127.0.0.1' &&
+    Number(url.port) >= 1024 && Number(url.port) <= 65535 && url.pathname === '/extension';
+  const cloud = url.protocol === 'wss:' && url.hostname && url.pathname === '/identity/extension';
+  if (!local && !cloud) throw new Error('invalid_endpoint');
+  return url.href;
 }
 void initialize();

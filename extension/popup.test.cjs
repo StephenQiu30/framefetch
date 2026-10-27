@@ -16,6 +16,11 @@ function popup(reply) {
   return { elements, calls, reply: value => { response = value; }, flush: () => new Promise(resolve => setImmediate(resolve)) };
 }
 const base = { version: '1.4.0', connected: true, session: 'available', busy: false, cause: null };
+test('popup identifies the configured cloud service even when disconnected', async () => {
+  const p = popup({ ...base, connected: false, endpoint: 'wss://150.158.45.162/identity/extension' }); await p.flush();
+  assert.equal(p.elements.get('endpoint')?.textContent, 'wss://150.158.45.162/identity/extension');
+  assert.equal(p.elements.get('connection').textContent, '未连接');
+});
 function state(material, outcome = 'not_checked', failure_class = null) {
   return { ...base, youtube: { material, outcome, failure_class, task_id: outcome === 'not_checked' ? null : 'target-task', checked_at: outcome === 'not_checked' ? null : '2026-10-16T10:00:00+00:00' } };
 }

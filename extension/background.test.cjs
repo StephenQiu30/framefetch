@@ -12,7 +12,7 @@ async function waitFor(predicate, message) {
     await new Promise(resolve => setTimeout(resolve, 1));
   }
 }
-function worker(chromeApi = {}, transport, cryptoApi = webcrypto) {
+function worker(chromeApi = {}, transport, cryptoApi = webcrypto, endpoint = 'ws://127.0.0.1:19101/extension') {
   const listeners = {}, sockets = [], timers = [], intervals = [], alarms = new Map();
   let now = 0;
   const listener = key => ({ addListener: callback => { listeners[key] = callback; }, removeListener: callback => { if (listeners[key] === callback) delete listeners[key]; } });
@@ -24,7 +24,7 @@ function worker(chromeApi = {}, transport, cryptoApi = webcrypto) {
   }
   const context = vm.createContext({
     TextEncoder, TextDecoder, Request, AbortController, URL, crypto: cryptoApi, WebSocket, Date: { now: () => now, parse: Date.parse },
-    fetch: async url => { if (typeof url !== 'string') return transport(url); assert.equal(url, 'chrome-extension://test/config.local.json'); return { ok: true, json: async () => ({ pairingKey: KEY, port: 19101, domains: ['instagram.com'], yuanbaoParse: true }) }; },
+    fetch: async url => { if (typeof url !== 'string') return transport(url); assert.equal(url, 'chrome-extension://test/config.local.json'); return { ok: true, json: async () => ({ pairingKey: KEY, endpoint, domains: ['instagram.com'], yuanbaoParse: true }) }; },
     chrome: { alarms: { onAlarm: listener('alarm'), get: async name => alarms.get(name), create: async (name, spec) => { alarms.set(name, spec); } },
       declarativeNetRequest: { getEnabledRulesets: async () => ['yuanbao-http'] },
       runtime: { id: 'test', onMessage: listener('message'), onStartup: listener('startup'), onInstalled: listener('installed'), getManifest: () => ({ version: '1.0.0' }), getURL: name => 'chrome-extension://test/' + name },
@@ -42,6 +42,23 @@ function worker(chromeApi = {}, transport, cryptoApi = webcrypto) {
   const flush = async () => { await new Promise(resolve => setImmediate(resolve)); await new Promise(resolve => setImmediate(resolve)); };
   return { context, listeners, sockets, timers, intervals, alarms, flush, advance: ms => { now += ms; } };
 }
+test('cloud connection uses only the configured WSS target and exposes no pairing material', async () => {
+  const w = worker({}, undefined, webcrypto, 'wss://150.158.45.162/identity/extension');
+  await w.flush();
+  assert.equal(w.sockets[0].url, 'wss://150.158.45.162/identity/extension');
+  let reply;
+  w.listeners.message({ type: 'status' }, { id: 'test', url: 'chrome-extension://test/popup.html' }, value => { reply = value; });
+  await w.flush();
+  assert.equal(reply.endpoint, 'wss://150.158.45.162/identity/extension');
+  assert.equal(JSON.stringify(reply).includes(KEY), false);
+});
+test('invalid endpoint never creates a socket or reads cookies', async () => {
+  for (const endpoint of ['ws://example.com/extension', 'wss://user:password@example.com/identity/extension', 'wss://example.com/identity/extension?token=private', 'wss://example.com/cookies', 'https://example.com/identity/extension']) {
+    const w = worker({ cookies: { getAll: () => assert.fail('no Cookie access') } }, undefined, webcrypto, endpoint);
+    await w.flush();
+    assert.equal(w.sockets.length, 0);
+  }
+});
 test('listeners registered synchronously; every worker start rebuilds alarm; initialization idempotent', async () => {
   const w = worker();
   assert.deepEqual(Object.keys(w.listeners), ['alarm', 'startup', 'installed', 'message']);
@@ -198,7 +215,7 @@ test('popup exposes only credential availability, admits only its own sender, an
   assert.equal(listener({ type: 'status', script: 'evil' }, sender, () => assert.fail('unexpected fields')), false);
   let reply;
   listener({ type: 'status' }, sender, value => { reply = value; }); await w.flush();
-  assert.deepEqual(JSON.parse(JSON.stringify(reply)), { connected: false, version: '1.0.0', session: 'available', youtube: { type: 'youtube_status', material: 'unavailable', outcome: 'not_checked', task_id: null, checked_at: null, failure_class: null }, busy: false, cause: null });
+  assert.deepEqual(JSON.parse(JSON.stringify(reply)), { connected: false, endpoint: 'ws://127.0.0.1:19101/extension', version: '1.0.0', session: 'available', youtube: { type: 'youtube_status', material: 'unavailable', outcome: 'not_checked', task_id: null, checked_at: null, failure_class: null }, busy: false, cause: null });
   assert.equal(JSON.stringify(reply).includes('synthetic-secret'), false);
   assert.deepEqual(pages, []);
   assert.equal(reads.length, 3);

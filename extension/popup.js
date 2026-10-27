@@ -41,7 +41,7 @@ function renderYouTube(state) {
   document.getElementById('youtube-task').textContent = outcome !== 'not_checked' && youtube.task_id ?
     `任务 ${youtube.task_id} · ${youtube.checked_at}（5 分钟内的结果，仅适用于该任务）` : '';
   document.getElementById('youtube-message').textContent = !state.connected ?
-    '请先连接宿主身份服务，再刷新状态。' : state.busy ? '正在处理任务，请完成后刷新状态。' :
+    '请先连接所配置的身份服务，再刷新状态。' : state.busy ? '正在处理任务，请完成后刷新状态。' :
     youtube?.material === 'missing' ? '请在此 Chrome 的 YouTube 页面完成登录，确认同一视频可播放，再刷新状态并在帧取重新解析。' :
     !readable ? '暂时无法读取材料，请稍后刷新状态；持续失败时检查插件与宿主连接。' :
     outcome === 'accepted' ? '携带当前材料的最近任务已通过解析。其他视频仍需实际解析，下载以完整文件校验为准。' :
@@ -61,17 +61,19 @@ async function refresh(type = 'status') {
     const state = await chrome.runtime.sendMessage({ type });
     if (!state || state.error) throw new Error('status_unavailable');
     document.getElementById('version').textContent = `v${state.version}`;
+    document.getElementById('endpoint').textContent = state.endpoint ?? '尚未配置服务地址';
     connection.textContent = state.connected ? '已连接' : '未连接';
     session.textContent = sessionLabels[state.session] ?? '暂不可用';
     renderYouTube(state);
     document.getElementById('reconnect').hidden = state.connected;
-    message.textContent = !state.connected ? '请确认宿主身份服务正在运行，然后点击“重新连接”。' :
+    message.textContent = !state.connected ? '请确认上述服务地址可用，然后点击“重新连接”。' :
       state.busy ? '正在处理解析任务，请稍候。' :
       state.cause ? causeMessages[state.cause] ?? '上次解析未完成，请重新解析。' :
       state.session === 'missing' ? '请点击“登录元宝”，完成登录后重新解析。' :
       '解析无需打开元宝页面。登录有效性将在实际请求时校验。';
   } catch {
     connection.textContent = '暂不可用';
+    document.getElementById('endpoint').textContent = '服务地址暂不可读取';
     session.textContent = '暂不可用';
     renderYouTube({ connected: false });
     message.textContent = '无法读取插件状态，请重新加载插件后再试。';
