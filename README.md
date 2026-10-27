@@ -64,7 +64,7 @@
 
 ## 快速开始
 
-只维护两份 Compose：`docker-compose.yml` 完整定义业务服务，本机与生产共用；`docker-compose-env.yml` 独立提供 PostgreSQL、RabbitMQ、Redis 和 MinIO。已有基础服务直接复用；仅在没有现成服务的环境显式运行 `docker compose -f docker-compose-env.yml up -d --wait`，再把业务配置中的 `*_HOST`／`*_PORT` 指向其实际地址与发布端口。Temporal 单独提供。先部署 Server，再让浏览器、Electron 或 App 连接。平台身份按 Registry 声明从普通 Chrome 扩展取得，接入方法见下文。
+Compose 按用途分层：`docker-compose.yml` 定义共享业务服务与本地开发配置；`docker-compose-prod.yml` 覆盖生产模式、前端 runtime 镜像、必填配置并关闭源码监听；`docker-compose-env.yml` 独立提供 PostgreSQL、RabbitMQ、Redis 和 MinIO。已有基础服务直接复用；仅在没有现成服务的环境显式准备基础环境，步骤见[生产入口](#平台身份与升级)，再把业务配置中的 `*_HOST`／`*_PORT` 指向其实际地址与发布端口。Temporal 单独提供。先部署 Server，再让浏览器、Electron 或 App 连接。平台身份按 Registry 声明从普通 Chrome 扩展取得，接入方法见下文。
 
 业务 Compose 项目名为 `framefetch`，后端镜像为 `framefetch:local`。`runner_work` 与 `browser_profiles` 默认绑定现有持久卷 `video-server_runner_work`、`video-server_browser_profiles`，保留任务文件与浏览器会话；其他卷名可通过 `RUNNER_WORK_VOLUME_NAME`、`BROWSER_PROFILES_VOLUME_NAME` 指定。数据库、队列、对象存储与鉴权标识保持其现有配置。
 
@@ -89,7 +89,7 @@ docker compose up -d --build --wait --remove-orphans
 
 已安装宿主平台身份时，安装流程会生成私有的 `.local-runtime/identity/runner.env`；正常 Compose 启动、重建和 watch 会自动把其中的 Runner Bearer 注入 `session-runner`，无需额外命令或手动导出环境变量。首次安装与升级步骤见[平台身份与升级](#平台身份与升级)。未安装身份时该文件可缺省，匿名平台正常运行。
 
-开发时使用 `docker compose up --build --watch`，或在已启动的本地容器上运行 `docker compose watch --no-up` 并保持终端运行。前端代码自动热重载，API／worker 源码自动同步并重启，Runner 保留只读沙箱并自动重建；依赖变化自动构建。本地与 CI 使用已验证的 Docker Compose 5.5.1，详见 [开发与发布规则](docs/design/12-可靠性与运行.md#发布)。生产部署使用同一文件，配置方式见下方生产入口。
+开发时使用 `docker compose up --build --watch`，或在已启动的本地容器上运行 `docker compose watch --no-up` 并保持终端运行。前端代码自动热重载，API／worker 源码自动同步并重启，Runner 保留只读沙箱并自动重建；依赖变化自动构建。本地与 CI 使用已验证的 Docker Compose 5.5.1，详见 [开发与发布规则](docs/design/12-可靠性与运行.md#发布)。生产部署同时加载生产覆盖文件，配置方式见下方生产入口。
 
 产品需求、系统设计与执行计划统一维护在 [docs/](docs/README.md)。将该目录作为 Obsidian 库打开，或用任意文本编辑器修改；版本通过 Git 管理，详见 [文档工作区](PROJECT.md#31-文档工作区)。
 
@@ -193,16 +193,16 @@ Compose 仅向 `session-runner` 加载 `.local-runtime/identity/runner.env`。�
 
 普通 `docker compose up`、`up --build`、`--force-recreate` 和 watch 都读取同一专用文件，不依赖启动终端的 `COOKIE_SOURCE_TOKEN`。已有安装升级只需正常执行一次 `install` 更新宿主服务与生成文件，之后重建无需额外操作。该文件缺省表示未安装身份；需要 Chrome 身份的平台仍须完成上面的安装与连接。文件含独立 Runner Bearer，不应上传、提交或放入发行包，勿输出完整 `docker compose config`／`docker inspect` 的环境内容。
 
-当前 Compose 与 squid 配套固定使用端口 `19101`，调整端口须同步精确代理 ACL。Runner 身份客户端显式使用受控代理，不使用环境代理、不跟随重定向；squid 只放行该宿主端口的 `POST /cookies` 和 `POST /yuanbao-parse`，强制直连，不经过 Clash／住宅上游。其他宿主端口、私网和 IP 字面量仍被拒绝。身份传输是明文 HTTP，egress-proxy 属于敏感信任组件，配置关闭访问日志、缓存和响应体存储。安装只启动宿主服务；业务服务仍由唯一的 `docker-compose.yml` 启动。
+当前 Compose 与 squid 配套固定使用端口 `19101`，调整端口须同步精确代理 ACL。Runner 身份客户端显式使用受控代理，不使用环境代理、不跟随重定向；squid 只放行该宿主端口的 `POST /cookies` 和 `POST /yuanbao-parse`，强制直连，不经过 Clash／住宅上游。其他宿主端口、私网和 IP 字面量仍被拒绝。身份传输是明文 HTTP，egress-proxy 属于敏感信任组件，配置关闭访问日志、缓存和响应体存储。安装只启动宿主服务；业务服务由共享 Compose 启动，生产环境同时加载生产覆盖文件。
 
 扩展使用 20 秒心跳、30 秒 alarm 和上限 30 秒的指数退避，并同步注册启动事件。保活机制依据 [Chrome WebSocket 文档](https://developer.chrome.com/docs/extensions/how-to/web-platform/websockets)；真实关闭 DevTools、睡眠唤醒与各类重启恢复仍须实测。
 
 Runner 身份调用、RunContext 材料所有权和私有 tmpfs 清理统一见[平台身份](docs/design/15-平台身份.md)与[解析引擎第 10 节](docs/design/14-解析引擎.md#10-模块接口)。真实 Chrome 保活、重连与需要身份的完整文件验收状态见[验证状态](docs/design/14-解析引擎.md#13-验证状态)。
 
-升级前暂停接单并排空媒体操作，备份业务库，幂等执行当前 schema.sql，再配套重建 API、worker、session-runner 与前端。生产配置使用 `.env.prod`，设置 `APP_ENV=production`、`FRONTEND_BUILD_TARGET=runtime`、实际 `SITE_URL` 与生产密钥；前端运行环境和启动命令由 Dockerfile 的 runtime 阶段提供。生产入口：
+升级前暂停接单并排空媒体操作，备份业务库，幂等执行当前 schema.sql，再配套重建 API、worker、session-runner 与前端。本地开发读取 `.env`，生产显式读取 `.env.prod`。仅当 `.env.prod` 不存在时，从 `.env.prod.example` 创建并填写实际 HTTPS `SITE_URL`、公开存储地址、管理员邮箱、基础服务连接和强随机密钥；不要复制本机 `.env` 或覆盖已有生产密钥。生产覆盖文件固定生产模式与前端 runtime 阶段，并移除源码监听；启动命令由 Dockerfile 的 runtime 阶段提供。生产入口：
 
 ```bash
-APP_ENV=production FRONTEND_BUILD_TARGET=runtime docker compose --env-file .env.prod up -d --build --wait --remove-orphans
+docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose-prod.yml up -d --build --wait
 ```
 
 健康检查：
@@ -212,6 +212,22 @@ curl --fail http://127.0.0.1:8111/health/live
 curl --fail http://127.0.0.1:8111/health/ready
 curl --fail --head http://127.0.0.1:8101/
 ```
+
+生产环境的 `config`、`ps`、`logs`、`down` 等操作也使用同一组 `--env-file` 与两个 `-f` 参数。`docker-compose-prod.yml` 是覆盖层，不能单独启动；宿主 AI Worker 也必须显式读取 `.env.prod`。
+
+在全新 Linux 服务器上准备缺失的基础服务时，先等待常驻服务健康，再执行一次性初始化；初始化失败时命令返回非零状态，不把已完成的一次性容器作为常驻服务等待：
+
+```bash
+docker compose --env-file .env.prod -f docker-compose-env.yml up -d --build --wait postgres rabbitmq redis minio
+docker compose --env-file .env.prod -f docker-compose-env.yml run --rm --no-deps rabbitmq-init
+docker compose --env-file .env.prod -f docker-compose-env.yml run --rm --no-deps minio-init
+```
+
+若业务容器通过 `host.docker.internal` 访问发布端口，将 `INFRA_HOST_BIND` 设置为 Docker 实际宿主网关地址（通常为 `172.17.0.1`），并匹配业务的 `*_PORT`；默认回环绑定仅供宿主进程使用，Linux 业务容器无法访问。不要将基础服务或管理端口绑定公网。Temporal 仍单独提供。宿主反向代理连接 API 发布端口时，将实际 `app_net` 网关的精确 `/32` 加入 `TRUSTED_PROXY_CIDRS`，供 WebSocket 验证转发后的 HTTPS Origin；不要假定 Docker 自动分配的网关是子网首地址。
+
+基础环境中的 MinIO 与 `mc` 由 [Dockerfile](infrastructure/minio/Dockerfile)构建，固定[官方源码 RELEASE.2025-10-15T17-29-55Z](https://github.com/minio/minio/tree/RELEASE.2025-10-15T17-29-55Z)与其锁定的客户端依赖，避免依赖已无法拉取的公共镜像。已有 MinIO 服务仍直接复用；构建不会读取或迁移已有数据卷。
+
+生产登录 Cookie 要求 HTTPS；没有域名时可使用 IP 地址证书与自动续期，见 [Certbot IP 证书说明](https://letsencrypt.org/2026/03/11/shorter-certs-certbot.html)。反向代理需代理 Web、API WebSocket 与公开 MinIO 文件端点，保留 Host 并正确设置转发头；MinIO 控制台不对外开放。
 
 只需要下载与剧本文档导入时，可在 `.env` 中设置 `ANALYSIS_ENABLED=false`。完整的启动、停止、已有基础环境复用和故障恢复方式见[可靠性与运行](docs/design/12-可靠性与运行.md)。更新代码时先执行 `git pull --ff-only`，再按上面的命令构建启动 Compose；`docker compose restart` 不会应用新代码、镜像或环境配置。
 

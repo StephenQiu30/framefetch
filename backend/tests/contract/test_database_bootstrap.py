@@ -257,10 +257,7 @@ def test_environment_bootstrap_provisions_analysis_storage_probe() -> None:
     compose = ENV_COMPOSE_PATH.read_text(encoding="utf-8")
     minio_init = _service_block(compose, "minio-init")
 
-    assert (
-        "image: minio/mc@sha256:"
-        "a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727"
-    ) in minio_init
+    assert "image: framefetch-minio:local" in minio_init
     assert "mc mb --ignore-existing" in minio_init
     assert "system/analysis-readiness" in minio_init
     assert "mc pipe" in minio_init
@@ -270,10 +267,7 @@ def test_environment_minio_applies_exact_browser_cors_origins() -> None:
     compose = ENV_COMPOSE_PATH.read_text(encoding="utf-8")
     minio = _service_block(compose, "minio")
 
-    assert (
-        "image: minio/minio@sha256:"
-        "14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e"
-    ) in minio
+    assert "image: framefetch-minio:local" in minio
     expected_setting = (
         'MINIO_API_CORS_ALLOW_ORIGIN: "${MINIO_CORS_ALLOWED_ORIGINS-'
         'http://127.0.0.1:8101,http://localhost:8101}"'
@@ -287,6 +281,25 @@ def test_environment_minio_applies_exact_browser_cors_origins() -> None:
     _assert_exact_http_origins(
         _env_value(ENV_EXAMPLE_PATH, "MINIO_CORS_ALLOWED_ORIGINS")
     )
+
+
+def test_environment_storage_image_keeps_official_source_and_dependency_pins() -> None:
+    services = load_compose(ENV_COMPOSE_PATH)["services"]
+    storage = services["minio"]
+    assert storage["image"] == services["minio-init"]["image"]
+    dockerfile = (ROOT.parent / storage["build"]["context"] / "Dockerfile").read_text(
+        encoding="utf-8"
+    )
+    bases = re.findall(r"(?m)^FROM (\S+)", dockerfile)
+    assert bases
+    assert all(re.search(r"@sha256:[0-9a-f]{64}$", image) for image in bases)
+    assert "https://github.com/minio/minio.git" in dockerfile
+    assert "git fetch --depth=1 origin 9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a" in (
+        dockerfile
+    )
+    assert dockerfile.count("go build -mod=readonly") == 2
+    assert "-o /out/mc github.com/minio/mc" in dockerfile
+    assert "-o /out/minio ." in dockerfile
 
 
 def test_database_consumers_use_the_configured_postgres_service() -> None:
@@ -472,10 +485,11 @@ def test_anonymous_runner_retains_private_network_and_workspace() -> None:
         assert "runner_egress_net" in services[service]["networks"]
 
 
-def test_compose_has_only_business_and_infrastructure_entrypoints() -> None:
+def test_compose_has_shared_business_production_and_infrastructure_files() -> None:
     assert {path.name for path in ROOT.parent.glob("*compose*.y*ml")} == {
         "docker-compose.yml",
         "docker-compose-env.yml",
+        "docker-compose-prod.yml",
     }
     compose = load_compose(COMPOSE_PATH)
     assert not any("extends" in service for service in compose["services"].values())
@@ -491,7 +505,10 @@ def test_compose_has_only_business_and_infrastructure_entrypoints() -> None:
     assert not {"NODE_ENV"} & frontend["environment"].keys()
     assert "command" not in frontend
     assert "working_dir" not in frontend
-    assert "--env-file .env.prod up" in ROOT_README_PATH.read_text(encoding="utf-8")
+    assert (
+        "--env-file .env.prod -f docker-compose.yml -f docker-compose-prod.yml up"
+        in ROOT_README_PATH.read_text(encoding="utf-8")
+    )
 
 
 def test_projects_build_and_run_separate_images() -> None:

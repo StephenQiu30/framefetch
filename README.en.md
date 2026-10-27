@@ -64,7 +64,7 @@ Consult the [platform scope and verification status](docs/design/14-解析引擎
 
 ## Quick start
 
-Keep two Compose files: `docker-compose.yml` defines all business services for local and production use; `docker-compose-env.yml` independently provisions PostgreSQL, RabbitMQ, Redis and MinIO. Reuse existing infrastructure. Only when it is absent, run `docker compose -f docker-compose-env.yml up -d --wait` explicitly, then configure business `*_HOST` / `*_PORT` values for its published endpoints. Provide Temporal separately. Deploy the Server, then connect Web, Electron or mobile clients. Platform identity follows the Registry declarations through the ordinary Chrome extension.
+Compose is layered by purpose: `docker-compose.yml` defines shared business services and local development settings; `docker-compose-prod.yml` enforces production mode, the frontend runtime image, required settings and disabled source watching; `docker-compose-env.yml` independently provisions PostgreSQL, RabbitMQ, Redis and MinIO. Reuse existing infrastructure. Only provision missing services explicitly, then configure business `*_HOST` / `*_PORT` values for their published endpoints. Provide Temporal separately. Deploy the Server, then connect Web, Electron or mobile clients. Platform identity follows the Registry declarations through the ordinary Chrome extension.
 
 The business Compose project is named `framefetch`; the backend image is `framefetch:local`. `runner_work` and `browser_profiles` bind to the existing persistent volumes `video-server_runner_work` and `video-server_browser_profiles` by default, preserving task files and browser sessions. Set `RUNNER_WORK_VOLUME_NAME` and `BROWSER_PROFILES_VOLUME_NAME` to use other volumes. Database, queue, object storage and authentication identifiers keep their existing configuration.
 
@@ -124,11 +124,25 @@ In Chrome 120+, enable developer mode and load that unpacked extension into the 
 
 Only the Runner receives `COOKIE_SOURCE_TOKEN`; the extension pairing key is separate. Cookie requests use the exact host/port/path proxy exception, with no redirects or upstream Clash routing. Installation, permissions and operational details are in the [Chinese runtime instructions](README.md#平台身份与升级); the protocol and acceptance boundaries are in [platform identity design](docs/design/15-平台身份.md).
 
-Before upgrading, pause admissions, drain media operations and back up the business database. Apply the current schema.sql, then rebuild the API, worker, session-runner and frontend together. In `.env.prod`, set `APP_ENV=production`, `FRONTEND_BUILD_TARGET=runtime`, the actual `SITE_URL` and production secrets. The frontend Dockerfile stage supplies its runtime environment and command. Production uses the same Compose file:
+Before upgrading, pause admissions, drain media operations and back up the business database. Apply the current schema.sql, then rebuild the API, worker, session-runner and frontend together. Local development reads `.env`; production explicitly selects `.env.prod`. Only create a missing `.env.prod` from `.env.prod.example`, then configure the public HTTPS origin, storage endpoint, administrator email, infrastructure connections and random secrets. Preserve existing production keys. The production override enforces production mode, the frontend runtime image and disabled source watching:
 
 ```bash
-APP_ENV=production FRONTEND_BUILD_TARGET=runtime docker compose --env-file .env.prod up -d --build --wait --remove-orphans
+docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose-prod.yml up -d --build --wait
 ```
+
+Use the same environment and both Compose files for production inspection and shutdown; the production file is an override and cannot run alone. On Linux, infrastructure published for business containers must bind to the actual Docker host gateway using `INFRA_HOST_BIND`, with matching business ports. Keep infrastructure and management ports off public interfaces. Production login requires HTTPS, including with an IP address.
+
+The standalone infrastructure builds MinIO and its locked `mc` client dependency from [pinned official source](infrastructure/minio/Dockerfile), since the public upstream images are unavailable. Existing infrastructure is reused without rebuilding or migrating its data.
+
+When provisioning infrastructure, wait for long-running services before executing initialization jobs:
+
+```bash
+docker compose --env-file .env.prod -f docker-compose-env.yml up -d --build --wait postgres rabbitmq redis minio
+docker compose --env-file .env.prod -f docker-compose-env.yml run --rm --no-deps rabbitmq-init
+docker compose --env-file .env.prod -f docker-compose-env.yml run --rm --no-deps minio-init
+```
+
+For host reverse proxies connecting to published API ports, add the actual application network gateway's exact `/32` to `TRUSTED_PROXY_CIDRS` for WebSocket origin validation. Do not assume Docker assigns the subnet's first address as its gateway.
 
 ```bash
 curl --fail http://127.0.0.1:8111/health/live

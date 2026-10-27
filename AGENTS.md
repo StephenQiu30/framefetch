@@ -23,8 +23,8 @@
 ## 本机环境
 
 - 基础服务（PostgreSQL、RabbitMQ、Redis、MinIO、Temporal）复用本机已运行的实例，不另起、不重建、不覆盖数据。
-- `docker-compose.yml` 是唯一业务入口，本机与生产共用；通过 `*_HOST`/`*_PORT` 连接已有基础服务。`docker-compose-env.yml` 独立提供 PostgreSQL、RabbitMQ、Redis、MinIO，仅在没有现成服务的环境显式启动；Temporal 单独提供。
-- 不覆盖已有 `.env`、`.env.prod`；只有配置文件不存在时才从 `.env.example` 创建。
+- `docker-compose.yml` 定义共享业务服务与本地开发入口；生产显式加载 `.env.prod`，并用 `-f docker-compose.yml -f docker-compose-prod.yml` 应用生产覆盖配置。通过 `*_HOST`/`*_PORT` 连接已有基础服务。`docker-compose-env.yml` 独立提供 PostgreSQL、RabbitMQ、Redis、MinIO，仅在没有现成服务的环境显式启动；Temporal 单独提供。
+- 不覆盖已有 `.env`、`.env.prod`；只有配置文件不存在时，才分别从 `.env.example`、`.env.prod.example` 创建。
 - 宿主 AI Worker 由已登录 Codex 或 Claude CLI 的宿主用户运行，容器不得挂载或复制 CLI 认证目录。
 - 数据库结构变化时，把 `backend/sql/schema.sql` 幂等执行到现有项目库；空库验证只用已有服务中的隔离测试库或 CI。
 

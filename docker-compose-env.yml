@@ -14,7 +14,7 @@ services:
       POSTGRES_USER: "${POSTGRES_USER:-video}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-video}"
     ports:
-      - "127.0.0.1:${HOST_POSTGRES_PORT:-15432}:5432"
+      - "${INFRA_HOST_BIND:-127.0.0.1}:${HOST_POSTGRES_PORT:-15432}:5432"
     volumes:
       - video_env_postgres_data:/var/lib/postgresql
     healthcheck:
@@ -33,8 +33,8 @@ services:
       RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS:-video}"
       RABBITMQ_DEFAULT_VHOST: "/"
     ports:
-      - "127.0.0.1:${HOST_RABBITMQ_PORT:-5673}:5672"
-      - "127.0.0.1:${HOST_RABBITMQ_MANAGEMENT_PORT:-15673}:15672"
+      - "${INFRA_HOST_BIND:-127.0.0.1}:${HOST_RABBITMQ_PORT:-5673}:5672"
+      - "${INFRA_HOST_BIND:-127.0.0.1}:${HOST_RABBITMQ_MANAGEMENT_PORT:-15673}:15672"
     volumes:
       - video_env_rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -80,7 +80,7 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "127.0.0.1:${HOST_REDIS_PORT:-16380}:6379"
+      - "${INFRA_HOST_BIND:-127.0.0.1}:${HOST_REDIS_PORT:-16380}:6379"
     volumes:
       - video_env_redis_data:/data
     healthcheck:
@@ -90,7 +90,9 @@ services:
       retries: 20
 
   minio:
-    image: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    build:
+      context: ./infrastructure/minio
+    image: framefetch-minio:local
     container_name: framefetch-env-minio
     restart: unless-stopped
     environment:
@@ -99,8 +101,8 @@ services:
       MINIO_API_CORS_ALLOW_ORIGIN: "${MINIO_CORS_ALLOWED_ORIGINS-http://127.0.0.1:8101,http://localhost:8101}"
     command: ["minio", "server", "/data", "--address", ":9000", "--console-address", ":9001"]
     ports:
-      - "127.0.0.1:${HOST_MINIO_PORT:-19190}:9000"
-      - "127.0.0.1:${HOST_MINIO_CONSOLE_PORT:-19191}:9001"
+      - "${INFRA_HOST_BIND:-127.0.0.1}:${HOST_MINIO_PORT:-19190}:9000"
+      - "${INFRA_HOST_BIND:-127.0.0.1}:${HOST_MINIO_CONSOLE_PORT:-19191}:9001"
     volumes:
       - video_env_minio_data:/data
     healthcheck:
@@ -110,7 +112,7 @@ services:
       retries: 20
 
   minio-init:
-    image: minio/mc@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+    image: framefetch-minio:local
     container_name: framefetch-env-minio-init
     restart: "no"
     environment:
