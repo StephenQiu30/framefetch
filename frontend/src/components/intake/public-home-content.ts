@@ -35,4 +35,10 @@ export const publicQuestions = [
     answer:
       'iOS 和 Android 客户端位于独立的 framefetch-app 仓库，使用 Flutter 构建并连接自托管 framefetch。媒体处理与 AI 推理由服务端执行，手机端不内置离线提取器或离线 AI 模型。',
   },
+  {
+    id: 'source-repositories',
+    question: '源码在哪里？如何关注项目？',
+    answer:
+      '服务端与 Web：https://github.com/StephenQiu30/framefetch。桌面端：https://github.com/StephenQiu30/framefetch-electron。iOS 与 Android：https://github.com/StephenQiu30/framefetch-app。三个仓库都采用 MIT 许可证，由 StephenQiu30 维护。在 GitHub 打开对应仓库即可 Star 或 Watch。',
+  },
 ] as const;

@@ -17,9 +17,10 @@ import {
   Item,
   ItemContent,
   ItemDescription,
+  ItemGroup,
   ItemTitle,
 } from '@/components/ui/item';
-import { siteConfig } from '@/lib/site';
+import { siteConfig, sourceRepositories } from '@/lib/site';
 
 const capabilities = [
   [
@@ -132,6 +133,31 @@ export function PublicHome() {
           <PublicHomeSafeguards items={safeguards} />
         </section>
       </SplitLayout>
+      <section
+        aria-labelledby="repositories-title"
+        className="flex flex-col gap-4"
+        id="repositories"
+      >
+        <ItemTitle>
+          <h2 id="repositories-title">源码仓库</h2>
+        </ItemTitle>
+        <ItemGroup>
+          {sourceRepositories.map(({ name, href, text }) => (
+            <Item key={name} role="listitem">
+              <ItemContent>
+                <ItemTitle>
+                  <Button asChild variant="link">
+                    <a href={href}>{name}</a>
+                  </Button>
+                </ItemTitle>
+                <ItemDescription className="line-clamp-none">
+                  {text}
+                </ItemDescription>
+              </ItemContent>
+            </Item>
+          ))}
+        </ItemGroup>
+      </section>
       <PublicHomeFaq />
     </div>
   );

@@ -17,7 +17,12 @@ export function publicMetadata(
     title: { absolute: title },
     description,
     applicationName: siteConfig.name,
-    alternates: { canonical: absoluteUrl(path) },
+    alternates: {
+      canonical: absoluteUrl(path),
+      ...(siteIndexable
+        ? { types: { 'text/plain': absoluteUrl('/llms.txt') } }
+        : {}),
+    },
     openGraph: {
       type: 'website',
       locale: 'zh_CN',

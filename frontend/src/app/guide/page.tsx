@@ -60,13 +60,13 @@ const sections = [
   },
   {
     id: 'clients',
-    title: 'Web 与 iOS / Android 客户端如何选择？',
+    title: 'Web、桌面与 iOS / Android 如何选择？',
     paragraphs: [
-      'Web 随 framefetch 部署，适合在浏览器中管理素材、任务、分析报告与管理员配置。framefetch-app 是单独维护的 Flutter 原生客户端，面向 iOS 和 Android，需要连接可访问的 framefetch。',
-      '手机端负责上传、任务操作与结果展示，媒体处理与 AI 推理仍由服务端完成。当前移动端从源码构建，不提供 App Store 或 Google Play 预构建安装包，也不提供离线 AI。',
+      'Web 随 framefetch 部署，适合在浏览器中管理素材、任务、分析报告与管理员配置。framefetch-electron 是面向 macOS 与 Windows 的桌面客户端，framefetch-app 是面向 iOS 和 Android 的 Flutter 客户端。两者都连接可访问的 framefetch，不单独保存业务数据。',
+      '桌面端与手机端负责操作、展示，以及系统文件保存或分享。媒体处理与 AI 推理仍由服务端完成。当前客户端从源码构建，不提供应用商店预构建安装包，也不提供离线 AI。',
     ],
-    source: siteConfig.mobileRepositoryUrl,
-    sourceLabel: '查看 Flutter 移动客户端与构建说明',
+    source: '/blob/main/README.md#同一工作站多种使用方式',
+    sourceLabel: '查看 Web、桌面与移动端仓库',
   },
   {
     id: 'availability',

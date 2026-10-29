@@ -19,6 +19,18 @@ describe('PublicHome', () => {
       'href',
       'https://github.com/StephenQiu30/framefetch/blob/main/README.md#快速开始',
     );
+    expect(
+      screen.getByRole('link', { name: 'framefetch', exact: true }),
+    ).toHaveAttribute('href', 'https://github.com/StephenQiu30/framefetch');
+    expect(
+      screen.getByRole('link', { name: 'framefetch-electron', exact: true }),
+    ).toHaveAttribute(
+      'href',
+      'https://github.com/StephenQiu30/framefetch-electron',
+    );
+    expect(
+      screen.getByRole('link', { name: 'framefetch-app', exact: true }),
+    ).toHaveAttribute('href', 'https://github.com/StephenQiu30/framefetch-app');
   });
 
   it('describes the downloader and its public content boundary', () => {

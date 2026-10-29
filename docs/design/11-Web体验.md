@@ -26,7 +26,9 @@
 
 - 公开页只有匿名视图下的 `/` 与 `/guide/`，以及随构建产出的 `/self-hosting/`、`/about/` 等说明页；其他页面默认 `noindex`。
 - `SITE_INDEXABLE` 默认 `false`，明确设为 `true` 才允许首页与指南被索引；`SITE_URL` 必须是无凭据的绝对地址；修改后需重建镜像。
-- 匿名首屏无需 JS 即可阅读；`robots.txt` 屏蔽 `/api` 与 `/health`；结构化数据只包含真实内容，不含虚构评分或价格。
+- 匿名首屏无需 JS 即可阅读；`robots.txt` 对通用爬虫与生成式搜索爬虫使用同一规则，允许公开页并屏蔽 `/api` 与 `/health`；结构化数据只包含真实内容，不含虚构评分或价格。
+- 索引开启时，公开页用 `rel="alternate"` 指向 `/llms.txt`。该文件列出三个真实仓库、许可证、维护者与常见问题；未开启索引时返回 404，页面也不链出该文件。
+- 首页、关于页和结构化数据列出 `framefetch`、`framefetch-electron`、`framefetch-app` 的仓库地址。桌面端面向 macOS 与 Windows。
 
 ## 文件保存
 

@@ -25,6 +25,33 @@ export function resolveSiteUrl(value: string | undefined): URL {
   }
 }
 
+export const sourceRepositories = [
+  {
+    name: 'framefetch',
+    href: 'https://github.com/StephenQiu30/framefetch',
+    text: 'FastAPI API、Next.js Web、下载 / 文档 / 报告 Worker、隔离 Media Runner 与 Docker Compose 部署。',
+    english:
+      'FastAPI API, Next.js web app, workers, isolated media runner and Docker Compose.',
+  },
+  {
+    name: 'framefetch-electron',
+    href: 'https://github.com/StephenQiu30/framefetch-electron',
+    text: '连接自托管 framefetch 的 Electron 桌面客户端，面向 macOS 与 Windows。媒体处理与 AI 推理仍在服务端执行。',
+    english:
+      'Electron desktop client for macOS and Windows. It connects to a self-hosted framefetch; media processing and AI inference stay on the server.',
+  },
+  {
+    name: 'framefetch-app',
+    href: 'https://github.com/StephenQiu30/framefetch-app',
+    text: '连接自托管 framefetch 的 Flutter iOS / Android 客户端。媒体处理与 AI 推理仍在服务端执行。',
+    english:
+      'Flutter iOS and Android client for a self-hosted framefetch. Media processing and AI inference stay on the server.',
+  },
+] as const;
+
+const [serverRepository, desktopRepository, mobileRepository] =
+  sourceRepositories;
+
 export const siteConfig = {
   name: '帧取 Framefetch',
   shortName: '帧取',
@@ -33,15 +60,30 @@ export const siteConfig = {
     '帧取 Framefetch 是 MIT 开源的自托管视频解析与 AI 分析平台，支持本地视频导入、剧本文档处理、分镜分析，以及 Markdown / DOCX 报告导出。',
   englishDescription:
     'Framefetch is a self-hosted open-source workflow for authorized video parsing, local media import, screenplay processing, and AI video analysis with Markdown and DOCX reports.',
-  repositoryUrl: 'https://github.com/StephenQiu30/framefetch',
-  documentationUrl: 'https://github.com/StephenQiu30/framefetch/tree/main/docs',
-  mobileRepositoryUrl: 'https://github.com/StephenQiu30/framefetch-app',
-  licenseUrl: 'https://github.com/StephenQiu30/framefetch/blob/main/LICENSE',
+  repositoryUrl: serverRepository.href,
+  desktopRepositoryUrl: desktopRepository.href,
+  documentationUrl: `${serverRepository.href}/tree/main/docs`,
+  mobileRepositoryUrl: mobileRepository.href,
+  licenseUrl: `${serverRepository.href}/blob/main/LICENSE`,
   maintainer: {
     name: 'StephenQiu30',
     url: 'https://github.com/StephenQiu30',
   },
 } as const;
+
+// Search and answer-engine crawlers. Private deployments still noindex HTML.
+export const generativeCrawlers = [
+  '*',
+  'OAI-SearchBot',
+  'ChatGPT-User',
+  'GPTBot',
+  'PerplexityBot',
+  'ClaudeBot',
+  'Claude-SearchBot',
+  'Google-Extended',
+  'Applebot-Extended',
+  'Bytespider',
+] as const;
 
 // Crawlable marketing pages. Everything else is an app view and stays noindex.
 export const publicPages = [

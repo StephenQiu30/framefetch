@@ -11,7 +11,7 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { publicMetadata } from '@/lib/public-metadata';
-import { absoluteUrl, siteConfig } from '@/lib/site';
+import { absoluteUrl, siteConfig, sourceRepositories } from '@/lib/site';
 
 const title = '关于帧取 Framefetch：开源个人视频工具的定位、原则与边界';
 const description =
@@ -49,19 +49,6 @@ const principles = [
   {
     name: '可自托管',
     text: '数据保存在部署者配置的基础设施中，项目不依赖官方托管服务，也不内置第三方追踪器。',
-  },
-];
-
-const repositories = [
-  {
-    name: 'framefetch',
-    href: siteConfig.repositoryUrl,
-    text: 'FastAPI API、Next.js Web、下载 / 文档 / 报告 Worker、隔离 Media Runner 与 Docker Compose 部署。',
-  },
-  {
-    name: 'framefetch-app',
-    href: siteConfig.mobileRepositoryUrl,
-    text: '连接自托管 framefetch 的 Flutter iOS / Android 客户端；媒体处理与 AI 推理仍在服务端执行。',
   },
 ];
 
@@ -165,7 +152,7 @@ export default function AboutPage() {
           <h2 id="repositories-title">源码在哪里？</h2>
         </ItemTitle>
         <ItemGroup>
-          {repositories.map(({ name, href, text }) => (
+          {sourceRepositories.map(({ name, href, text }) => (
             <Item key={name} role="listitem">
               <ItemContent>
                 <ItemTitle>

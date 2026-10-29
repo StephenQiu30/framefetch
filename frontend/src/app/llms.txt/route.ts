@@ -1,5 +1,10 @@
 import { publicQuestions } from '@/components/intake/public-home-content';
-import { absoluteUrl, siteConfig, siteIndexable } from '@/lib/site';
+import {
+  absoluteUrl,
+  siteConfig,
+  siteIndexable,
+  sourceRepositories,
+} from '@/lib/site';
 
 // https://llmstxt.org — a plain-text map for generative search and AI agents.
 export function GET() {
@@ -22,10 +27,18 @@ Framefetch only processes content the user is authorized to use: public, free, n
 
 ## Source
 
-- [framefetch](${siteConfig.repositoryUrl}): FastAPI API, Next.js web app, workers, isolated media runner, Docker Compose
-- [framefetch-app](${siteConfig.mobileRepositoryUrl}): Flutter iOS / Android client for a self-hosted framefetch
+${sourceRepositories.map(({ name, href, english }) => `- [${name}](${href}): ${english}`).join('\n')}
 - [English README](${siteConfig.repositoryUrl}/blob/main/README.en.md)
 - [System design](${siteConfig.repositoryUrl}/blob/main/docs/design/README.md)
+- [Citation](${siteConfig.repositoryUrl}/blob/main/CITATION.cff)
+
+## Facts
+
+- Canonical name: 帧取 (Framefetch)
+- License: MIT
+- Maintainer: ${siteConfig.maintainer.name} (${siteConfig.maintainer.url})
+- Server and web, desktop, and mobile clients are the three repositories above. Follow a repository on GitHub to watch its releases.
+- Desktop targets macOS and Windows. Media processing and AI inference stay on the self-hosted server.
 
 ## FAQ
 

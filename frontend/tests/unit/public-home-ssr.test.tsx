@@ -41,7 +41,7 @@ describe('anonymous homepage server rendering', () => {
     const faq = graph['@graph'].find(
       (item: Record<string, unknown>) => item['@type'] === 'FAQPage',
     );
-    expect(faq.mainEntity).toHaveLength(6);
+    expect(faq.mainEntity).toHaveLength(7);
     for (const item of faq.mainEntity) {
       const id = new URL(item['@id']).hash.slice(1);
       const visible = document.getElementById(id);

@@ -15,9 +15,18 @@ describe('public SEO metadata', () => {
     const { default: robots } = await import('@/app/robots');
     const { default: sitemap } = await import('@/app/sitemap');
     const { publicMetadata } = await import('@/lib/public-metadata');
+    const searchRule = { allow: '/', disallow: ['/api', '/health'] };
     expect(robots().rules).toEqual([
-      { userAgent: '*', allow: '/', disallow: ['/api', '/health'] },
-      { userAgent: 'OAI-SearchBot', allow: '/', disallow: ['/api', '/health'] },
+      { userAgent: '*', ...searchRule },
+      { userAgent: 'OAI-SearchBot', ...searchRule },
+      { userAgent: 'ChatGPT-User', ...searchRule },
+      { userAgent: 'GPTBot', ...searchRule },
+      { userAgent: 'PerplexityBot', ...searchRule },
+      { userAgent: 'ClaudeBot', ...searchRule },
+      { userAgent: 'Claude-SearchBot', ...searchRule },
+      { userAgent: 'Google-Extended', ...searchRule },
+      { userAgent: 'Applebot-Extended', ...searchRule },
+      { userAgent: 'Bytespider', ...searchRule },
     ]);
     expect(robots().sitemap).toBe('https://framefetch.example/sitemap.xml');
     expect(sitemap()).toEqual([
@@ -36,6 +45,9 @@ describe('public SEO metadata', () => {
       url: 'https://framefetch.example/guide/',
       description: 'Description',
     });
+    expect(metadata.alternates?.types).toMatchObject({
+      'text/plain': 'https://framefetch.example/llms.txt',
+    });
   });
 
   it.each([undefined, 'false', 'TRUE'])(
@@ -47,10 +59,12 @@ describe('public SEO metadata', () => {
       const { publicMetadata } = await import('@/lib/public-metadata');
       expect(sitemap()).toEqual([]);
       expect(robots().sitemap).toBeUndefined();
-      expect(publicMetadata('Home', 'Description', '/').robots).toMatchObject({
+      const metadata = publicMetadata('Home', 'Description', '/');
+      expect(metadata.robots).toMatchObject({
         index: false,
         nosnippet: true,
       });
+      expect(metadata.alternates?.types).toBeUndefined();
       // Crawlers can still retrieve HTML to see noindex, including after de-indexing.
       expect(robots().rules).toContainEqual({
         userAgent: '*',
@@ -73,6 +87,10 @@ describe('public SEO metadata', () => {
       expect(body).toContain(`(https://framefetch.example${path})`);
     }
     expect(body).toContain('### 帧取 Framefetch 是什么？');
+    expect(body).toContain(
+      'https://github.com/StephenQiu30/framefetch-electron',
+    );
+    expect(body).toContain('Canonical name: 帧取 (Framefetch)');
 
     vi.resetModules();
     vi.stubEnv('SITE_INDEXABLE', 'false');
