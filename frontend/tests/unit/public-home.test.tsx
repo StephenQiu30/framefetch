@@ -20,16 +20,16 @@ describe('PublicHome', () => {
       'https://github.com/StephenQiu30/framefetch/blob/main/README.md#快速开始',
     );
     expect(
-      screen.getByRole('link', { name: 'framefetch', exact: true }),
+      screen.getByRole('link', { name: /^framefetch$/ }),
     ).toHaveAttribute('href', 'https://github.com/StephenQiu30/framefetch');
     expect(
-      screen.getByRole('link', { name: 'framefetch-electron', exact: true }),
+      screen.getByRole('link', { name: /^framefetch-electron$/ }),
     ).toHaveAttribute(
       'href',
       'https://github.com/StephenQiu30/framefetch-electron',
     );
     expect(
-      screen.getByRole('link', { name: 'framefetch-app', exact: true }),
+      screen.getByRole('link', { name: /^framefetch-app$/ }),
     ).toHaveAttribute('href', 'https://github.com/StephenQiu30/framefetch-app');
   });
 
