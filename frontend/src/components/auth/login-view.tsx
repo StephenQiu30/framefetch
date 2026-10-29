@@ -11,10 +11,9 @@ import { PasswordInput } from '@/components/auth/password-input';
 import { isValidEmail } from '@/components/auth/register-form-model';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { FieldGroup } from '@/components/ui/field';
+import { FieldDescription, FieldGroup } from '@/components/ui/field';
 import { Form } from '@/components/ui/form';
 import { InputGroupInput } from '@/components/ui/input-group';
-import { ItemDescription } from '@/components/ui/item';
 import { Spinner } from '@/components/ui/spinner';
 import { authRedirect } from '@/lib/auth-redirect';
 import { displayError } from '@/lib/request-error';
@@ -117,7 +116,7 @@ export function LoginView() {
               id="login-password"
               minLength={8}
               name="password"
-              placeholder="至少 8 个字符"
+              placeholder="输入密码"
               type="password"
             />
           </AuthField>
@@ -141,12 +140,12 @@ export function LoginView() {
           ) : null}
         </Button>
       </Form>
-      <ItemDescription className="line-clamp-none mt-7">
+      <FieldDescription className="mt-7">
         还没有账户？{' '}
         <Button asChild variant="link">
           <Link href={`/user/register${search}`}>创建账户</Link>
         </Button>
-      </ItemDescription>
+      </FieldDescription>
     </AuthPageFrame>
   );
 }

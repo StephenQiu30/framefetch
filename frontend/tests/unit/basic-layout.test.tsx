@@ -582,7 +582,7 @@ describe('BasicLayout', () => {
     ).toBeInTheDocument();
     expect(container.querySelector('[data-slot="card"]')).toBeNull();
   });
-  it('moves the registration indicator only after email verification and resets when email changes', async () => {
+  it('asks for the email, then the code, and only then the account password', async () => {
     mockHttpResponses(
       { email_sent: true, retry_after_seconds: 60, expires_in_seconds: 600 },
       { verified: true },
@@ -590,28 +590,39 @@ describe('BasicLayout', () => {
     render(<RegisterView />);
     const steps = screen.getByRole('list', { name: '注册步骤' });
     expect(steps.querySelector('[aria-current="step"]')).toHaveTextContent(
-      '验证邮箱',
+      '邮箱',
     );
+    expect(screen.queryByLabelText('邮箱验证码')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('用户名')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('密码')).not.toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText('邮箱地址'), {
       target: { value: 'member@example.com' },
     });
     fireEvent.click(screen.getByRole('button', { name: '获取验证码' }));
-    await screen.findByRole('button', { name: /秒后可重发/ });
-    fireEvent.change(screen.getByLabelText('邮箱验证码'), {
-      target: { value: '123456' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: '验证邮箱' }));
-    await screen.findByLabelText('密码');
+    await screen.findByLabelText('邮箱验证码');
     expect(steps.querySelector('[aria-current="step"]')).toHaveTextContent(
-      '设置密码',
-    );
-    fireEvent.change(screen.getByLabelText('邮箱地址'), {
-      target: { value: 'another@example.com' },
-    });
-    expect(steps.querySelector('[aria-current="step"]')).toHaveTextContent(
-      '验证邮箱',
+      '验证码',
     );
     expect(screen.queryByLabelText('密码')).not.toBeInTheDocument();
+
+    fireEvent.input(screen.getByLabelText('邮箱验证码'), {
+      target: { value: '123456' },
+    });
+    await screen.findByLabelText('用户名');
+    expect(screen.getByLabelText('密码')).toBeInTheDocument();
+    expect(screen.getByLabelText('确认密码')).toBeInTheDocument();
+    expect(steps.querySelector('[aria-current="step"]')).toHaveTextContent(
+      '用户名和密码',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '返回验证码' }));
+    expect(screen.queryByLabelText('密码')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '修改邮箱' }));
+    expect(screen.getByLabelText('邮箱地址')).toHaveValue('member@example.com');
+    expect(screen.queryByLabelText('邮箱验证码')).not.toBeInTheDocument();
+    expect(steps.querySelector('[aria-current="step"]')).toHaveTextContent(
+      '邮箱',
+    );
   });
 });

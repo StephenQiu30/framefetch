@@ -218,6 +218,26 @@
     background-color: var(--muted);
   }
 
+  [data-design="borderless"] [data-slot="input-otp-group"] {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  [data-design="borderless"] [data-slot="input-otp-slot"] {
+    width: auto;
+    border-radius: var(--radius-lg);
+  }
+
+  [data-design="borderless"]
+    [data-slot="input-otp-slot"]:not([data-active="true"]):not(
+      [aria-invalid="true"]
+    ) {
+    border-color: transparent;
+    background-color: var(--muted);
+  }
+
   [data-design="borderless"]
     :is(
       [data-slot="card"],
