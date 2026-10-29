@@ -19,9 +19,10 @@ describe('PublicHome', () => {
       'href',
       'https://github.com/StephenQiu30/framefetch/blob/main/README.md#快速开始',
     );
-    expect(
-      screen.getByRole('link', { name: /^framefetch$/ }),
-    ).toHaveAttribute('href', 'https://github.com/StephenQiu30/framefetch');
+    expect(screen.getByRole('link', { name: /^framefetch$/ })).toHaveAttribute(
+      'href',
+      'https://github.com/StephenQiu30/framefetch',
+    );
     expect(
       screen.getByRole('link', { name: /^framefetch-electron$/ }),
     ).toHaveAttribute(
