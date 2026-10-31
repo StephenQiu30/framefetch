@@ -260,6 +260,33 @@
     ) {
     border-color: transparent;
     --tw-ring-color: transparent;
+    --tw-ring-shadow: 0 0 #0000;
+  }
+
+  /* Hairline separators sit on a contrasting fill or overlay and stay visible
+     even when the border color is transparent. Drop the stroke; keep padding.
+     Sheet and dialog surfaces keep their own fill so the overlay does not show through. */
+  [data-design="borderless"]
+  :is(
+    [data-slot="card-footer"],
+    [data-slot="dialog-footer"],
+    [data-slot="alert-dialog-footer"]
+  ) {
+    border-width: 0;
+    background-color: transparent;
+  }
+
+  [data-design="borderless"]
+    :is(
+      [data-slot="accordion-item"],
+      [data-slot="sheet-content"],
+      [data-slot="empty"]
+    ) {
+    border-width: 0;
+  }
+
+  [data-design="borderless"] .recharts-tooltip-wrapper > div {
+    border-color: transparent;
   }
 
   [data-design="borderless"]
@@ -301,7 +328,8 @@
     border-width: 0;
   }
 
-  .table-borderless [data-slot="table-row"] {
+  .table-borderless [data-slot="table-row"],
+  .table-borderless [data-slot="table-footer"] {
     border-width: 0;
   }
 

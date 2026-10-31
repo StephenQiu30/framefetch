@@ -30,23 +30,26 @@ import { InputGroupInput } from '@/components/ui/input-group';
 import { ItemTitle } from '@/components/ui/item';
 import { Spinner } from '@/components/ui/spinner';
 import { authRedirect } from '@/lib/auth-redirect';
+import { useT } from '@/lib/i18n/i18n-provider';
 import { displayError } from '@/lib/request-error';
 import { withWebSessionMutation } from '@/lib/session-events';
 import { normalizeUsername, USERNAME_HELP } from '@/lib/username';
 
-const steps = [
-  ['email', '邮箱'],
-  ['code', '验证码'],
-  ['account', '用户名和密码'],
-] as const;
+const steps = ['email', 'code', 'account'] as const;
 
-type Step = (typeof steps)[number][0];
+type Step = (typeof steps)[number];
 
-const stepDescription: Record<Step, string> = {
-  email: '输入邮箱，我们会发送 6 位验证码。',
-  code: '验证码输入完成后，再设置用户名和密码。',
-  account: '设置用户名和密码，完成注册。',
-};
+const stepLabel = {
+  email: 'auth.stepEmail',
+  code: 'auth.stepCode',
+  account: 'auth.stepAccount',
+} as const;
+
+const stepDescription = {
+  email: 'auth.registerEmail',
+  code: 'auth.registerCode',
+  account: 'auth.registerAccount',
+} as const;
 
 export function RegisterView() {
   const { user, loading, setUser } = useAuth();
@@ -65,7 +68,8 @@ export function RegisterView() {
   const verifyingRef = useRef(false);
   const stepRef = useRef(step);
   const router = useRouter();
-  const stepIndex = steps.findIndex(([id]) => id === step);
+  const t = useT();
+  const stepIndex = steps.indexOf(step);
 
   useEffect(() => {
     const currentSearch = window.location.search;
@@ -189,15 +193,15 @@ export function RegisterView() {
 
   return (
     <AuthPageFrame
-      description={stepDescription[step]}
-      title="创建帧取账户"
+      description={t(stepDescription[step])}
+      title={t('auth.registerTitle')}
       titleId="register-title"
     >
       <ol
-        aria-label="注册步骤"
+        aria-label={t('auth.registerSteps')}
         className="mb-7 flex flex-wrap items-center gap-x-6 gap-y-3"
       >
-        {steps.map(([id, label], index) => {
+        {steps.map((id, index) => {
           const current = id === step;
           const done = index < stepIndex;
           return (
@@ -209,7 +213,7 @@ export function RegisterView() {
               <Badge variant={current || done ? 'default' : 'secondary'}>
                 {done ? <CheckIcon aria-hidden /> : index + 1}
               </Badge>
-              <ItemTitle>{label}</ItemTitle>
+              <ItemTitle>{t(stepLabel[id])}</ItemTitle>
             </li>
           );
         })}

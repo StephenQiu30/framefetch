@@ -65,11 +65,13 @@ export function PublicHomeSafeguards({ items }: { items: readonly string[] }) {
 }
 export function PublicHomeWorkflow({
   items,
+  label,
 }: {
   items: readonly WorkflowStep[];
+  label: string;
 }) {
   return (
-    <ol aria-label="使用步骤" className="flex flex-col gap-3">
+    <ol aria-label={label} className="flex flex-col gap-3">
       {items.map(([title, description], index) => (
         <Item asChild key={title}>
           <li>

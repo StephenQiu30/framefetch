@@ -29,7 +29,7 @@
 .block-editor .ce-popover__container {
   color: var(--popover-foreground);
   background: var(--popover);
-  border-color: var(--border);
+  border-color: transparent;
 }
 .block-editor .ce-inline-tool,
 .block-editor .ce-conversion-tool {
@@ -45,7 +45,7 @@
 .block-editor .cdx-search-field {
   color: var(--foreground);
   background: var(--muted);
-  border-color: var(--border);
+  border-color: transparent;
 }
 .block-editor .ce-code__textarea {
   max-width: 100%;
@@ -69,7 +69,7 @@
 }
 .block-editor .cdx-input {
   background: var(--background);
-  border-color: var(--border);
+  border-color: transparent;
   box-shadow: none;
 }
 .block-editor .cdx-quote__text {

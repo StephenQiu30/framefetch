@@ -33,10 +33,7 @@ import {
 import { useAuth } from '@/components/auth/auth-provider';
 import type { IntakeMode } from '@/components/intake/content-intake-hero';
 import { useIntakeDraft } from '@/components/intake/intake-draft-provider';
-import {
-  hasPublicInput,
-  PUBLIC_INPUT_REQUIRED,
-} from '@/components/intake/public-input';
+import { hasPublicInput } from '@/components/intake/public-input';
 import { markNavigationPush } from '@/components/layout/navigation-state';
 import {
   Command,
@@ -60,88 +57,110 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { Kbd } from '@/components/ui/kbd';
+import { useT } from '@/lib/i18n/i18n-provider';
+import type { MessageKey } from '@/lib/i18n/messages';
 
 const publicDestinations = [
-  { label: '首页', href: '/', keywords: '工作区', icon: HouseIcon },
-  { label: '使用指南', href: '/guide/', keywords: '帮助', icon: BookOpenIcon },
   {
-    label: '自托管部署',
+    labelKey: 'chrome.home',
+    href: '/',
+    keywords: '首页 工作区 home workspace',
+    icon: HouseIcon,
+  },
+  {
+    labelKey: 'chrome.guide',
+    href: '/guide/',
+    keywords: '使用指南 帮助 guide help',
+    icon: BookOpenIcon,
+  },
+  {
+    labelKey: 'chrome.selfHosting',
     href: '/self-hosting/',
-    keywords: '部署',
+    keywords: '自托管部署 部署 self-hosting deploy',
     icon: HardDrivesIcon,
   },
-  { label: '关于', href: '/about/', keywords: 'Framefetch', icon: InfoIcon },
+  {
+    labelKey: 'chrome.about',
+    href: '/about/',
+    keywords: '关于 Framefetch about',
+    icon: InfoIcon,
+  },
 ] as const;
 
 const accountDestinations = [
   {
-    label: '下载记录',
+    labelKey: 'chrome.history',
     href: '/history',
-    keywords: '历史 任务',
+    keywords: '下载记录 历史 任务 download history',
     icon: ClockCounterClockwiseIcon,
   },
   {
-    label: '我的处理记录',
+    labelKey: 'chrome.activity',
     href: '/history/activity',
-    keywords: '解析历史 分析历史',
+    keywords: '我的处理记录 解析历史 分析历史 activity',
     icon: ListBulletsIcon,
   },
   {
-    label: '剧本文档',
+    labelKey: 'chrome.documents',
     href: '/documents',
-    keywords: '文档',
+    keywords: '剧本文档 文档 screenplay documents',
     icon: FileTextIcon,
   },
-  { label: '平台状态', href: '/providers', keywords: '来源', icon: PulseIcon },
   {
-    label: '个人资料',
+    labelKey: 'chrome.providers',
+    href: '/providers',
+    keywords: '平台状态 来源 provider status',
+    icon: PulseIcon,
+  },
+  {
+    labelKey: 'chrome.account',
     href: '/account',
-    keywords: '账户',
+    keywords: '个人资料 账户 profile account',
     icon: UserCircleIcon,
   },
 ] as const;
 
 const adminDestinations = [
   {
-    label: '系统操作日志',
+    labelKey: 'chrome.operationLogs',
     href: '/admin/operation-logs',
-    keywords: '管理员 日志',
+    keywords: '系统操作日志 管理员 日志 operation logs',
     icon: ListBulletsIcon,
   },
   {
-    label: 'AI 服务',
+    labelKey: 'chrome.aiProviders',
     href: '/admin/ai-providers',
-    keywords: '管理员 模型',
+    keywords: 'AI 服务 管理员 模型 ai providers',
     icon: RobotIcon,
   },
   {
-    label: '使用统计',
+    labelKey: 'chrome.analytics',
     href: '/admin/analytics',
-    keywords: '管理员 统计',
+    keywords: '使用统计 管理员 统计 usage analytics',
     icon: ChartLineUpIcon,
   },
   {
-    label: '文件管理',
+    labelKey: 'chrome.files',
     href: '/admin/files',
-    keywords: '管理员 存储',
+    keywords: '文件管理 管理员 存储 files storage',
     icon: HardDrivesIcon,
   },
   {
-    label: '平台目录',
+    labelKey: 'chrome.catalog',
     href: '/admin/providers',
-    keywords: '管理员 平台',
+    keywords: '平台目录 管理员 平台 provider catalog',
     icon: StackIcon,
   },
   {
-    label: '用户管理',
+    labelKey: 'chrome.users',
     href: '/admin/users',
-    keywords: '管理员 用户',
+    keywords: '用户管理 管理员 用户 users',
     icon: UsersThreeIcon,
   },
 ] as const;
 
 function matchesDestination(
-  destination: { label: string; href: string; keywords: string },
+  destination: { href: string; keywords: string; label: string },
   query: string,
 ) {
   return `${destination.label} ${destination.href} ${destination.keywords}`
@@ -149,7 +168,18 @@ function matchesDestination(
     .includes(query);
 }
 
+function labelDestinations<T extends { labelKey: MessageKey }>(
+  destinations: readonly T[],
+  t: (key: MessageKey) => string,
+) {
+  return destinations.map((destination) => ({
+    ...destination,
+    label: t(destination.labelKey),
+  }));
+}
+
 export function QuickParseDialog() {
+  const t = useT();
   const { user } = useAuth();
   const { input, requestQuickParse, setMode } = useIntakeDraft();
   const pathname = usePathname() ?? '/';
@@ -160,24 +190,33 @@ export function QuickParseDialog() {
   const [invalid, setInvalid] = useState(false);
   const query = value.trim().toLocaleLowerCase();
   const isShareText = /https?:\/\//iu.test(value);
-  const publicMatches = publicDestinations.filter((item) =>
+  const labeledPublic = labelDestinations(publicDestinations, t);
+  const labeledAccount = labelDestinations(accountDestinations, t);
+  const labeledAdmin = labelDestinations(adminDestinations, t);
+  const publicMatches = labeledPublic.filter((item) =>
     matchesDestination(item, query),
   );
   const accountMatches = user
-    ? accountDestinations.filter((item) => matchesDestination(item, query))
+    ? labeledAccount.filter((item) => matchesDestination(item, query))
     : [];
   const adminMatches =
     user?.role === 'admin'
-      ? adminDestinations.filter((item) => matchesDestination(item, query))
+      ? labeledAdmin.filter((item) => matchesDestination(item, query))
       : [];
   const navigationMatches =
     publicMatches.length + accountMatches.length + adminMatches.length;
   const showNavigation = !isShareText;
   const showVideoUpload = Boolean(
-    user && (!query || (!navigationMatches && '上传本地视频'.includes(query))),
+    user &&
+      (!query ||
+        (!navigationMatches &&
+          '上传本地视频 upload local video'.includes(query))),
   );
   const showScreenplayUpload = Boolean(
-    user && (!query || (!navigationMatches && '上传剧本文档'.includes(query))),
+    user &&
+      (!query ||
+        (!navigationMatches &&
+          '上传剧本文档 upload screenplay'.includes(query))),
   );
   const showParse = Boolean(
     user &&
@@ -186,9 +225,14 @@ export function QuickParseDialog() {
         (!navigationMatches && !showVideoUpload && !showScreenplayUpload)),
   );
   const showLogin = Boolean(
-    !user && (!query || isShareText || '登录后使用'.includes(query)),
+    !user &&
+      (!query ||
+        isShareText ||
+        '登录后使用 sign in to continue'.includes(query)),
   );
-  const showRegister = Boolean(!user && (!query || '注册账户'.includes(query)));
+  const showRegister = Boolean(
+    !user && (!query || '注册账户 create account'.includes(query)),
+  );
 
   const openDialog = useCallback(
     (nextValue = input) => {
@@ -288,7 +332,7 @@ export function QuickParseDialog() {
         <InputGroupInput
           aria-haspopup="dialog"
           aria-keyshortcuts="Meta+K Control+K"
-          aria-label="搜索或粘贴链接"
+          aria-label={t('chrome.quickParseLabel')}
           onClick={() => openDialog()}
           onChange={(event) => openDialog(event.currentTarget.value)}
           onKeyDown={(event) => {
@@ -296,7 +340,7 @@ export function QuickParseDialog() {
             event.preventDefault();
             openDialog();
           }}
-          placeholder="搜索或粘贴链接"
+          placeholder={t('chrome.quickParseLabel')}
           type="search"
           value=""
         />
@@ -319,18 +363,18 @@ export function QuickParseDialog() {
           }}
         >
           <DialogHeader>
-            <DialogTitle>快捷操作</DialogTitle>
+            <DialogTitle>{t('chrome.quickParseTitle')}</DialogTitle>
             <DialogDescription>
               {user
-                ? '搜索页面、解析公开链接，或上传本地视频与剧本文档。'
-                : '搜索页面；登录后可解析链接、上传视频与剧本文档。'}
+                ? t('chrome.quickParseSignedIn')
+                : t('chrome.quickParseSignedOut')}
             </DialogDescription>
           </DialogHeader>
-          <Command label="链接或页面" shouldFilter={false}>
+          <Command label={t('chrome.commandLabel')} shouldFilter={false}>
             <CommandInput
               aria-describedby={invalid ? 'quick-parse-error' : undefined}
               aria-invalid={invalid ? true : undefined}
-              aria-label="链接或页面"
+              aria-label={t('chrome.commandLabel')}
               maxLength={4096}
               onKeyDown={(event) => {
                 if (
@@ -349,17 +393,17 @@ export function QuickParseDialog() {
                 setValue(nextValue);
                 setInvalid(false);
               }}
-              placeholder="搜索页面，或粘贴媒体链接…"
+              placeholder={t('chrome.commandPlaceholder')}
               value={value}
             />
             <CommandList>
               {user &&
               (showParse || showVideoUpload || showScreenplayUpload) ? (
-                <CommandGroup heading="选择操作">
+                <CommandGroup heading={t('chrome.chooseAction')}>
                   {showParse ? (
                     <CommandItem onSelect={submit} value="解析链接">
                       <LinkSimpleIcon aria-hidden />
-                      解析链接
+                      {t('chrome.parseLink')}
                       <CommandShortcut aria-label="Enter">
                         <ArrowElbowDownLeftIcon aria-hidden />
                       </CommandShortcut>
@@ -371,7 +415,7 @@ export function QuickParseDialog() {
                       value="上传本地视频"
                     >
                       <FileVideoIcon aria-hidden />
-                      上传本地视频
+                      {t('chrome.uploadVideo')}
                     </CommandItem>
                   ) : null}
                   {showScreenplayUpload ? (
@@ -380,20 +424,20 @@ export function QuickParseDialog() {
                       value="上传剧本文档"
                     >
                       <FileTextIcon aria-hidden />
-                      上传剧本文档
+                      {t('chrome.uploadScreenplay')}
                     </CommandItem>
                   ) : null}
                 </CommandGroup>
               ) : null}
               {showLogin || showRegister ? (
-                <CommandGroup heading="开始使用">
+                <CommandGroup heading={t('chrome.getStarted')}>
                   {showLogin ? (
                     <CommandItem
                       onSelect={() => navigate('/user/login?redirect=%2F')}
                       value="登录后使用"
                     >
                       <SignInIcon aria-hidden />
-                      登录后使用
+                      {t('chrome.loginToUse')}
                     </CommandItem>
                   ) : null}
                   {showRegister ? (
@@ -402,13 +446,13 @@ export function QuickParseDialog() {
                       value="注册账户"
                     >
                       <UserPlusIcon aria-hidden />
-                      注册账户
+                      {t('chrome.registerAccount')}
                     </CommandItem>
                   ) : null}
                 </CommandGroup>
               ) : null}
               {showNavigation && publicMatches.length ? (
-                <CommandGroup heading="页面">
+                <CommandGroup heading={t('chrome.pages')}>
                   {publicMatches.map(({ label, href, icon: Icon }) => (
                     <CommandItem
                       key={href}
@@ -422,7 +466,7 @@ export function QuickParseDialog() {
                 </CommandGroup>
               ) : null}
               {showNavigation && accountMatches.length ? (
-                <CommandGroup heading="工作区">
+                <CommandGroup heading={t('chrome.workspace')}>
                   {accountMatches.map(({ label, href, icon: Icon }) => (
                     <CommandItem
                       key={href}
@@ -436,7 +480,7 @@ export function QuickParseDialog() {
                 </CommandGroup>
               ) : null}
               {showNavigation && adminMatches.length ? (
-                <CommandGroup heading="管理">
+                <CommandGroup heading={t('chrome.admin')}>
                   {adminMatches.map(({ label, href, icon: Icon }) => (
                     <CommandItem
                       key={href}
@@ -455,13 +499,13 @@ export function QuickParseDialog() {
               !showLogin &&
               !showRegister ? (
                 <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-                  没有匹配的页面
+                  {t('chrome.noPageMatch')}
                 </p>
               ) : null}
             </CommandList>
             {invalid ? (
               <FieldError id="quick-parse-error">
-                {PUBLIC_INPUT_REQUIRED}
+                {t('chrome.publicInputRequired')}
               </FieldError>
             ) : null}
           </Command>

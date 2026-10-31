@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 
 import { PageHeader } from '@/components/layout/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useT } from '@/lib/i18n/i18n-provider';
 
 export type IntakeMode = 'link' | 'video' | 'screenplay' | 'watermark';
 
@@ -25,16 +26,21 @@ export function ContentIntakeHero({
   videoForm: ReactNode;
   watermarkForm: ReactNode;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         size="lg"
         description={
           mode === 'watermark'
-            ? '上传本地视频，自动去水印，原片始终保留。'
-            : '粘贴视频页或分享链接，选择画质后下载，自动校验并处理水印。'
+            ? t('intake.watermarkDescription')
+            : t('intake.downloadDescription')
         }
-        title={mode === 'watermark' ? '视频去水印' : '下载任意公开视频'}
+        title={
+          mode === 'watermark'
+            ? t('intake.watermarkTitle')
+            : t('intake.downloadTitle')
+        }
       />
 
       <Tabs
@@ -43,17 +49,17 @@ export function ContentIntakeHero({
         value={mode}
       >
         <TabsList
-          aria-label="选择内容来源"
+          aria-label={t('intake.sourceLabel')}
           className="h-auto max-w-full flex-wrap"
           variant="default"
         >
           <TabsTrigger className="min-w-0" disabled={disabled} value="link">
             <LinkSimple aria-hidden />
-            链接下载
+            {t('intake.link')}
           </TabsTrigger>
           <TabsTrigger className="min-w-0" disabled={disabled} value="video">
             <FileVideo aria-hidden />
-            本地视频
+            {t('intake.video')}
           </TabsTrigger>
           <TabsTrigger
             className="min-w-0"
@@ -61,7 +67,7 @@ export function ContentIntakeHero({
             value="screenplay"
           >
             <FileText aria-hidden />
-            剧本文档
+            {t('intake.screenplay')}
           </TabsTrigger>
           <TabsTrigger
             className="min-w-0"
@@ -69,7 +75,7 @@ export function ContentIntakeHero({
             value="watermark"
           >
             <Eraser aria-hidden />
-            视频去水印
+            {t('intake.watermark')}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="link">{linkForm}</TabsContent>

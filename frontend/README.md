@@ -17,6 +17,8 @@ pnpm dev
 
 打开 [Web 工作区](http://127.0.0.1:8101)。前端按运行时 `BACKEND_ORIGIN` 将 `/api/*`、`/health/*` 转发到 FastAPI（默认 `127.0.0.1:8111`）；上传使用流式代理。生产入口还需将 `/api/ws/tasks` 的 WebSocket Upgrade 转发到 FastAPI，部署方式见[项目首页](../README.md#快速开始)。
 
+界面语言为 `zh-CN` 与 `en-US`。导航右侧的语言按钮把选择写入 `framefetch-locale`，根布局据此设置 `html lang`。文案目录在 `src/lib/i18n/`。导航、错误说明、编辑器工具名，以及首页、登录侧栏和工作区入口的信息描述会随语言切换。指南、关于、自托管正文和业务表单仍是中文。
+
 提交前运行：
 
 ```bash

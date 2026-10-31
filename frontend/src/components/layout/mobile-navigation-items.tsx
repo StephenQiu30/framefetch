@@ -20,6 +20,7 @@ import { type ReactNode, useId } from 'react';
 
 import { MobileNavigationLink as MobileLink } from '@/components/layout/mobile-navigation-link';
 import { NavigationMenuList } from '@/components/ui/navigation-menu';
+import { useT } from '@/lib/i18n/i18n-provider';
 import { siteConfig } from '@/lib/site';
 
 export function MobileNavigationItems({
@@ -29,30 +30,31 @@ export function MobileNavigationItems({
   pathname: string;
   user?: API.UserResponse;
 }) {
+  const t = useT();
   return (
     <div className="grid gap-6 px-4 pb-4">
-      <MobileNavigationSection title="工作区">
+      <MobileNavigationSection title={t('chrome.workspace')}>
         <MobileLink active={pathname === '/'} href="/">
           <HouseIcon aria-hidden />
-          首页
+          {t('chrome.home')}
         </MobileLink>
         <MobileLink active={pathname === '/history'} href="/history">
           <ClockCounterClockwiseIcon aria-hidden />
-          下载记录
+          {t('chrome.history')}
         </MobileLink>
         <MobileLink
           active={pathname.startsWith('/documents')}
           href="/documents"
         >
           <FileTextIcon aria-hidden />
-          剧本文档
+          {t('chrome.documents')}
         </MobileLink>
         <MobileLink
           active={pathname.startsWith('/providers')}
           href="/providers"
         >
           <PulseIcon aria-hidden />
-          平台状态
+          {t('chrome.providers')}
         </MobileLink>
         {user ? (
           <>
@@ -61,14 +63,14 @@ export function MobileNavigationItems({
               href="/history/activity"
             >
               <ListBulletsIcon aria-hidden />
-              我的处理记录
+              {t('chrome.activity')}
             </MobileLink>
             <MobileLink
               active={pathname.startsWith('/account')}
               href="/account"
             >
               <UserCircleIcon aria-hidden />
-              个人资料
+              {t('chrome.account')}
             </MobileLink>
           </>
         ) : (
@@ -77,76 +79,76 @@ export function MobileNavigationItems({
               href={`/user/login?redirect=${encodeURIComponent(pathname)}`}
             >
               <UserCircleIcon aria-hidden />
-              登录账户
+              {t('chrome.loginAccount')}
             </MobileLink>
             <MobileLink href="/user/register">
               <UserPlusIcon aria-hidden />
-              注册账户
+              {t('chrome.registerAccount')}
             </MobileLink>
           </>
         )}
       </MobileNavigationSection>
       {user?.role === 'admin' ? (
-        <MobileNavigationSection title="管理">
+        <MobileNavigationSection title={t('chrome.admin')}>
           <MobileLink
             active={pathname.startsWith('/admin/operation-logs')}
             href="/admin/operation-logs"
           >
             <ListBulletsIcon aria-hidden />
-            系统操作日志
+            {t('chrome.operationLogs')}
           </MobileLink>
           <MobileLink
             active={pathname.startsWith('/admin/ai-providers')}
             href="/admin/ai-providers"
           >
             <RobotIcon aria-hidden />
-            AI 服务
+            {t('chrome.aiProviders')}
           </MobileLink>
           <MobileLink
             active={pathname.startsWith('/admin/analytics')}
             href="/admin/analytics"
           >
             <ChartLineUpIcon aria-hidden />
-            使用统计
+            {t('chrome.analytics')}
           </MobileLink>
           <MobileLink
             active={pathname.startsWith('/admin/files')}
             href="/admin/files"
           >
             <HardDrivesIcon aria-hidden />
-            文件管理
+            {t('chrome.files')}
           </MobileLink>
           <MobileLink
             active={pathname.startsWith('/admin/providers')}
             href="/admin/providers"
           >
             <StackIcon aria-hidden />
-            平台目录
+            {t('chrome.catalog')}
           </MobileLink>
           <MobileLink
             active={pathname.startsWith('/admin/users')}
             href="/admin/users"
           >
             <UsersThreeIcon aria-hidden />
-            用户管理
+            {t('chrome.users')}
           </MobileLink>
         </MobileNavigationSection>
       ) : null}
-      <MobileNavigationSection title="资源">
+      <MobileNavigationSection title={t('chrome.resources')}>
         <MobileLink active={pathname.startsWith('/guide')} href="/guide/">
           <BookOpenIcon aria-hidden />
-          使用指南
+          {t('chrome.guide')}
         </MobileLink>
         <MobileLink
           active={pathname.startsWith('/self-hosting')}
           href="/self-hosting/"
         >
           <DesktopTowerIcon aria-hidden />
-          自托管部署
+          {t('chrome.selfHosting')}
         </MobileLink>
         <MobileLink active={pathname.startsWith('/about')} href="/about/">
           <InfoIcon aria-hidden />
-          关于
+          {t('chrome.about')}
         </MobileLink>
         <MobileLink href={siteConfig.repositoryUrl}>
           <GithubLogoIcon aria-hidden />
@@ -154,7 +156,7 @@ export function MobileNavigationItems({
         </MobileLink>
         <MobileLink href={siteConfig.documentationUrl}>
           <FileTextIcon aria-hidden />
-          文档
+          {t('chrome.docs')}
         </MobileLink>
       </MobileNavigationSection>
     </div>

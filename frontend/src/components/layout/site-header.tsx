@@ -10,16 +10,19 @@ import { AuthStatusCode, useAuth } from '@/components/auth/auth-provider';
 import { QuickParseDialog } from '@/components/intake/quick-parse-dialog';
 import { DesktopNavigation } from '@/components/layout/desktop-navigation';
 import { HeaderAccount } from '@/components/layout/header-account';
+import { LocaleToggle } from '@/components/layout/locale-toggle';
 import { MobileNavigation } from '@/components/layout/mobile-navigation';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/lib/i18n/i18n-provider';
 import { displayError } from '@/lib/request-error';
 import { isPublicPage } from '@/lib/site';
 
 function BrandLink({ className }: { className?: string }) {
+  const t = useT();
   return (
     <Link
-      aria-label="帧取首页"
+      aria-label={t('chrome.homeLabel')}
       className={cn(
         'focus-ring inline-flex min-h-9 items-center gap-3 rounded-md text-lg font-semibold tracking-tight',
         className,
@@ -37,12 +40,13 @@ function BrandLink({ className }: { className?: string }) {
         src="/logo.svg"
         width={32}
       />
-      <span>帧取</span>
+      <span>{t('chrome.brand')}</span>
     </Link>
   );
 }
 
 function SiteHeader() {
+  const t = useT();
   const { user, loading, status, signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
   const pathname = usePathname() ?? '/';
@@ -111,6 +115,7 @@ function SiteHeader() {
               >
                 <QuickParseDialog />
               </div>
+              <LocaleToggle />
               {authView ? (
                 <ThemeToggle />
               ) : (
@@ -120,7 +125,7 @@ function SiteHeader() {
                     <>
                       <div className="flex shrink-0 justify-end">
                         <Button asChild size="sm">
-                          <Link href="/user/login">登录</Link>
+                          <Link href="/user/login">{t('chrome.login')}</Link>
                         </Button>
                       </div>
                       <MobileNavigation

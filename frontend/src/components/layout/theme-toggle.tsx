@@ -5,9 +5,11 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useT } from '@/lib/i18n/i18n-provider';
 
 export function ThemeToggle() {
   const { setTheme, theme } = useTheme();
+  const t = useT();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -16,7 +18,7 @@ export function ThemeToggle() {
 
   return (
     <Button
-      aria-label={dark ? '切换到浅色主题' : '切换到深色主题'}
+      aria-label={dark ? t('chrome.themeToLight') : t('chrome.themeToDark')}
       onClick={() => setTheme(dark ? 'light' : 'dark')}
       size="icon-lg"
       variant="ghost"

@@ -1,3 +1,5 @@
+'use client';
+
 import {
   ArrowRightIcon,
   ArrowUpRightIcon,
@@ -20,39 +22,34 @@ import {
   ItemGroup,
   ItemTitle,
 } from '@/components/ui/item';
+import { useLocale, useT } from '@/lib/i18n/i18n-provider';
 import { siteConfig, sourceRepositories } from '@/lib/site';
 
-const capabilities = [
-  [
-    '公开视频',
-    '粘贴链接，选择画质',
-    '检查公开、免费、非 DRM 的视频链接，选择实际可用的格式并下载。平台与链接是否可用，以解析结果和最终文件为准。',
-  ],
-  [
-    '本地导入',
-    '视频与剧本文档',
-    '导入有权处理的本地视频，以及 Markdown、Fountain、TXT、PDF 或 DOCX 剧本文档，在工作区查看与管理。',
-  ],
-  [
-    'AI 分析',
-    '从素材到分析报告',
-    '按所选分析方式生成场景、分镜或报告，并导出 Markdown / DOCX。需要可用的 AI 服务和分析 Worker。',
-  ],
-] as const;
-const workflow = [
-  ['解析', '粘贴公开视频链接，或导入本地视频与剧本'],
-  ['选择', '确认目标与可用画质'],
-  ['执行', '查看下载、导入与分析的处理进度'],
-  ['交付', '预览文件，下载素材或导出报告'],
-] as const;
-const safeguards = [
-  '下载范围为可证明公开、免费、非 DRM 的 HTTP(S) 内容；实际能力以当前实例的链接检查为准。',
-  '无法确认可下载的内容，可导入自己有权处理的本地文件。',
-  '素材与任务保存在自己的部署中；使用外部 AI 服务时，分析所需内容会发送到该服务。',
-  '公开视频不等于可自由使用，请仅处理已获授权的内容。',
-] as const;
-
 export function PublicHome() {
+  const locale = useLocale();
+  const t = useT();
+  const capabilities = [
+    [t('home.publicEyebrow'), t('home.publicTitle'), t('home.publicBody')],
+    [t('home.localEyebrow'), t('home.localTitle'), t('home.localBody')],
+    [
+      t('home.analysisEyebrow'),
+      t('home.analysisTitle'),
+      t('home.analysisBody'),
+    ],
+  ] as const;
+  const workflow = [
+    [t('home.stepParse'), t('home.stepParseBody')],
+    [t('home.stepChoose'), t('home.stepChooseBody')],
+    [t('home.stepRun'), t('home.stepRunBody')],
+    [t('home.stepDeliver'), t('home.stepDeliverBody')],
+  ] as const;
+  const safeguards = [
+    t('home.safeguardPublic'),
+    t('home.safeguardLocal'),
+    t('home.safeguardStorage'),
+    t('home.safeguardLicense'),
+  ] as const;
+
   return (
     <div
       className="inner-page flex flex-col gap-12"
@@ -60,25 +57,25 @@ export function PublicHome() {
     >
       <PageHeader
         size="lg"
-        title="Framefetch 万能视频下载器"
-        description="粘贴公开视频链接，选择画质并下载。也可以导入本地视频与剧本文档，按需进行 AI 分析。"
+        title={t('home.title')}
+        description={t('home.description')}
       />
       <div className="flex flex-wrap gap-3">
         <Button asChild>
           <Link href="/user/register">
-            创建本地账户
+            {t('home.createAccount')}
             <ArrowRightIcon aria-hidden data-icon="inline-end" />
           </Link>
         </Button>
         <Button asChild variant="secondary">
           <a href={siteConfig.repositoryUrl} rel="noreferrer" target="_blank">
             <GithubLogoIcon aria-hidden data-icon="inline-start" />
-            查看源代码
+            {t('home.viewSource')}
             <ArrowUpRightIcon aria-hidden data-icon="inline-end" />
           </a>
         </Button>
         <Button asChild variant="ghost">
-          <Link href="/user/login">登录账户</Link>
+          <Link href="/user/login">{t('home.signIn')}</Link>
         </Button>
       </div>
       <SplitLayout columns="primary">
@@ -88,7 +85,7 @@ export function PublicHome() {
           id="capabilities"
         >
           <ItemTitle>
-            <h2 id="capabilities-title">下载、导入与分析</h2>
+            <h2 id="capabilities-title">{t('home.capabilitiesTitle')}</h2>
           </ItemTitle>
           <PublicHomeCapabilities items={capabilities} />
         </section>
@@ -97,9 +94,9 @@ export function PublicHome() {
           className="flex flex-col gap-4"
         >
           <ItemTitle>
-            <h2 id="workflow-title">从链接到文件</h2>
+            <h2 id="workflow-title">{t('home.workflowTitle')}</h2>
           </ItemTitle>
-          <PublicHomeWorkflow items={workflow} />
+          <PublicHomeWorkflow items={workflow} label={t('home.workflowList')} />
         </section>
       </SplitLayout>
       <SplitLayout columns="primary" id="architecture">
@@ -108,15 +105,13 @@ export function PublicHome() {
           className="flex flex-col gap-4"
         >
           <ItemTitle>
-            <h2 id="architecture-title">开源，可自托管</h2>
+            <h2 id="architecture-title">{t('home.architectureTitle')}</h2>
           </ItemTitle>
           <Item variant="muted">
             <ItemContent>
-              <ItemTitle>在自己的基础设施上运行</ItemTitle>
+              <ItemTitle>{t('home.architectureItemTitle')}</ItemTitle>
               <ItemDescription className="line-clamp-none">
-                帧取是 MIT
-                开源的个人视频工具。源码可自行部署、使用和修改，服务器、存储、流量与外部
-                AI 服务的运行成本由你承担。
+                {t('home.architectureBody')}
               </ItemDescription>
             </ItemContent>
           </Item>
@@ -124,12 +119,12 @@ export function PublicHome() {
             <a
               href={`${siteConfig.repositoryUrl}/blob/main/README.md#快速开始`}
             >
-              阅读部署说明
+              {t('home.readDeploy')}
               <ArrowUpRightIcon aria-hidden data-icon="inline-end" />
             </a>
           </Button>
         </section>
-        <section aria-label="下载与使用边界">
+        <section aria-label={t('home.safeguardsLabel')}>
           <PublicHomeSafeguards items={safeguards} />
         </section>
       </SplitLayout>
@@ -139,10 +134,10 @@ export function PublicHome() {
         id="repositories"
       >
         <ItemTitle>
-          <h2 id="repositories-title">源码仓库</h2>
+          <h2 id="repositories-title">{t('home.repositoriesTitle')}</h2>
         </ItemTitle>
         <ItemGroup>
-          {sourceRepositories.map(({ name, href, text }) => (
+          {sourceRepositories.map(({ name, href, text, english }) => (
             <Item key={name} role="listitem">
               <ItemContent>
                 <ItemTitle>
@@ -151,7 +146,7 @@ export function PublicHome() {
                   </Button>
                 </ItemTitle>
                 <ItemDescription className="line-clamp-none">
-                  {text}
+                  {locale === 'en-US' ? english : text}
                 </ItemDescription>
               </ItemContent>
             </Item>

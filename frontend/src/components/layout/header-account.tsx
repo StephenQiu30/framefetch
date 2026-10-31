@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { avatarUrl } from '@/lib/avatar';
+import { useT } from '@/lib/i18n/i18n-provider';
 
 type HeaderAccountProps = {
   analyticsActive: boolean;
@@ -52,6 +53,7 @@ export function HeaderAccount({
   user,
   usersActive,
 }: HeaderAccountProps) {
+  const t = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const openedByHover = useRef(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -98,7 +100,7 @@ export function HeaderAccount({
         >
           <DropdownMenuTrigger asChild>
             <Button
-              aria-label="打开账户菜单"
+              aria-label={t('chrome.openAccountMenu')}
               onKeyDown={() => {
                 cancelHoverClose();
                 openedByHover.current = false;
@@ -125,7 +127,7 @@ export function HeaderAccount({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            aria-label="账户菜单"
+            aria-label={t('chrome.accountMenuLabel')}
             className="w-56"
             onCloseAutoFocus={(event) => {
               if (openedByHover.current) {
@@ -149,7 +151,7 @@ export function HeaderAccount({
               <DropdownMenuItem asChild>
                 <Link href="/account">
                   <UserCircleIcon aria-hidden className="size-4" />
-                  个人资料
+                  {t('chrome.account')}
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -165,7 +167,7 @@ export function HeaderAccount({
                     href="/admin/operation-logs"
                   >
                     <ListBulletsIcon aria-hidden />
-                    系统操作日志
+                    {t('chrome.operationLogs')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -174,7 +176,7 @@ export function HeaderAccount({
                     href="/admin/files"
                   >
                     <HardDrivesIcon aria-hidden className="size-4" />
-                    文件管理
+                    {t('chrome.files')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -183,7 +185,7 @@ export function HeaderAccount({
                     href="/admin/ai-providers"
                   >
                     <RobotIcon aria-hidden className="size-4" />
-                    AI 服务
+                    {t('chrome.aiProviders')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -192,7 +194,7 @@ export function HeaderAccount({
                     href="/admin/analytics"
                   >
                     <ChartLineUpIcon aria-hidden className="size-4" />
-                    使用统计
+                    {t('chrome.analytics')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -201,7 +203,7 @@ export function HeaderAccount({
                     href="/admin/providers"
                   >
                     <StackIcon aria-hidden className="size-4" />
-                    平台目录
+                    {t('chrome.catalog')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -210,7 +212,7 @@ export function HeaderAccount({
                     href="/admin/users"
                   >
                     <UsersThreeIcon aria-hidden className="size-4" />
-                    用户管理
+                    {t('chrome.users')}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
@@ -219,7 +221,7 @@ export function HeaderAccount({
             <DropdownMenuGroup>
               <DropdownMenuItem disabled={signingOut} onSelect={onSignOut}>
                 <SignOutIcon aria-hidden className="size-4" />
-                {signingOut ? '正在退出…' : '退出登录'}
+                {signingOut ? t('chrome.signingOut') : t('chrome.signOut')}
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
@@ -228,7 +230,7 @@ export function HeaderAccount({
         <Button asChild className="w-full" size="lg" variant="ghost">
           <Link href={`/user/login?redirect=${encodeURIComponent(pathname)}`}>
             <UserCircleIcon aria-hidden className="" />
-            <span>账户</span>
+            <span>{t('chrome.accountMenu')}</span>
           </Link>
         </Button>
       )}

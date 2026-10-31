@@ -7,9 +7,11 @@ import { NavigationHistoryProvider } from '@/components/layout/navigation-histor
 import SiteFooter from '@/components/layout/site-footer';
 import SiteHeader from '@/components/layout/site-header';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/lib/i18n/i18n-provider';
 
 export function BasicLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? '/';
+  const t = useT();
 
   return (
     <NavigationHistoryProvider currentPath={pathname}>
@@ -22,7 +24,7 @@ export function BasicLayout({ children }: { children: ReactNode }) {
           className="fixed left-4 top-0 z-50 -translate-y-full focus-visible:top-3 focus-visible:translate-y-0"
           size="lg"
         >
-          <a href="#main-content">跳到主要内容</a>
+          <a href="#main-content">{t('chrome.skipToContent')}</a>
         </Button>
         <SiteHeader />
         <main

@@ -8,6 +8,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
+import { useT } from '@/lib/i18n/i18n-provider';
 import { siteConfig } from '@/lib/site';
 
 type DesktopNavigationProps = {
@@ -25,17 +26,22 @@ export function DesktopNavigation({
   providersActive,
   publicView,
 }: DesktopNavigationProps) {
+  const t = useT();
   return (
     <NavigationMenu
-      aria-label="主要导航"
+      aria-label={t('chrome.primaryNav')}
       className="hidden max-w-none flex-none lg:flex"
       viewport={false}
     >
       <NavigationMenuList className="gap-1">
         {publicView ? (
           <>
-            <NavigationLink href="/#capabilities">产品能力</NavigationLink>
-            <NavigationLink href="/#architecture">自托管架构</NavigationLink>
+            <NavigationLink href="/#capabilities">
+              {t('chrome.productCapabilities')}
+            </NavigationLink>
+            <NavigationLink href="/#architecture">
+              {t('chrome.selfHostedArchitecture')}
+            </NavigationLink>
             <NavigationLink href={siteConfig.repositoryUrl}>
               <GithubLogoIcon aria-hidden />
               GitHub
@@ -45,16 +51,16 @@ export function DesktopNavigation({
         ) : (
           <>
             <NavigationLink active={homeActive} href="/">
-              首页
+              {t('chrome.home')}
             </NavigationLink>
             <NavigationLink active={historyActive} href="/history">
-              下载记录
+              {t('chrome.history')}
             </NavigationLink>
             <NavigationLink active={documentsActive} href="/documents">
-              剧本文档
+              {t('chrome.documents')}
             </NavigationLink>
             <NavigationLink active={providersActive} href="/providers">
-              平台状态
+              {t('chrome.providers')}
             </NavigationLink>
           </>
         )}

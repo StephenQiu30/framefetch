@@ -2,7 +2,7 @@
 
 import { cn } from 'cn';
 import Link from 'next/link';
-import { useSyncExternalStore } from 'react';
+import { type ReactNode, useSyncExternalStore } from 'react';
 import { buttonVariants } from '@/components/ui/button';
 import {
   NavigationMenu,
@@ -10,6 +10,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
+import { useT } from '@/lib/i18n/i18n-provider';
 import { siteConfig } from '@/lib/site';
 
 function desktopViewport() {
@@ -33,6 +34,7 @@ function isDesktopViewport() {
 }
 
 function SiteFooter({ className }: { className?: string }) {
+  const t = useT();
   const showFooterActions = useSyncExternalStore(
     subscribeToDesktopViewport,
     isDesktopViewport,
@@ -44,28 +46,32 @@ function SiteFooter({ className }: { className?: string }) {
       <div className="content-shell flex min-h-16 flex-wrap items-center justify-between gap-x-8 gap-y-3 py-5 text-sm text-muted-foreground">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <Link className="focus-ring font-medium text-foreground" href="/">
-            帧取 · Framefetch
+            {t('chrome.footerBrand')}
           </Link>
           <span>
             <Link className="focus-ring" href={siteConfig.licenseUrl}>
-              MIT 开源
+              {t('chrome.license')}
             </Link>{' '}
-            · 请仅处理已获授权内容
+            · {t('chrome.authorizedOnly')}
           </span>
         </div>
         {showFooterActions ? (
           <div className="flex min-w-0 flex-wrap items-center gap-3">
             <NavigationMenu
-              aria-label="项目链接"
+              aria-label={t('chrome.projectLinks')}
               className="min-w-0 max-w-none"
               viewport={false}
             >
               <NavigationMenuList className="flex-wrap justify-start gap-x-4 gap-y-2">
-                <FooterLink href="/guide/">使用指南</FooterLink>
-                <FooterLink href="/self-hosting/">自托管部署</FooterLink>
-                <FooterLink href="/about/">关于</FooterLink>
+                <FooterLink href="/guide/">{t('chrome.guide')}</FooterLink>
+                <FooterLink href="/self-hosting/">
+                  {t('chrome.selfHosting')}
+                </FooterLink>
+                <FooterLink href="/about/">{t('chrome.about')}</FooterLink>
                 <FooterLink href={siteConfig.repositoryUrl}>GitHub</FooterLink>
-                <FooterLink href={siteConfig.documentationUrl}>文档</FooterLink>
+                <FooterLink href={siteConfig.documentationUrl}>
+                  {t('chrome.docs')}
+                </FooterLink>
               </NavigationMenuList>
             </NavigationMenu>
           </div>
@@ -75,7 +81,7 @@ function SiteFooter({ className }: { className?: string }) {
   );
 }
 
-function FooterLink({ children, href }: { children: string; href: string }) {
+function FooterLink({ children, href }: { children: ReactNode; href: string }) {
   return (
     <NavigationMenuItem>
       <NavigationMenuLink

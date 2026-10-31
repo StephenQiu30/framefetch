@@ -1,3 +1,10 @@
+import {
+  localizedStatusMessage,
+  lookupEnglishError,
+} from '@/lib/i18n/error-copy';
+import type { Locale } from '@/lib/i18n/locale';
+import { currentLocale } from '@/lib/i18n/locale-state';
+
 const localizedErrorMessages: Record<string, string> = {
   active_task_quota_exceeded:
     '同时进行的任务已达上限，请等待完成或取消任务后再试。',
@@ -138,16 +145,22 @@ const localizedFailureCauses: Record<string, string> = {
 export function localizedErrorMessage(
   code: string | null | undefined,
   causeCode?: unknown,
+  locale: Locale = currentLocale(),
 ): string | undefined {
   if (!code) return undefined;
-  const cause =
-    typeof causeCode === 'string'
-      ? localizedFailureCauses[`${code}:${causeCode}`]
-      : undefined;
+  const causeKey =
+    typeof causeCode === 'string' ? `${code}:${causeCode}` : undefined;
+  if (locale === 'en-US') return lookupEnglishError(code, causeKey);
+  const cause = causeKey ? localizedFailureCauses[causeKey] : undefined;
   return cause ?? localizedErrorMessages[code];
 }
 
-export function statusErrorMessage(status: number): string {
+export function statusErrorMessage(
+  status: number,
+  locale: Locale = currentLocale(),
+): string {
+  const localized = localizedStatusMessage(status, locale);
+  if (localized) return localized;
   const message = statusErrorMessages[status];
   if (message) return message;
   if (status >= 500) return '服务处理失败，请稍后重试。';

@@ -1,10 +1,11 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, vi } from 'vitest';
-
+import { resetLocale } from '@/lib/i18n/locale-state';
 import { httpClient } from '@/lib/request';
 import { MockWebSocket } from './helpers/websocket';
 
 beforeEach(() => {
+  resetLocale();
   sessionStorage.clear();
   // Happy DOM has no Web Locks. Individual coordination tests hold/reject this
   // callback; regular view tests model an immediately available browser lock.

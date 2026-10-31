@@ -16,6 +16,7 @@ import { Form } from '@/components/ui/form';
 import { InputGroupInput } from '@/components/ui/input-group';
 import { Spinner } from '@/components/ui/spinner';
 import { authRedirect } from '@/lib/auth-redirect';
+import { useT } from '@/lib/i18n/i18n-provider';
 import { displayError } from '@/lib/request-error';
 import { withWebSessionMutation } from '@/lib/session-events';
 
@@ -30,6 +31,7 @@ export function LoginView() {
   const [submitting, setSubmitting] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const t = useT();
 
   useEffect(() => {
     const currentSearch = window.location.search;
@@ -70,8 +72,8 @@ export function LoginView() {
 
   return (
     <AuthPageFrame
-      description="使用你的帧取账户继续管理下载、文档与分析。"
-      title="登录帧取"
+      description={t('auth.loginDescription')}
+      title={t('auth.loginTitle')}
       titleId="login-title"
     >
       <Form

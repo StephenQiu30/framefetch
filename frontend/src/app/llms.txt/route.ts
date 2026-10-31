@@ -42,7 +42,9 @@ ${sourceRepositories.map(({ name, href, english }) => `- [${name}](${href}): ${e
 
 ## FAQ
 
-${publicQuestions.map(({ question, answer }) => `### ${question}\n\n${answer}`).join('\n\n')}
+${publicQuestions()
+  .map(({ question, answer }) => `### ${question}\n\n${answer}`)
+  .join('\n\n')}
 `;
 
   return new Response(body, {

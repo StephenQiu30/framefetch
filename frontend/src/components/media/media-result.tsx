@@ -71,7 +71,7 @@ export function MediaResultSkeleton({
           )}
         </CardContent>
         {selectionPanel ? (
-          <CardFooter className="mt-auto rounded-none border-0 bg-transparent p-0 pt-7">
+          <CardFooter className="mt-auto rounded-none p-0 pt-7">
             <Skeleton className="h-8 w-full" />
           </CardFooter>
         ) : null}

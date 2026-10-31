@@ -2,6 +2,9 @@ import {
   localizedErrorMessage,
   statusErrorMessage,
 } from '@/lib/error-messages';
+import { requestCopy } from '@/lib/i18n/error-copy';
+import type { Locale } from '@/lib/i18n/locale';
+import { currentLocale } from '@/lib/i18n/locale-state';
 
 export class ApiError extends Error {
   constructor(
@@ -15,13 +18,17 @@ export class ApiError extends Error {
   }
 }
 
-export function displayError(error: unknown): string {
-  if (!(error instanceof ApiError)) return '发生未知错误，请稍后重试。';
+export function displayError(
+  error: unknown,
+  locale: Locale = currentLocale(),
+): string {
+  const copy = requestCopy(locale);
+  if (!(error instanceof ApiError)) return copy.unknown;
   return (
-    localizedErrorMessage(error.code) ??
-    (containsChinese(error.detail)
+    localizedErrorMessage(error.code, undefined, locale) ??
+    (locale === 'zh-CN' && containsChinese(error.detail)
       ? error.detail
-      : statusErrorMessage(error.status))
+      : statusErrorMessage(error.status, locale))
   );
 }
 
@@ -29,19 +36,18 @@ export function apiErrorFrom(
   status: number,
   payload: unknown,
   fallbackDetail?: string,
+  locale: Locale = currentLocale(),
 ): ApiError {
   const problem = parseErrorResponse(payload);
   if (problem) {
     return new ApiError(status, problem.code, problem.message, problem.message);
   }
+  const copy = requestCopy(locale);
   return new ApiError(
     status,
     'request_failed',
-    '请求失败',
-    fallbackDetail ??
-      (status >= 500
-        ? '服务暂时不可用，请稍后重试。'
-        : '请求未能完成，请检查后重试。'),
+    copy.requestFailed,
+    fallbackDetail ?? (status >= 500 ? copy.unavailable : copy.incomplete),
   );
 }
 

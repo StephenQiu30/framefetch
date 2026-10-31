@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { publicQuestions } from '@/components/intake/public-home-content';
 import {
@@ -8,8 +10,13 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { ItemTitle } from '@/components/ui/item';
+import { useLocale, useT } from '@/lib/i18n/i18n-provider';
 
 export function PublicHomeFaq() {
+  const locale = useLocale();
+  const t = useT();
+  const questions = publicQuestions(locale);
+
   return (
     <section
       aria-labelledby="questions-title"
@@ -17,13 +24,13 @@ export function PublicHomeFaq() {
       id="questions"
     >
       <ItemTitle>
-        <h2 id="questions-title">常见问题</h2>
+        <h2 id="questions-title">{t('home.faqTitle')}</h2>
       </ItemTitle>
       <Accordion
         type="multiple"
-        defaultValue={publicQuestions.map((item) => item.id)}
+        defaultValue={questions.map((item) => item.id)}
       >
-        {publicQuestions.map(({ id, question, answer }) => (
+        {questions.map(({ id, question, answer }) => (
           <AccordionItem id={id} key={id} value={id}>
             <AccordionTrigger>{question}</AccordionTrigger>
             <AccordionContent>{answer}</AccordionContent>
@@ -31,7 +38,7 @@ export function PublicHomeFaq() {
         ))}
       </Accordion>
       <Button asChild className="self-start" variant="ghost">
-        <Link href="/guide/">阅读视频分析与自托管使用指南</Link>
+        <Link href="/guide/">{t('home.faqGuide')}</Link>
       </Button>
     </section>
   );

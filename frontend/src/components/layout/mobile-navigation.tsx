@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
 import { avatarUrl } from '@/lib/avatar';
+import { useT } from '@/lib/i18n/i18n-provider';
 
 type MobileNavigationProps = {
   loading: boolean;
@@ -35,13 +36,14 @@ export function MobileNavigation({
   signingOut,
   user,
 }: MobileNavigationProps) {
+  const t = useT();
   const navigationTitleRef = useRef<HTMLHeadingElement>(null);
 
   return (
     <Sheet>
       <SheetTrigger asChild>
         <Button
-          aria-label="打开导航菜单"
+          aria-label={t('chrome.openNavigation')}
           className="lg:hidden"
           disabled={loading}
           size="icon"
@@ -60,9 +62,11 @@ export function MobileNavigation({
       >
         <SheetHeader className="shrink-0">
           <SheetTitle ref={navigationTitleRef} tabIndex={-1}>
-            导航
+            {t('chrome.navigation')}
           </SheetTitle>
-          <SheetDescription>访问工作区、账户与使用资源。</SheetDescription>
+          <SheetDescription>
+            {t('chrome.navigationDescription')}
+          </SheetDescription>
         </SheetHeader>
         {user ? (
           <div className="flex shrink-0 items-center gap-3 px-4">
@@ -81,7 +85,7 @@ export function MobileNavigation({
           </div>
         ) : null}
         <NavigationMenu
-          aria-label="移动导航"
+          aria-label={t('chrome.mobileNav')}
           className="block min-h-0 max-w-none flex-1 overflow-y-auto overscroll-contain"
           orientation="vertical"
           viewport={false}
@@ -102,7 +106,7 @@ export function MobileNavigation({
                 ) : (
                   <SignOutIcon aria-hidden data-icon="inline-start" />
                 )}
-                {signingOut ? '正在退出…' : '退出登录'}
+                {signingOut ? t('chrome.signingOut') : t('chrome.signOut')}
               </Button>
             </SheetClose>
           </SheetFooter>

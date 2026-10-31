@@ -12,6 +12,8 @@ import {
   useState,
 } from 'react';
 import { Button } from '@/components/ui/button';
+import { useLocale, useT } from '@/lib/i18n/i18n-provider';
+import { translate } from '@/lib/i18n/messages';
 import {
   documentKey,
   type EditorDocument,
@@ -44,13 +46,17 @@ export function Editor({
   onError,
   ref,
   className,
-  label = '正文编辑器',
-  placeholder = '开始编写正文…',
+  label,
+  placeholder,
   readOnly = false,
   autofocus = false,
   links = true,
   headingIds = [],
 }: EditorProps) {
+  const locale = useLocale();
+  const t = useT();
+  const resolvedLabel = label ?? t('chrome.editorLabel');
+  const resolvedPlaceholder = placeholder ?? t('chrome.editorPlaceholder');
   const holder = useRef<HTMLDivElement>(null);
   const instance = useRef<EditorJS | null>(null);
   const document = useMemo(
@@ -60,9 +66,10 @@ export function Editor({
   const latest = useRef({
     document,
     readOnly,
-    placeholder,
+    placeholder: resolvedPlaceholder,
     autofocus,
-    label,
+    label: resolvedLabel,
+    locale,
     headingIds,
   });
   const callbacks = useRef({ onChange, onError });
@@ -80,9 +87,10 @@ export function Editor({
     latest.current = {
       document,
       readOnly,
-      placeholder,
+      placeholder: resolvedPlaceholder,
       autofocus,
-      label,
+      label: resolvedLabel,
+      locale,
       headingIds,
     };
     decorate.current();
@@ -91,9 +99,10 @@ export function Editor({
     onError,
     document,
     readOnly,
-    placeholder,
+    resolvedPlaceholder,
     autofocus,
-    label,
+    resolvedLabel,
+    locale,
     headingIds,
   ]);
 
@@ -173,7 +182,10 @@ export function Editor({
         .forEach((field, index) => {
           field.setAttribute(
             'aria-label',
-            `${latest.current.label}，内容 ${index + 1}`,
+            translate(latest.current.locale, 'chrome.editorField', {
+              label: latest.current.label,
+              index: index + 1,
+            }),
           );
           if (field.getAttribute('contenteditable') === 'true') {
             field.setAttribute('role', 'textbox');
@@ -218,33 +230,46 @@ export function Editor({
             ui: {
               blockTunes: {
                 toggler: {
-                  'Click to tune': '块设置',
-                  'or drag to move': '拖动排序',
+                  'Click to tune': translate(initial.locale, 'editor.tune'),
+                  'or drag to move': translate(initial.locale, 'editor.drag'),
                 },
               },
-              toolbar: { toolbox: { Add: '添加内容' } },
-              popover: { Filter: '搜索', 'Nothing found': '没有匹配内容' },
+              toolbar: {
+                toolbox: { Add: translate(initial.locale, 'editor.add') },
+              },
+              popover: {
+                Filter: translate(initial.locale, 'editor.filter'),
+                'Nothing found': translate(initial.locale, 'editor.nothing'),
+              },
             },
             toolNames: {
-              Text: '正文',
-              Heading: '标题',
-              List: '列表',
-              'Ordered List': '有序列表',
-              'Unordered List': '无序列表',
-              Checklist: '任务列表',
-              Quote: '引用',
-              Code: '代码',
-              Table: '表格',
-              Delimiter: '分隔线',
-              Bold: '加粗',
-              Italic: '斜体',
-              Link: '链接',
-              'Inline Code': '行内代码',
+              Text: translate(initial.locale, 'editor.text'),
+              Heading: translate(initial.locale, 'editor.heading'),
+              List: translate(initial.locale, 'editor.list'),
+              'Ordered List': translate(initial.locale, 'editor.ordered'),
+              'Unordered List': translate(initial.locale, 'editor.unordered'),
+              Checklist: translate(initial.locale, 'editor.checklist'),
+              Quote: translate(initial.locale, 'editor.quote'),
+              Code: translate(initial.locale, 'editor.code'),
+              Table: translate(initial.locale, 'editor.table'),
+              Delimiter: translate(initial.locale, 'editor.delimiter'),
+              Bold: translate(initial.locale, 'editor.bold'),
+              Italic: translate(initial.locale, 'editor.italic'),
+              Link: translate(initial.locale, 'editor.link'),
+              'Inline Code': translate(initial.locale, 'editor.inlineCode'),
             },
             blockTunes: {
-              delete: { Delete: '删除', 'Click to delete': '确认删除' },
-              moveUp: { 'Move up': '上移' },
-              moveDown: { 'Move down': '下移' },
+              delete: {
+                Delete: translate(initial.locale, 'editor.delete'),
+                'Click to delete': translate(
+                  initial.locale,
+                  'editor.confirmDelete',
+                ),
+              },
+              moveUp: { 'Move up': translate(initial.locale, 'editor.moveUp') },
+              moveDown: {
+                'Move down': translate(initial.locale, 'editor.moveDown'),
+              },
             },
           },
         },
@@ -324,7 +349,7 @@ export function Editor({
       if (editor) void editor.isReady.then(dispose, dispose);
       else dispose();
     };
-  }, [attempt]);
+  }, [attempt, locale]);
 
   return (
     <section
@@ -341,18 +366,18 @@ export function Editor({
     >
       {status === 'loading' ? (
         <p role="status" className="text-sm text-muted-foreground">
-          正在加载正文…
+          {t('chrome.editorLoading')}
         </p>
       ) : null}
       {status === 'error' ? (
         <div role="alert" className="flex items-center gap-3 text-sm">
-          <span>正文加载失败，请重试。</span>
+          <span>{t('chrome.editorFailed')}</span>
           <Button
             type="button"
             variant="outline"
             onClick={() => setAttempt((current) => current + 1)}
           >
-            重试
+            {t('chrome.retry')}
           </Button>
         </div>
       ) : null}

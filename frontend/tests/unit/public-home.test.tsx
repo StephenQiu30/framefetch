@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { PublicHome } from '@/components/intake/public-home';
+import { I18nProvider } from '@/lib/i18n/i18n-provider';
 
 describe('PublicHome', () => {
   it('keeps the public conversion and documentation paths available', () => {
@@ -52,6 +53,26 @@ describe('PublicHome', () => {
         screen.getByRole('region', { name: '下载、导入与分析' }),
       ).getByText(/导入有权处理的本地视频/),
     ).toBeInTheDocument();
+  });
+
+  it('switches the information descriptions with the locale', () => {
+    render(
+      <I18nProvider locale="en-US">
+        <PublicHome />
+      </I18nProvider>,
+    );
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Framefetch video downloader',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Paste a public video link, choose a quality/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Questions' })).toHaveTextContent(
+      'What is Framefetch?',
+    );
   });
 
   it('keeps the workflow as an ordered accessible list', () => {

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/field';
 import { InputGroup } from '@/components/ui/input-group';
 import { Item, ItemContent } from '@/components/ui/item';
+import { useT } from '@/lib/i18n/i18n-provider';
 
 type AuthPageFrameProps = {
   children: ReactNode;
@@ -25,6 +26,7 @@ export function AuthPageFrame({
   title,
   titleId,
 }: AuthPageFrameProps) {
+  const t = useT();
   return (
     <div
       className="inner-page flex flex-1 flex-col justify-center"
@@ -49,32 +51,32 @@ export function AuthPageFrame({
           <ItemContent className="w-full max-w-md flex-none gap-8">
             <div className="flex flex-col gap-3">
               <p className="text-sm font-medium text-muted-foreground">
-                Framefetch 万能视频下载器
+                {t('auth.kicker')}
               </p>
               <p className="text-balance text-3xl font-medium tracking-tight">
-                粘贴链接，带走任意公开视频。
+                {t('auth.headline')}
               </p>
               <p className="text-sm leading-6 text-muted-foreground">
-                自动列出可用画质，下载完成后校验文件，并可直接在线播放。
+                {t('auth.summary')}
               </p>
             </div>
             <ul className="flex flex-col gap-4">
               <li className="flex flex-col gap-1">
-                <span className="font-medium">下载公开视频</span>
+                <span className="font-medium">{t('auth.downloadTitle')}</span>
                 <span className="text-sm leading-6 text-muted-foreground">
-                  选择画质，完成后校验文件完整性。
+                  {t('auth.downloadBody')}
                 </span>
               </li>
               <li className="flex flex-col gap-1">
-                <span className="font-medium">在线播放</span>
+                <span className="font-medium">{t('auth.playTitle')}</span>
                 <span className="text-sm leading-6 text-muted-foreground">
-                  下载完成的视频可直接在任务页播放。
+                  {t('auth.playBody')}
                 </span>
               </li>
               <li className="flex flex-col gap-1">
-                <span className="font-medium">AI 拉片分析</span>
+                <span className="font-medium">{t('auth.analysisTitle')}</span>
                 <span className="text-sm leading-6 text-muted-foreground">
-                  生成分镜、场景与报告，可导出 Markdown 或 DOCX。
+                  {t('auth.analysisBody')}
                 </span>
               </li>
             </ul>

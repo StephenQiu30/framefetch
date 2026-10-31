@@ -24,7 +24,6 @@ import { MediaUploadForm } from '@/components/intake/media-upload-form';
 import {
   hasPublicInput,
   isWeChatArticleInput,
-  PUBLIC_INPUT_REQUIRED,
 } from '@/components/intake/public-input';
 import { useDocumentImport } from '@/components/intake/use-document-import';
 import { useDownloadIntent } from '@/components/intake/use-download-intent';
@@ -33,6 +32,7 @@ import { FeedbackNotice } from '@/components/layout/feedback-notice';
 import { markNavigationPush } from '@/components/layout/navigation-state';
 import { ScreenplayUploadForm } from '@/components/screenplay/screenplay-upload-form';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/lib/i18n/i18n-provider';
 import { privateQueryKey } from '@/lib/query-keys';
 import { displayError } from '@/lib/request-error';
 import { createUuid as createIdempotencyKey } from '@/lib/uuid';
@@ -40,6 +40,7 @@ import { createUuid as createIdempotencyKey } from '@/lib/uuid';
 type BusyAction = 'inspect' | null;
 const PARSE_STATUS_TOAST_ID = 'framefetch-parse-status';
 export default function DownloadWorkspace() {
+  const t = useT();
   const router = useRouter();
   const queries = useQueryClient();
   const {
@@ -262,7 +263,7 @@ export default function DownloadWorkspace() {
     clearLinkResult();
     if (!hasPublicInput(input)) {
       setUrlInvalid(true);
-      setError(PUBLIC_INPUT_REQUIRED);
+      setError(t('chrome.publicInputRequired'));
       return;
     }
     setUrlInvalid(false);
