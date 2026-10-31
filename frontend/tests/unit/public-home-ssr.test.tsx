@@ -2,8 +2,16 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const session = vi.hoisted(() => ({ names: new Set<string>() }));
+vi.mock('server-only', () => ({}));
 vi.mock('next/headers', () => ({
-  cookies: async () => ({ has: (name: string) => session.names.has(name) }),
+  cookies: async () => ({
+    has: (name: string) => session.names.has(name),
+    get: (name: string) =>
+      session.names.has(name) ? { name, value: '1' } : undefined,
+  }),
+  headers: async () => ({
+    get: (name: string) => (name === 'accept-language' ? 'zh-CN' : null),
+  }),
 }));
 vi.mock('@/components/auth/auth-provider', async (importOriginal) => ({
   ...(await importOriginal()),
